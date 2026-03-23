@@ -1,0 +1,68 @@
+import { getDataSource } from "@/lib/db/data-source";
+import {
+  AdministratorEntity,
+  type Administrator,
+} from "@/lib/db/entities/administrator.entity";
+
+type CreateAdministratorPayload = {
+  name?: string;
+  email?: string;
+};
+
+export async function GET() {
+  const dataSource = await getDataSource();
+  const administratorRepository = dataSource.getRepository(AdministratorEntity);
+
+  const administrators = await administratorRepository.find({
+    relations: {
+      condominiums: true,
+      plans: true,
+    },
+    order: {
+      createdAt: "ASC",
+    },
+  });
+
+  return Response.json(
+    administrators.map((administrator: Administrator) => ({
+      id: administrator.id,
+      name: administrator.name,
+      email: administrator.email,
+      condominiumCount: administrator.condominiums.length,
+      createdPlanCount: administrator.plans.length,
+    })),
+  );
+}
+
+export async function POST(request: Request) {
+  const payload = (await request.json()) as CreateAdministratorPayload;
+
+  if (!payload.name || !payload.email) {
+    return Response.json(
+      { error: "name e email sao obrigatorios." },
+      { status: 400 },
+    );
+  }
+
+  const dataSource = await getDataSource();
+  const administratorRepository = dataSource.getRepository(AdministratorEntity);
+  const normalizedEmail = payload.email.trim().toLowerCase();
+
+  const existingAdministrator = await administratorRepository.findOneBy({
+    email: normalizedEmail,
+  });
+
+  if (existingAdministrator) {
+    return Response.json(
+      { error: "Ja existe um administrador com esse email." },
+      { status: 409 },
+    );
+  }
+
+  const administrator = await administratorRepository.save({
+    name: payload.name.trim(),
+    email: normalizedEmail,
+  });
+
+  return Response.json(administrator, { status: 201 });
+}

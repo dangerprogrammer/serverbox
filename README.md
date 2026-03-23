@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## ServerBox
 
-## Getting Started
+Base inicial em Next.js 16 para vender bolinhas de tenis para condominios.
+O projeto usa TypeORM no servidor com banco SQLite local para desenvolvimento.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 com App Router
+- React 19
+- TypeORM
+- better-sqlite3
+
+## Como rodar
+
+1. Instale as dependencias:
+
+```bash
+npm install
+```
+
+2. Suba o projeto:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Abra `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Na primeira execucao, o banco e criado automaticamente em `data/serverbox.sqlite` e recebe seed com:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 1 administrador inicial
+- 3 planos padrao: basico, intermediario e premium
+- 1 plano personalizado de exemplo
+- 3 condominios de exemplo
+- vinculos entre condominios e os planos disponiveis para cada um
 
-## Learn More
+Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 
-To learn more about Next.js, take a look at the following resources:
+## Estrutura inicial do dominio
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `Administrator`: administrador que cria planos e gerencia condominios
+- `Plan`: catalogo dos planos vendidos
+- `Condominium`: dados do condominio cliente
+- `CondominiumPlan`: vinculo entre condominio e planos disponiveis
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Endpoints iniciais
 
-## Deploy on Vercel
+- `GET /api/administradores`
+- `POST /api/administradores`
+- `GET /api/plans`
+- `POST /api/plans`
+- `GET /api/condominios`
+- `POST /api/condominios`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Exemplo de criacao de condominio:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+curl -X POST http://localhost:3000/api/condominios \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"Condominio Parque Central\",\"city\":\"Sao Paulo\",\"state\":\"SP\",\"courts\":2,\"activeResidents\":180,\"adminEmail\":\"admin@serverbox.local\",\"includeDefaultPlans\":true}"
+```
