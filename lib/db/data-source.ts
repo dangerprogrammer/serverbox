@@ -6,8 +6,10 @@ import path from "node:path";
 
 import Database from "better-sqlite3";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
+import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPlanEntity } from "@/lib/db/entities/condominium-plan.entity";
+import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import { seedDatabase } from "@/lib/db/seed";
 import { DataSource } from "typeorm";
@@ -39,6 +41,20 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
         )
         .get(),
     );
+    const hasPaymentTable = Boolean(
+      database
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'condominium_payments'",
+        )
+        .get(),
+    );
+    const hasInventoryTable = Boolean(
+      database
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ball_inventory_movements'",
+        )
+        .get(),
+    );
     const hasPrimaryAdminId = tableInfo.some(
       (column) => column.name === "primaryAdminId",
     );
@@ -46,7 +62,12 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
     database.close();
     database = null;
 
-    if (hasLegacySubscriptionsTable || !hasPrimaryAdminId) {
+    if (
+      hasLegacySubscriptionsTable ||
+      !hasPrimaryAdminId ||
+      !hasPaymentTable ||
+      !hasInventoryTable
+    ) {
       await rm(databasePath, { force: true });
       await rm(`${databasePath}-journal`, { force: true });
     }
@@ -73,6 +94,8 @@ async function createDataSource() {
         PlanEntity,
         CondominiumEntity,
         CondominiumPlanEntity,
+        CondominiumPaymentEntity,
+        BallInventoryMovementEntity,
       ],
     });
 

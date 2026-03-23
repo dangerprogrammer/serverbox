@@ -8,10 +8,18 @@ import {
   type Administrator,
 } from "@/lib/db/entities/administrator.entity";
 import {
+  BallMovementKind,
+  type BallInventoryMovement,
+} from "@/lib/db/entities/ball-inventory-movement.entity";
+import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
 import type { CondominiumPlan } from "@/lib/db/entities/condominium-plan.entity";
+import {
+  PaymentStatus,
+  type CondominiumPayment,
+} from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity, PlanTier, type Plan } from "@/lib/db/entities/plan.entity";
 
 const tierLabels: Record<PlanTier, string> = {
@@ -20,6 +28,14 @@ const tierLabels: Record<PlanTier, string> = {
   [PlanTier.PREMIUM]: "Premium",
   [PlanTier.CUSTOM]: "Personalizado",
 };
+
+function computeAvailableBalls(movements: BallInventoryMovement[]) {
+  return movements.reduce((total, movement) => {
+    return movement.kind === BallMovementKind.CREDIT
+      ? total + movement.quantity
+      : total - movement.quantity;
+  }, 0);
+}
 
 export const getDashboardData = cache(async () => {
   const dataSource = await getDataSource();
@@ -50,6 +66,8 @@ export const getDashboardData = cache(async () => {
       relations: {
         primaryAdmin: true,
         planAssignments: { plan: true },
+        payments: true,
+        ballMovements: true,
       },
       order: {
         createdAt: "ASC",
@@ -63,6 +81,11 @@ export const getDashboardData = cache(async () => {
       administrators: administrators.length,
       totalPlans: plans.length,
       customPlans: plans.filter((plan: Plan) => !plan.isDefault).length,
+      availableBalls: condominiums.reduce(
+        (total, condominium) =>
+          total + computeAvailableBalls(condominium.ballMovements),
+        0,
+      ),
     },
     plans: plans.map((plan: Plan) => ({
       id: plan.id,
@@ -86,6 +109,10 @@ export const getDashboardData = cache(async () => {
       activeResidents: condominium.activeResidents,
       administratorName: condominium.primaryAdmin.name,
       availablePlanCount: condominium.planAssignments.length,
+      availableBalls: computeAvailableBalls(condominium.ballMovements),
+      paidPayments: condominium.payments.filter(
+        (payment: CondominiumPayment) => payment.status === PaymentStatus.PAID,
+      ).length,
       planNames: condominium.planAssignments.map(
         (assignment: CondominiumPlan) => assignment.plan.name,
       ),

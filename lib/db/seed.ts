@@ -1,6 +1,15 @@
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
+import {
+  BallInventoryMovementEntity,
+  BallMovementKind,
+} from "@/lib/db/entities/ball-inventory-movement.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPlanEntity } from "@/lib/db/entities/condominium-plan.entity";
+import {
+  CondominiumPaymentEntity,
+  PaymentMethod,
+  PaymentStatus,
+} from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity, PlanTier } from "@/lib/db/entities/plan.entity";
 import type { DataSource } from "typeorm";
 
@@ -63,6 +72,7 @@ const condominiumSeeds = [
     courts: 2,
     activeResidents: 180,
     customPlanSlugs: [],
+    paidPlanSlug: "intermediario",
   },
   {
     name: "Residencial Costa Serena",
@@ -71,6 +81,7 @@ const condominiumSeeds = [
     courts: 1,
     activeResidents: 96,
     customPlanSlugs: [],
+    paidPlanSlug: "basico",
   },
   {
     name: "Jardins do Lago Clube",
@@ -79,8 +90,13 @@ const condominiumSeeds = [
     courts: 3,
     activeResidents: 260,
     customPlanSlugs: ["quadra-intensiva"],
+    paidPlanSlug: "quadra-intensiva",
   },
 ];
+
+function buildPaymentReference(index: number) {
+  return `seed-payment-${String(index + 1).padStart(3, "0")}`;
+}
 
 export async function seedDatabase(dataSource: DataSource) {
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
@@ -88,6 +104,8 @@ export async function seedDatabase(dataSource: DataSource) {
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const condominiumPlanRepository =
     dataSource.getRepository(CondominiumPlanEntity);
+  const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
+  const movementRepository = dataSource.getRepository(BallInventoryMovementEntity);
 
   let administrator = await administratorRepository.findOneBy({
     email: administratorSeed.email,
@@ -117,7 +135,7 @@ export async function seedDatabase(dataSource: DataSource) {
   const planMap = new Map(plans.map((plan) => [plan.slug, plan]));
   const defaultPlans = plans.filter((plan) => plan.isDefault);
 
-  for (const condominiumSeed of condominiumSeeds) {
+  for (const [index, condominiumSeed] of condominiumSeeds.entries()) {
     const condominium = condominiumRepository.create({
       name: condominiumSeed.name,
       city: condominiumSeed.city,
@@ -136,11 +154,36 @@ export async function seedDatabase(dataSource: DataSource) {
     ];
 
     await condominiumPlanRepository.save(
-      plansForCondominium.map((plan, index) => ({
+      plansForCondominium.map((plan, planIndex) => ({
         condominium: savedCondominium,
         plan,
-        isFeatured: index === 0,
+        isFeatured: planIndex === 0,
       })),
     );
+
+    const selectedPlan = planMap.get(condominiumSeed.paidPlanSlug);
+
+    if (!selectedPlan) {
+      continue;
+    }
+
+    const payment = await paymentRepository.save({
+      condominium: savedCondominium,
+      plan: selectedPlan,
+      reference: buildPaymentReference(index),
+      method: PaymentMethod.PIX,
+      status: PaymentStatus.PAID,
+      amountInCents: selectedPlan.monthlyPriceInCents,
+      ballQuantity: selectedPlan.monthlyBallAllowance,
+      paidAt: new Date(),
+    });
+
+    await movementRepository.save({
+      condominium: savedCondominium,
+      payment,
+      kind: BallMovementKind.CREDIT,
+      quantity: selectedPlan.monthlyBallAllowance,
+      reason: `Credito liberado pelo pagamento do plano ${selectedPlan.name}.`,
+    });
   }
 }

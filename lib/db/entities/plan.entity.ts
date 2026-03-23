@@ -2,6 +2,7 @@ import { EntitySchema } from "typeorm";
 
 import type { Administrator } from "@/lib/db/entities/administrator.entity";
 import type { CondominiumPlan } from "@/lib/db/entities/condominium-plan.entity";
+import type { CondominiumPayment } from "@/lib/db/entities/condominium-payment.entity";
 
 export enum PlanTier {
   BASIC = "basic",
@@ -23,6 +24,7 @@ export type Plan = {
   isActive: boolean;
   createdBy: Administrator | null;
   condominiumPlans: CondominiumPlan[];
+  payments: CondominiumPayment[];
 };
 
 export const PlanEntity = new EntitySchema<Plan>({
@@ -79,6 +81,11 @@ export const PlanEntity = new EntitySchema<Plan>({
     condominiumPlans: {
       type: "one-to-many",
       target: "CondominiumPlan",
+      inverseSide: "plan",
+    },
+    payments: {
+      type: "one-to-many",
+      target: "CondominiumPayment",
       inverseSide: "plan",
     },
   },

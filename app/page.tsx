@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { getDashboardData } from "@/lib/data/dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -43,11 +45,22 @@ export default async function Home() {
                 </p>
               </div>
               <div className="rounded-3xl border border-border bg-white/85 p-5 backdrop-blur">
-                <p className="text-sm text-slate-500">Administradores</p>
+                <p className="text-sm text-slate-500">Saldo total</p>
                 <p className="mt-2 text-3xl font-semibold text-slate-900">
-                  {dashboard.summary.administrators}
+                  {dashboard.summary.availableBalls}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+                  bolinhas disponiveis
                 </p>
               </div>
+            </div>
+            <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+              <Link
+                href="/dashboard"
+                className="inline-flex h-12 items-center justify-center rounded-full bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong"
+              >
+                Abrir dashboard de pagamentos
+              </Link>
             </div>
           </div>
 
@@ -76,9 +89,11 @@ export default async function Home() {
                     </span>
                   </div>
                   <div className="mt-4 flex items-end justify-between text-sm text-slate-300">
-                    <span>{condominium.administratorName}</span>
+                    <span>
+                      {condominium.availableBalls} bolinhas • {condominium.paidPayments} pagamentos pagos
+                    </span>
                     <strong className="text-base text-white">
-                      {condominium.planNames.join(", ")}
+                      {condominium.administratorName}
                     </strong>
                   </div>
                 </div>
@@ -103,9 +118,9 @@ export default async function Home() {
               opcoes personalizadas sem duplicar cadastro de condominio.
             </p>
             <p>
-              A home esta lendo do banco no servidor, e a API ja expoe os dados
-              em <code>/api/administradores</code>, <code>/api/plans</code> e{" "}
-              <code>/api/condominios</code>.
+              Agora tambem existe um fluxo inicial de pagamento: o pagamento
+              entra como pendente, e ao ser confirmado credita bolinhas no saldo
+              visivel na dashboard do administrador.
             </p>
           </div>
         </div>
