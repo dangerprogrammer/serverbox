@@ -1,0 +1,8 @@
+{
+  "type": "postgres",
+  "url": "postgresql://postgres:socket_io_js@db.jxinrwwwndrrrecnhvzt.supabase.co:5432/postgres",
+  "synchronize": true,
+  "ssl": {
+    "rejectUnauthorized": false
+  }
+}

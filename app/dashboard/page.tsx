@@ -1,10 +1,7 @@
 import Link from "next/link";
 
 import { SubmitButton } from "@/app/dashboard/_components/submit-button";
-import {
-  confirmPaymentAction,
-  createPaymentAction,
-} from "@/app/dashboard/actions";
+import { createPaymentAction } from "@/app/dashboard/actions";
 import { getAdminDashboardData } from "@/lib/data/admin-dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -135,7 +132,7 @@ export default async function DashboardPage() {
           </section>
 
           <section className="rounded-[1.75rem] border border-border bg-slate-950 p-6 text-white shadow-2xl">
-            <h2 className="text-2xl font-semibold">Pendencias PIX para validar</h2>
+            <h2 className="text-2xl font-semibold">Cobrancas PIX em aberto</h2>
             <div className="mt-5 space-y-4">
               {dashboard.pendingPayments.length === 0 ? (
                 <p className="text-sm text-slate-300">
@@ -143,12 +140,10 @@ export default async function DashboardPage() {
                 </p>
               ) : (
                 dashboard.pendingPayments.map((payment) => (
-                  <form
+                  <article
                     key={payment.id}
-                    action={confirmPaymentAction}
                     className="rounded-2xl border border-white/10 bg-white/5 p-4"
                   >
-                    <input type="hidden" name="paymentId" value={payment.id} />
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -168,30 +163,19 @@ export default async function DashboardPage() {
                         </span>
                       </div>
 
-                      <label className="block space-y-2">
-                        <span className="text-sm text-slate-300">
-                          TXID/E2E recebido do banco ou PSP
-                        </span>
-                        <input
-                          type="text"
-                          name="pixTransactionId"
-                          defaultValue={payment.pixTransactionId ?? ""}
-                          className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none"
-                        />
-                      </label>
-
                       <div className="flex items-center justify-between gap-4">
-                        <span className="text-sm text-slate-300">
+                        <div className="text-sm text-slate-300">
                           +{payment.ballQuantity} bolinhas
-                        </span>
-                        <SubmitButton
-                          idleLabel="Validar PIX"
-                          pendingLabel="Validando..."
-                          className="inline-flex h-10 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-slate-950 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        />
+                        </div>
+                        <Link
+                          href={`/pagamentos/${payment.id}`}
+                          className="inline-flex h-10 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-slate-950 transition hover:bg-orange-100"
+                        >
+                          Abrir cobranca PIX
+                        </Link>
                       </div>
                     </div>
-                  </form>
+                  </article>
                 ))
               )}
             </div>

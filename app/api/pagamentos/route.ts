@@ -7,7 +7,11 @@ import {
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
-import { buildPaymentReference, buildPixCharge } from "@/lib/payments/pix";
+import {
+  buildPaymentReference,
+  buildPixCharge,
+  getPixTestAmountInCents,
+} from "@/lib/payments/pix";
 
 type CreatePaymentPayload = {
   condominiumId?: string;
@@ -91,9 +95,9 @@ export async function POST(request: Request) {
   }
 
   const reference = buildPaymentReference();
+  const testAmountInCents = getPixTestAmountInCents();
   const pixCharge = buildPixCharge({
-    amountInCents: plan.monthlyPriceInCents,
-    condominiumName: condominium.name,
+    amountInCents: testAmountInCents,
     reference,
   });
 
@@ -103,7 +107,7 @@ export async function POST(request: Request) {
     reference,
     method: PaymentMethod.PIX,
     status: PaymentStatus.PENDING,
-    amountInCents: plan.monthlyPriceInCents,
+    amountInCents: testAmountInCents,
     ballQuantity: plan.monthlyBallAllowance,
     pixTransactionId: pixCharge.pixTransactionId,
     pixQrCode: pixCharge.pixQrCode,

@@ -56,18 +56,24 @@ Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 - `POST /api/condominios`
 - `GET /api/pagamentos`
 - `POST /api/pagamentos`
+- `GET /api/pagamentos/:paymentId`
 - `POST /api/pagamentos/:paymentId/confirmar`
 
 ## Dashboard
 
-- `GET /dashboard`: tela administrativa com saldo de bolinhas, pagamentos pendentes e confirmacao manual
+- `GET /dashboard`: tela administrativa com saldo de bolinhas e cobrancas PIX em aberto
+
+## Checkout PIX
+
+- `GET /pagamentos/:paymentId`: tela da cobranca com QR Code, copia e cola e atualizacao automatica de status
 
 Fluxo atual:
 
 1. Cria um pagamento pendente para um condominio
-2. Confirma o pagamento
-3. O sistema gera um credito em `BallInventoryMovement`
-4. O saldo de bolinhas fica visivel na dashboard
+2. Abre a cobranca PIX com QR Code e copia e cola
+3. O backend so libera o credito quando recebe a confirmacao do pagamento
+4. O sistema gera um credito em `BallInventoryMovement`
+5. O saldo de bolinhas fica visivel na dashboard
 
 Exemplo de criacao de condominio:
 

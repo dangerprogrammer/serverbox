@@ -118,9 +118,9 @@ export default async function Home() {
               opcoes personalizadas sem duplicar cadastro de condominio.
             </p>
             <p>
-              Agora tambem existe um fluxo inicial de pagamento: o pagamento
-              entra como pendente, e ao ser confirmado credita bolinhas no saldo
-              visivel na dashboard do administrador.
+              Agora o fluxo de pagamento gera um checkout PIX com QR Code e
+              copia e cola. O acesso so deve ser liberado depois da confirmacao
+              real do pagamento no backend.
             </p>
           </div>
         </div>

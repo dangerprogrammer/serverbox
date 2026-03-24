@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { getDataSource } from "@/lib/db/data-source";
 import {
   CondominiumPaymentEntity,
@@ -32,6 +34,10 @@ export async function POST(
       paidAmountInCents: payload.paidAmountInCents,
       verificationSource: PaymentVerificationSource.WEBHOOK,
     });
+
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+    revalidatePath(`/pagamentos/${paymentId}`);
 
     return Response.json(savedPayment);
   } catch (error) {

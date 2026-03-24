@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import "server-only";
 
+import fs from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
@@ -12,17 +13,57 @@ import { CondominiumPlanEntity } from "@/lib/db/entities/condominium-plan.entity
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import { seedDatabase } from "@/lib/db/seed";
-import { DataSource } from "typeorm";
+import { DataSource, type DataSourceOptions } from "typeorm";
 
 declare global {
   var __serverboxDataSourcePromise: Promise<DataSource> | undefined;
+}
+
+const entities = [
+  AdministratorEntity,
+  PlanEntity,
+  CondominiumEntity,
+  CondominiumPlanEntity,
+  CondominiumPaymentEntity,
+  BallInventoryMovementEntity,
+];
+
+type OrmConfig = {
+  type?: "postgres" | "better-sqlite3";
+  url?: string;
+  database?: string;
+  synchronize?: boolean;
+  ssl?: {
+    rejectUnauthorized?: boolean;
+  };
+};
+
+function getOrmConfig() {
+  const ormconfigPath = path.resolve(process.cwd(), "ormconfig.json");
+
+  if (!fs.existsSync(ormconfigPath)) {
+    return {} satisfies OrmConfig;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(ormconfigPath, "utf8")) as OrmConfig;
+  } catch (error) {
+    console.error("Failed to parse ormconfig.json", error);
+    return {} satisfies OrmConfig;
+  }
+}
+
+const ormConfig = getOrmConfig();
+
+function getDatabaseUrl() {
+  return process.env.DATABASE_URL?.trim() || ormConfig.url?.trim();
 }
 
 function getDatabasePath() {
   return path.join(
     process.cwd(),
     "data",
-    process.env.DB_FILENAME ?? "serverbox.sqlite",
+    ormConfig.database ?? process.env.DB_FILENAME ?? "serverbox.sqlite",
   );
 }
 
@@ -107,26 +148,41 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
   }
 }
 
-async function createDataSource() {
-  const databasePath = getDatabasePath();
+function createDataSourceOptions(): DataSourceOptions {
+  const databaseUrl = getDatabaseUrl();
 
-  await mkdir(path.dirname(databasePath), { recursive: true });
-  await resetLegacyDatabaseIfNeeded(databasePath);
+  if (databaseUrl) {
+    return {
+      type: ormConfig.type ?? "postgres",
+      url: databaseUrl,
+      ssl: ormConfig.ssl ?? {
+        rejectUnauthorized: false,
+      },
+      uuidExtension: "pgcrypto",
+      synchronize: ormConfig.synchronize ?? true,
+      entities,
+    };
+  }
+
+  return {
+    type: "better-sqlite3",
+    database: getDatabasePath(),
+    synchronize: ormConfig.synchronize ?? true,
+    entities,
+  };
+}
+
+async function createDataSource() {
+  const databaseUrl = getDatabaseUrl();
+
+  if (!databaseUrl) {
+    const databasePath = getDatabasePath();
+    await mkdir(path.dirname(databasePath), { recursive: true });
+    await resetLegacyDatabaseIfNeeded(databasePath);
+  }
 
   const initialize = async () => {
-    const dataSource = new DataSource({
-      type: "better-sqlite3",
-      database: databasePath,
-      synchronize: true,
-      entities: [
-        AdministratorEntity,
-        PlanEntity,
-        CondominiumEntity,
-        CondominiumPlanEntity,
-        CondominiumPaymentEntity,
-        BallInventoryMovementEntity,
-      ],
-    });
+    const dataSource = new DataSource(createDataSourceOptions());
 
     await dataSource.initialize();
     await seedDatabase(dataSource);
