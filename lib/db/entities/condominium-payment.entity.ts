@@ -5,16 +5,19 @@ import type { Plan } from "@/lib/db/entities/plan.entity";
 
 export enum PaymentMethod {
   PIX = "pix",
-  CREDIT_CARD = "credit_card",
-  BOLETO = "boleto",
-  MANUAL = "manual",
 }
 
 export enum PaymentStatus {
   PENDING = "pending",
   PAID = "paid",
   FAILED = "failed",
+  EXPIRED = "expired",
   REFUNDED = "refunded",
+}
+
+export enum PaymentVerificationSource {
+  WEBHOOK = "webhook",
+  MANUAL_REVIEW = "manual_review",
 }
 
 export type CondominiumPayment = {
@@ -24,7 +27,13 @@ export type CondominiumPayment = {
   status: PaymentStatus;
   amountInCents: number;
   ballQuantity: number;
+  pixTransactionId: string | null;
+  pixQrCode: string | null;
+  pixCopyPasteCode: string | null;
+  pixExpiresAt: Date | null;
   paidAt: Date | null;
+  verifiedAt: Date | null;
+  verificationSource: PaymentVerificationSource | null;
   createdAt: Date;
   updatedAt: Date;
   condominium: Condominium;
@@ -56,8 +65,33 @@ export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
     ballQuantity: {
       type: Number,
     },
+    pixTransactionId: {
+      type: String,
+      unique: true,
+      nullable: true,
+    },
+    pixQrCode: {
+      type: String,
+      nullable: true,
+    },
+    pixCopyPasteCode: {
+      type: String,
+      nullable: true,
+    },
+    pixExpiresAt: {
+      type: Date,
+      nullable: true,
+    },
     paidAt: {
       type: Date,
+      nullable: true,
+    },
+    verifiedAt: {
+      type: Date,
+      nullable: true,
+    },
+    verificationSource: {
+      type: String,
       nullable: true,
     },
     createdAt: {

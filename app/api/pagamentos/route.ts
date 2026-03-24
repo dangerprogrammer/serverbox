@@ -7,29 +7,13 @@ import {
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
+import { buildPaymentReference, buildPixCharge } from "@/lib/payments/pix";
 
 type CreatePaymentPayload = {
   condominiumId?: string;
   planId?: string;
   method?: string;
 };
-
-function normalizePaymentMethod(value?: string) {
-  switch (value) {
-    case PaymentMethod.CREDIT_CARD:
-      return PaymentMethod.CREDIT_CARD;
-    case PaymentMethod.BOLETO:
-      return PaymentMethod.BOLETO;
-    case PaymentMethod.MANUAL:
-      return PaymentMethod.MANUAL;
-    default:
-      return PaymentMethod.PIX;
-  }
-}
-
-function buildReference() {
-  return `api-pay-${Date.now()}`;
-}
 
 export async function GET() {
   const dataSource = await getDataSource();
@@ -53,7 +37,13 @@ export async function GET() {
       method: payment.method,
       amountInCents: payment.amountInCents,
       ballQuantity: payment.ballQuantity,
+      pixTransactionId: payment.pixTransactionId,
+      pixQrCode: payment.pixQrCode,
+      pixCopyPasteCode: payment.pixCopyPasteCode,
+      pixExpiresAt: payment.pixExpiresAt,
       paidAt: payment.paidAt,
+      verifiedAt: payment.verifiedAt,
+      verificationSource: payment.verificationSource,
       condominium: {
         id: payment.condominium.id,
         name: payment.condominium.name,
@@ -76,6 +66,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (payload.method && payload.method !== PaymentMethod.PIX) {
+    return Response.json(
+      { error: "Somente pagamentos PIX sao suportados." },
+      { status: 400 },
+    );
+  }
+
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const planRepository = dataSource.getRepository(PlanEntity);
@@ -93,15 +90,28 @@ export async function POST(request: Request) {
     );
   }
 
+  const reference = buildPaymentReference();
+  const pixCharge = buildPixCharge({
+    amountInCents: plan.monthlyPriceInCents,
+    condominiumName: condominium.name,
+    reference,
+  });
+
   const payment = await paymentRepository.save({
     condominium,
     plan,
-    reference: buildReference(),
-    method: normalizePaymentMethod(payload.method),
+    reference,
+    method: PaymentMethod.PIX,
     status: PaymentStatus.PENDING,
     amountInCents: plan.monthlyPriceInCents,
     ballQuantity: plan.monthlyBallAllowance,
+    pixTransactionId: pixCharge.pixTransactionId,
+    pixQrCode: pixCharge.pixQrCode,
+    pixCopyPasteCode: pixCharge.pixCopyPasteCode,
+    pixExpiresAt: pixCharge.pixExpiresAt,
     paidAt: null,
+    verifiedAt: null,
+    verificationSource: null,
   });
 
   return Response.json(payment, { status: 201 });

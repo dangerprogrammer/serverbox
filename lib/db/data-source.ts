@@ -58,6 +58,29 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
     const hasPrimaryAdminId = tableInfo.some(
       (column) => column.name === "primaryAdminId",
     );
+    const paymentTableInfo = hasPaymentTable
+      ? (database
+          .prepare("PRAGMA table_info('condominium_payments')")
+          .all() as Array<{ name: string }>)
+      : [];
+    const hasPixTransactionId = paymentTableInfo.some(
+      (column) => column.name === "pixTransactionId",
+    );
+    const hasPixQrCode = paymentTableInfo.some(
+      (column) => column.name === "pixQrCode",
+    );
+    const hasPixCopyPasteCode = paymentTableInfo.some(
+      (column) => column.name === "pixCopyPasteCode",
+    );
+    const hasPixExpiresAt = paymentTableInfo.some(
+      (column) => column.name === "pixExpiresAt",
+    );
+    const hasVerifiedAt = paymentTableInfo.some(
+      (column) => column.name === "verifiedAt",
+    );
+    const hasVerificationSource = paymentTableInfo.some(
+      (column) => column.name === "verificationSource",
+    );
 
     database.close();
     database = null;
@@ -66,7 +89,13 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
       hasLegacySubscriptionsTable ||
       !hasPrimaryAdminId ||
       !hasPaymentTable ||
-      !hasInventoryTable
+      !hasInventoryTable ||
+      !hasPixTransactionId ||
+      !hasPixQrCode ||
+      !hasPixCopyPasteCode ||
+      !hasPixExpiresAt ||
+      !hasVerifiedAt ||
+      !hasVerificationSource
     ) {
       await rm(databasePath, { force: true });
       await rm(`${databasePath}-journal`, { force: true });

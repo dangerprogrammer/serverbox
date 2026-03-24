@@ -14,9 +14,6 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 
 const paymentMethodLabels: Record<string, string> = {
   pix: "PIX",
-  credit_card: "Cartao",
-  boleto: "Boleto",
-  manual: "Manual",
 };
 
 export default async function DashboardPage() {
@@ -31,12 +28,12 @@ export default async function DashboardPage() {
               Dashboard administrativa
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
-              Pagamentos confirmados viram saldo real de bolinhas.
+              PIX confirmado vira saldo real de bolinhas.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              O fluxo inicial registra um pagamento pendente e, quando ele e
-              confirmado, credita automaticamente as bolinhas do plano no saldo
-              do condominio.
+              Cada cobranca nasce com um TXID unico. O credito so e liberado
+              depois que a transacao PIX e validada, evitando confirmar
+              pagamentos sem evidencia.
             </p>
           </div>
           <Link
@@ -82,11 +79,12 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <section className="rounded-[1.75rem] border border-border bg-white p-6 shadow-[0_18px_50px_rgba(30,41,59,0.08)]">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Registrar pagamento
+              Registrar cobranca PIX
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Cria um pagamento pendente para um condominio. Ao confirmar, o
-              sistema credita automaticamente a quantidade de bolinhas do plano.
+              Cria uma cobranca PIX pendente para um condominio. Depois, o
+              sistema so liquida o pagamento quando o TXID recebido bater com a
+              cobranca esperada.
             </p>
 
             <form action={createPaymentAction} className="mt-6 space-y-4">
@@ -116,31 +114,20 @@ export default async function DashboardPage() {
                 >
                   {dashboard.plans.map((plan) => (
                     <option key={plan.id} value={plan.id}>
-                      {plan.name} • {plan.monthlyBallAllowance} bolinhas •{" "}
+                      {plan.name} - {plan.monthlyBallAllowance} bolinhas -{" "}
                       {currencyFormatter.format(plan.monthlyPriceInCents / 100)}
                     </option>
                   ))}
                 </select>
               </label>
 
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Metodo
-                </span>
-                <select
-                  name="method"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none"
-                  defaultValue="pix"
-                >
-                  <option value="pix">PIX</option>
-                  <option value="credit_card">Cartao</option>
-                  <option value="boleto">Boleto</option>
-                  <option value="manual">Manual</option>
-                </select>
-              </label>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                Pagamento exclusivo via PIX com TXID unico e validacao antes da
+                liberacao do saldo.
+              </div>
 
               <SubmitButton
-                idleLabel="Criar pagamento pendente"
+                idleLabel="Criar cobranca PIX"
                 pendingLabel="Criando..."
                 className="inline-flex h-12 w-full items-center justify-center rounded-full bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -148,7 +135,7 @@ export default async function DashboardPage() {
           </section>
 
           <section className="rounded-[1.75rem] border border-border bg-slate-950 p-6 text-white shadow-2xl">
-            <h2 className="text-2xl font-semibold">Pendencias para confirmar</h2>
+            <h2 className="text-2xl font-semibold">Pendencias PIX para validar</h2>
             <div className="mt-5 space-y-4">
               {dashboard.pendingPayments.length === 0 ? (
                 <p className="text-sm text-slate-300">
@@ -169,21 +156,37 @@ export default async function DashboardPage() {
                             {payment.condominiumName}
                           </p>
                           <p className="text-sm text-slate-300">
-                            {payment.planName} •{" "}
+                            {payment.planName} -{" "}
                             {currencyFormatter.format(payment.amountInCents / 100)}
+                          </p>
+                          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">
+                            TXID esperado: {payment.pixTransactionId ?? "aguardando geracao"}
                           </p>
                         </div>
                         <span className="rounded-full bg-orange-300/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-200">
                           {paymentMethodLabels[payment.method] ?? payment.method}
                         </span>
                       </div>
+
+                      <label className="block space-y-2">
+                        <span className="text-sm text-slate-300">
+                          TXID/E2E recebido do banco ou PSP
+                        </span>
+                        <input
+                          type="text"
+                          name="pixTransactionId"
+                          defaultValue={payment.pixTransactionId ?? ""}
+                          className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none"
+                        />
+                      </label>
+
                       <div className="flex items-center justify-between gap-4">
                         <span className="text-sm text-slate-300">
                           +{payment.ballQuantity} bolinhas
                         </span>
                         <SubmitButton
-                          idleLabel="Confirmar pagamento"
-                          pendingLabel="Confirmando..."
+                          idleLabel="Validar PIX"
+                          pendingLabel="Validando..."
                           className="inline-flex h-10 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-slate-950 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
                         />
                       </div>
@@ -220,11 +223,12 @@ export default async function DashboardPage() {
                       {condominium.name}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
-                      {condominium.city}, {condominium.state} •{" "}
+                      {condominium.city}, {condominium.state} -{" "}
                       {condominium.administratorName}
                     </p>
                     <p className="mt-3 text-sm leading-7 text-slate-600">
-                      Planos disponiveis: {condominium.plans.map((plan) => plan.name).join(", ")}
+                      Planos disponiveis:{" "}
+                      {condominium.plans.map((plan) => plan.name).join(", ")}
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
@@ -273,7 +277,7 @@ export default async function DashboardPage() {
                           {payment.planName}
                         </p>
                         <p className="mt-3 text-sm text-slate-600">
-                          {currencyFormatter.format(payment.amountInCents / 100)} •{" "}
+                          {currencyFormatter.format(payment.amountInCents / 100)} -{" "}
                           {payment.ballQuantity} bolinhas
                         </p>
                         <p className="mt-2 text-xs uppercase tracking-[0.18em] text-accent-strong">

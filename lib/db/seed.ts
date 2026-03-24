@@ -9,8 +9,10 @@ import {
   CondominiumPaymentEntity,
   PaymentMethod,
   PaymentStatus,
+  PaymentVerificationSource,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity, PlanTier } from "@/lib/db/entities/plan.entity";
+import { buildPixCharge } from "@/lib/payments/pix";
 import type { DataSource } from "typeorm";
 
 const administratorSeed = {
@@ -167,15 +169,28 @@ export async function seedDatabase(dataSource: DataSource) {
       continue;
     }
 
+    const reference = buildPaymentReference(index);
+    const pixCharge = buildPixCharge({
+      amountInCents: selectedPlan.monthlyPriceInCents,
+      condominiumName: savedCondominium.name,
+      reference,
+    });
+
     const payment = await paymentRepository.save({
       condominium: savedCondominium,
       plan: selectedPlan,
-      reference: buildPaymentReference(index),
+      reference,
       method: PaymentMethod.PIX,
       status: PaymentStatus.PAID,
       amountInCents: selectedPlan.monthlyPriceInCents,
       ballQuantity: selectedPlan.monthlyBallAllowance,
+      pixTransactionId: pixCharge.pixTransactionId,
+      pixQrCode: pixCharge.pixQrCode,
+      pixCopyPasteCode: pixCharge.pixCopyPasteCode,
+      pixExpiresAt: pixCharge.pixExpiresAt,
       paidAt: new Date(),
+      verifiedAt: new Date(),
+      verificationSource: PaymentVerificationSource.WEBHOOK,
     });
 
     await movementRepository.save({
