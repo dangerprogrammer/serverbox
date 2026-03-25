@@ -131,9 +131,11 @@ export const getAdminDashboardData = cache(async () => {
         amountInCents: payment.amountInCents,
         ballQuantity: payment.ballQuantity,
         method: payment.method,
-        pixTransactionId: payment.pixTransactionId,
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
         pixExpiresAt: payment.pixExpiresAt,
         verifiedAt: payment.verifiedAt,
+        providerDevMode: payment.providerDevMode,
       })),
   };
 });

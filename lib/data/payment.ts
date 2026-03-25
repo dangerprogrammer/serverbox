@@ -6,6 +6,7 @@ import {
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
+import { syncAbacatePixPayment } from "@/lib/payments/settle-payment";
 
 function hasPaymentExpired(payment: CondominiumPayment) {
   return (
@@ -44,7 +45,11 @@ export async function getPaymentDetails(paymentId: string) {
     return null;
   }
 
-  const freshPayment = await expirePaymentIfNeeded(payment);
+  const syncedPayment =
+    payment.status === PaymentStatus.PENDING
+      ? await syncAbacatePixPayment({ paymentId })
+      : payment;
+  const freshPayment = await expirePaymentIfNeeded(syncedPayment ?? payment);
 
   return {
     id: freshPayment.id,
@@ -53,6 +58,10 @@ export async function getPaymentDetails(paymentId: string) {
     method: freshPayment.method,
     amountInCents: freshPayment.amountInCents,
     ballQuantity: freshPayment.ballQuantity,
+    provider: freshPayment.provider,
+    providerPaymentId: freshPayment.providerPaymentId,
+    providerReceiptUrl: freshPayment.providerReceiptUrl,
+    providerDevMode: freshPayment.providerDevMode,
     pixTransactionId: freshPayment.pixTransactionId,
     pixQrCode: freshPayment.pixQrCode,
     pixCopyPasteCode: freshPayment.pixCopyPasteCode,

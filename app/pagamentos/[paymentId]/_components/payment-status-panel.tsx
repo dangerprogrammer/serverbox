@@ -10,6 +10,10 @@ type PaymentDetails = {
   status: PaymentStatus;
   amountInCents: number;
   ballQuantity: number;
+  provider: string | null;
+  providerPaymentId: string | null;
+  providerReceiptUrl: string | null;
+  providerDevMode: boolean | null;
   pixCopyPasteCode: string | null;
   pixExpiresAt: string | null;
   paidAt: string | null;
@@ -34,6 +38,7 @@ export function PaymentStatusPanel({
 }: PaymentStatusPanelProps) {
   const [payment, setPayment] = useState(initialPayment);
   const [copied, setCopied] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
     if (payment.status !== "pending") {
@@ -101,6 +106,35 @@ export function PaymentStatusPanel({
     setCopied(true);
   }
 
+  async function simulatePayment() {
+    setIsSimulating(true);
+
+    try {
+      const response = await fetch(`/api/pagamentos/${payment.id}/confirmar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          simulate: true,
+        }),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const nextPayment = (await response.json()) as PaymentDetails;
+      setPayment({
+        ...nextPayment,
+        pixExpiresAt: nextPayment.pixExpiresAt,
+        paidAt: nextPayment.paidAt,
+      });
+    } finally {
+      setIsSimulating(false);
+    }
+  }
+
   return (
     <section className="rounded-[1.75rem] border border-border bg-white p-6 shadow-[0_18px_50px_rgba(30,41,59,0.08)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -155,12 +189,36 @@ export function PaymentStatusPanel({
           <button
             type="button"
             onClick={copyPixCode}
+            disabled={!payment.pixCopyPasteCode}
             className="inline-flex h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong"
           >
             {copied ? "Copiado" : "Copiar codigo"}
           </button>
         </div>
       </div>
+
+      {payment.providerDevMode ? (
+        <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-emerald-900">
+                Ambiente de desenvolvimento da AbacatePay
+              </p>
+              <p className="mt-1 text-sm text-emerald-800">
+                Voce pode simular a confirmacao para testar a liberacao do saldo.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={simulatePayment}
+              disabled={isSimulating || payment.status !== "pending"}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-700 px-5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSimulating ? "Simulando..." : "Simular pagamento"}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-slate-200 bg-white p-4">
@@ -182,6 +240,38 @@ export function PaymentStatusPanel({
           <p className="text-sm text-slate-500">Confirmado em</p>
           <p className="mt-2 text-xl font-semibold text-slate-900">
             {paidAtLabel ?? "Aguardando"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+          <p className="text-sm text-slate-500">Gateway</p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {payment.provider ?? "Nao informado"}
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+          <p className="text-sm text-slate-500">ID no gateway</p>
+          <p className="mt-2 break-all text-sm font-semibold text-slate-900">
+            {payment.providerPaymentId ?? "Aguardando"}
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+          <p className="text-sm text-slate-500">Recibo</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">
+            {payment.providerReceiptUrl ? (
+              <a
+                href={payment.providerReceiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent-strong underline"
+              >
+                Abrir recibo
+              </a>
+            ) : (
+              "Indisponivel"
+            )}
           </p>
         </div>
       </div>

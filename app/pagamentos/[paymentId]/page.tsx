@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -19,7 +20,9 @@ export default async function PaymentPage({
     notFound();
   }
 
-  const qrCodeSvg = payment.pixCopyPasteCode
+  const qrCodeSvg = payment.pixQrCode?.startsWith("data:image/")
+    ? null
+    : payment.pixCopyPasteCode
     ? await buildPixQrCodeSvg(payment.pixCopyPasteCode)
     : null;
 
@@ -55,7 +58,16 @@ export default async function PaymentPage({
             Pague com PIX
           </p>
           <div className="mt-6 rounded-[1.75rem] bg-white p-5">
-            {qrCodeSvg ? (
+            {payment.pixQrCode?.startsWith("data:image/") ? (
+              <Image
+                src={payment.pixQrCode}
+                alt="QR Code PIX"
+                width={280}
+                height={280}
+                unoptimized
+                className="mx-auto w-full max-w-[280px]"
+              />
+            ) : qrCodeSvg ? (
               <div
                 aria-label="QR Code PIX"
                 dangerouslySetInnerHTML={{ __html: qrCodeSvg }}

@@ -18,6 +18,7 @@ export enum PaymentStatus {
 export enum PaymentVerificationSource {
   WEBHOOK = "webhook",
   MANUAL_REVIEW = "manual_review",
+  STATUS_CHECK = "status_check",
 }
 
 export type CondominiumPayment = {
@@ -27,6 +28,11 @@ export type CondominiumPayment = {
   status: PaymentStatus;
   amountInCents: number;
   ballQuantity: number;
+  provider: string | null;
+  providerPaymentId: string | null;
+  providerRawStatus: string | null;
+  providerReceiptUrl: string | null;
+  providerDevMode: boolean | null;
   pixTransactionId: string | null;
   pixQrCode: string | null;
   pixCopyPasteCode: string | null;
@@ -64,6 +70,27 @@ export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
     },
     ballQuantity: {
       type: Number,
+    },
+    provider: {
+      type: String,
+      nullable: true,
+    },
+    providerPaymentId: {
+      type: String,
+      unique: true,
+      nullable: true,
+    },
+    providerRawStatus: {
+      type: String,
+      nullable: true,
+    },
+    providerReceiptUrl: {
+      type: String,
+      nullable: true,
+    },
+    providerDevMode: {
+      type: Boolean,
+      nullable: true,
     },
     pixTransactionId: {
       type: String,

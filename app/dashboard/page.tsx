@@ -157,7 +157,9 @@ export default async function DashboardPage() {
                             {currencyFormatter.format(payment.amountInCents / 100)}
                           </p>
                           <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">
-                            TXID esperado: {payment.pixTransactionId ?? "aguardando geracao"}
+                            {payment.provider === "abacatepay"
+                              ? `AbacatePay ID: ${payment.providerPaymentId ?? "aguardando geracao"}`
+                              : `Referencia: ${payment.reference}`}
                           </p>
                         </div>
                         <span className="rounded-full bg-orange-300/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-200">

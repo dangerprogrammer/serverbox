@@ -8,9 +8,12 @@ import {
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import {
+  createAbacatePixCharge,
+  isAbacatePayConfigured,
+} from "@/lib/payments/abacatepay";
+import {
+  buildLocalPixProviderCharge,
   buildPaymentReference,
-  buildPixCharge,
-  getPixTestAmountInCents,
 } from "@/lib/payments/pix";
 
 type CreatePaymentPayload = {
@@ -41,6 +44,11 @@ export async function GET() {
       method: payment.method,
       amountInCents: payment.amountInCents,
       ballQuantity: payment.ballQuantity,
+      provider: payment.provider,
+      providerPaymentId: payment.providerPaymentId,
+      providerRawStatus: payment.providerRawStatus,
+      providerReceiptUrl: payment.providerReceiptUrl,
+      providerDevMode: payment.providerDevMode,
       pixTransactionId: payment.pixTransactionId,
       pixQrCode: payment.pixQrCode,
       pixCopyPasteCode: payment.pixCopyPasteCode,
@@ -83,7 +91,12 @@ export async function POST(request: Request) {
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
 
   const [condominium, plan] = await Promise.all([
-    condominiumRepository.findOneBy({ id: payload.condominiumId }),
+    condominiumRepository.findOne({
+      where: { id: payload.condominiumId },
+      relations: {
+        primaryAdmin: true,
+      },
+    }),
     planRepository.findOneBy({ id: payload.planId }),
   ]);
 
@@ -95,11 +108,23 @@ export async function POST(request: Request) {
   }
 
   const reference = buildPaymentReference();
-  const testAmountInCents = getPixTestAmountInCents();
-  const pixCharge = buildPixCharge({
-    amountInCents: testAmountInCents,
-    reference,
-  });
+  const pixCharge = isAbacatePayConfigured()
+    ? await createAbacatePixCharge({
+        amountInCents: plan.monthlyPriceInCents,
+        reference,
+        customer: {
+          name: condominium.primaryAdmin.name,
+          email: condominium.primaryAdmin.email,
+        },
+        metadata: {
+          condominiumId: condominium.id,
+          planId: plan.id,
+        },
+      })
+    : buildLocalPixProviderCharge({
+        amountInCents: plan.monthlyPriceInCents,
+        reference,
+      });
 
   const payment = await paymentRepository.save({
     condominium,
@@ -107,8 +132,13 @@ export async function POST(request: Request) {
     reference,
     method: PaymentMethod.PIX,
     status: PaymentStatus.PENDING,
-    amountInCents: testAmountInCents,
+    amountInCents: pixCharge.amountInCents,
     ballQuantity: plan.monthlyBallAllowance,
+    provider: pixCharge.provider,
+    providerPaymentId: pixCharge.providerPaymentId,
+    providerRawStatus: pixCharge.providerRawStatus,
+    providerReceiptUrl: pixCharge.providerReceiptUrl,
+    providerDevMode: pixCharge.providerDevMode,
     pixTransactionId: pixCharge.pixTransactionId,
     pixQrCode: pixCharge.pixQrCode,
     pixCopyPasteCode: pixCharge.pixCopyPasteCode,

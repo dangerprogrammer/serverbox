@@ -1,16 +1,13 @@
 import { revalidatePath } from "next/cache";
 
-import { getDataSource } from "@/lib/db/data-source";
 import {
-  CondominiumPaymentEntity,
-  PaymentStatus,
-  PaymentVerificationSource,
-} from "@/lib/db/entities/condominium-payment.entity";
-import { settlePixPayment } from "@/lib/payments/settle-payment";
+  simulateAbacatePixPayment,
+  simulateLocalPixPayment,
+  syncAbacatePixPayment,
+} from "@/lib/payments/settle-payment";
 
 type ConfirmPaymentPayload = {
-  pixTransactionId?: string;
-  paidAmountInCents?: number;
+  simulate?: boolean;
 };
 
 export async function POST(
@@ -18,22 +15,35 @@ export async function POST(
   context: { params: Promise<{ paymentId: string }> },
 ) {
   const { paymentId } = await context.params;
-  const payload = (await request.json()) as ConfirmPaymentPayload;
-
-  if (!payload.pixTransactionId) {
-    return Response.json(
-      { error: "pixTransactionId e obrigatorio para confirmar o PIX." },
-      { status: 400 },
-    );
-  }
+  const payload = (await request.json().catch(() => ({}))) as ConfirmPaymentPayload;
 
   try {
-    const savedPayment = await settlePixPayment({
-      paymentId,
-      pixTransactionId: payload.pixTransactionId,
-      paidAmountInCents: payload.paidAmountInCents,
-      verificationSource: PaymentVerificationSource.WEBHOOK,
-    });
+    const savedPayment = payload.simulate
+      ? await simulateAbacatePixPayment(paymentId).catch(async (error) => {
+          if (
+            error instanceof Error &&
+            error.message === "ABACATEPAY_API_KEY nao configurada."
+          ) {
+            return simulateLocalPixPayment(paymentId);
+          }
+
+          if (
+            error instanceof Error &&
+            error.message === "Pagamento nao esta vinculado a AbacatePay."
+          ) {
+            return simulateLocalPixPayment(paymentId);
+          }
+
+          throw error;
+        })
+      : await syncAbacatePixPayment({ paymentId });
+
+    if (!savedPayment) {
+      return Response.json(
+        { error: "Configure ABACATEPAY_API_KEY para sincronizar pagamentos." },
+        { status: 503 },
+      );
+    }
 
     revalidatePath("/");
     revalidatePath("/dashboard");
@@ -42,29 +52,13 @@ export async function POST(
     return Response.json(savedPayment);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao confirmar pagamento.";
+      error instanceof Error ? error.message : "Falha ao sincronizar pagamento.";
 
     if (message === "Pagamento nao encontrado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 
-    if (message === "A cobranca PIX expirou e nao pode mais ser confirmada.") {
-      const dataSource = await getDataSource();
-      const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
-      const payment = await paymentRepository.findOneBy({ id: paymentId });
-
-      if (payment && payment.status !== PaymentStatus.EXPIRED) {
-        payment.status = PaymentStatus.EXPIRED;
-        await paymentRepository.save(payment);
-      }
-
-      return Response.json({ error: message }, { status: 410 });
-    }
-
-    if (
-      message === "O identificador PIX informado nao corresponde a cobranca." ||
-      message === "O valor recebido difere do valor esperado da cobranca."
-    ) {
+    if (message === "Pagamento nao esta vinculado a AbacatePay.") {
       return Response.json({ error: message }, { status: 409 });
     }
 

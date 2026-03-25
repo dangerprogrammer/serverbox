@@ -11,9 +11,12 @@ import {
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import {
+  createAbacatePixCharge,
+  isAbacatePayConfigured,
+} from "@/lib/payments/abacatepay";
+import {
+  buildLocalPixProviderCharge,
   buildPaymentReference,
-  buildPixCharge,
-  getPixTestAmountInCents,
 } from "@/lib/payments/pix";
 
 export async function createPaymentAction(formData: FormData) {
@@ -30,7 +33,12 @@ export async function createPaymentAction(formData: FormData) {
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
 
   const [condominium, plan] = await Promise.all([
-    condominiumRepository.findOneBy({ id: condominiumId }),
+    condominiumRepository.findOne({
+      where: { id: condominiumId },
+      relations: {
+        primaryAdmin: true,
+      },
+    }),
     planRepository.findOneBy({ id: planId }),
   ]);
 
@@ -39,11 +47,23 @@ export async function createPaymentAction(formData: FormData) {
   }
 
   const reference = buildPaymentReference();
-  const testAmountInCents = getPixTestAmountInCents();
-  const pixCharge = buildPixCharge({
-    amountInCents: testAmountInCents,
-    reference,
-  });
+  const pixCharge = isAbacatePayConfigured()
+    ? await createAbacatePixCharge({
+        amountInCents: plan.monthlyPriceInCents,
+        reference,
+        customer: {
+          name: condominium.primaryAdmin.name,
+          email: condominium.primaryAdmin.email,
+        },
+        metadata: {
+          condominiumId: condominium.id,
+          planId: plan.id,
+        },
+      })
+    : buildLocalPixProviderCharge({
+        amountInCents: plan.monthlyPriceInCents,
+        reference,
+      });
 
   const payment = await paymentRepository.save({
     condominium,
@@ -51,8 +71,13 @@ export async function createPaymentAction(formData: FormData) {
     reference,
     method: pixCharge.method,
     status: PaymentStatus.PENDING,
-    amountInCents: testAmountInCents,
+    amountInCents: pixCharge.amountInCents,
     ballQuantity: plan.monthlyBallAllowance,
+    provider: pixCharge.provider,
+    providerPaymentId: pixCharge.providerPaymentId,
+    providerRawStatus: pixCharge.providerRawStatus,
+    providerReceiptUrl: pixCharge.providerReceiptUrl,
+    providerDevMode: pixCharge.providerDevMode,
     pixTransactionId: pixCharge.pixTransactionId,
     pixQrCode: pixCharge.pixQrCode,
     pixCopyPasteCode: pixCharge.pixCopyPasteCode,

@@ -1,4 +1,7 @@
-import { PaymentMethod } from "@/lib/db/entities/condominium-payment.entity";
+import {
+  PaymentMethod,
+  PaymentStatus,
+} from "@/lib/db/entities/condominium-payment.entity";
 
 type BuildPixChargeInput = {
   amountInCents: number;
@@ -115,5 +118,30 @@ export function buildPixCharge({
     pixQrCode: `pix:${pixCopyPasteCode}`,
     pixCopyPasteCode,
     pixExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+  };
+}
+
+export function buildLocalPixProviderCharge({
+  amountInCents,
+  reference,
+}: BuildPixChargeInput) {
+  const pixCharge = buildPixCharge({
+    amountInCents,
+    reference,
+  });
+
+  return {
+    provider: "local-dev",
+    providerPaymentId: pixCharge.pixTransactionId,
+    providerRawStatus: "PENDING",
+    providerReceiptUrl: null,
+    providerDevMode: true,
+    method: PaymentMethod.PIX,
+    status: PaymentStatus.PENDING,
+    amountInCents,
+    pixTransactionId: pixCharge.pixTransactionId,
+    pixQrCode: pixCharge.pixQrCode,
+    pixCopyPasteCode: pixCharge.pixCopyPasteCode,
+    pixExpiresAt: pixCharge.pixExpiresAt,
   };
 }
