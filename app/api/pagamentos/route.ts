@@ -97,6 +97,16 @@ export async function POST(request: Request) {
       );
     }
 
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.") {
+      return Response.json(
+        {
+          error:
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar cobrancas PIX.",
+        },
+        { status: 503 },
+      );
+    }
+
     return Response.json({ error: message }, { status: 400 });
   }
 }

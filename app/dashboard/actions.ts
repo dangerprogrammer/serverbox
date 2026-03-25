@@ -13,11 +13,24 @@ export async function createPaymentAction(formData: FormData) {
     throw new Error("Condominio e plano sao obrigatorios para criar pagamento.");
   }
 
-  const payment = await createCondominiumPayment({
-    condominiumId,
-    planId,
-  });
+  try {
+    const payment = await createCondominiumPayment({
+      condominiumId,
+      planId,
+    });
 
-  revalidatePath("/dashboard");
-  redirect(`/pagamentos/${payment.id}`);
+    revalidatePath("/dashboard");
+    redirect(`/pagamentos/${payment.id}`);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha ao criar cobranca PIX.";
+
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.") {
+      throw new Error(
+        "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobrancas na AbacatePay.",
+      );
+    }
+
+    throw error;
+  }
 }

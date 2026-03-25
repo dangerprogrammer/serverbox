@@ -100,7 +100,12 @@ PIX, configure no `.env.local`:
 ABACATEPAY_API_KEY=sua_chave
 ABACATEPAY_WEBHOOK_SECRET=seu_segredo
 ABACATEPAY_PUBLIC_WEBHOOK_KEY=sua_chave_publica_do_webhook
+ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE=5511999999999
+ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID=12345678909
 ```
 
 Sem `ABACATEPAY_API_KEY`, a API passa a recusar a criacao de novas cobrancas
 com `503`.
+
+Como o dominio atual ainda nao cadastra telefone e documento por condominio, a
+criacao da cobranca usa um contato padrao da AbacatePay vindo do ambiente.

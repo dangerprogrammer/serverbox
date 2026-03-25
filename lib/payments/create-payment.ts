@@ -15,6 +15,14 @@ type CreateCondominiumPaymentInput = {
   planId: string;
 };
 
+function getDefaultAbacatePayCustomerCellphone() {
+  return process.env.ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE?.trim() || null;
+}
+
+function getDefaultAbacatePayCustomerTaxId() {
+  return process.env.ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID?.trim() || null;
+}
+
 function buildPaymentReference() {
   const now = new Date();
   const serial = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(
@@ -53,6 +61,12 @@ export async function createCondominiumPayment({
     throw new Error("Condominio ou plano nao encontrado.");
   }
 
+  const defaultCustomerCellphone = getDefaultAbacatePayCustomerCellphone();
+
+  if (!defaultCustomerCellphone) {
+    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.");
+  }
+
   const reference = buildPaymentReference();
   const charge = await createAbacatePixCharge({
     amountInCents: plan.monthlyPriceInCents,
@@ -60,6 +74,8 @@ export async function createCondominiumPayment({
     customer: {
       name: condominium.primaryAdmin.name,
       email: condominium.primaryAdmin.email,
+      cellphone: defaultCustomerCellphone,
+      taxId: getDefaultAbacatePayCustomerTaxId() ?? undefined,
     },
     metadata: {
       reference,
