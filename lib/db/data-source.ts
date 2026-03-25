@@ -150,10 +150,12 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
 
 function createDataSourceOptions(): DataSourceOptions {
   const databaseUrl = getDatabaseUrl();
+  const databaseType =
+    ormConfig.type === "better-sqlite3" ? "better-sqlite3" : "postgres";
 
-  if (databaseUrl) {
+  if (databaseUrl && databaseType === "postgres") {
     return {
-      type: ormConfig.type ?? "postgres",
+      type: "postgres",
       url: databaseUrl,
       ssl: ormConfig.ssl ?? {
         rejectUnauthorized: false,
@@ -166,7 +168,7 @@ function createDataSourceOptions(): DataSourceOptions {
 
   return {
     type: "better-sqlite3",
-    database: getDatabasePath(),
+    database: databaseUrl ?? getDatabasePath(),
     synchronize: ormConfig.synchronize ?? true,
     entities,
   };

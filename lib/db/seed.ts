@@ -172,7 +172,6 @@ export async function seedDatabase(dataSource: DataSource) {
     const reference = buildPaymentReference(index);
     const pixCharge = buildPixCharge({
       amountInCents: selectedPlan.monthlyPriceInCents,
-      condominiumName: savedCondominium.name,
       reference,
     });
 
