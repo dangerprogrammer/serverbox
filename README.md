@@ -57,7 +57,7 @@ Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 - `GET /api/pagamentos`
 - `POST /api/pagamentos`
 - `GET /api/pagamentos/:paymentId`
-- `POST /api/pagamentos/:paymentId/confirmar`
+- `POST /api/pagamentos/:paymentId`
 
 ## Dashboard
 
@@ -71,7 +71,7 @@ Fluxo atual:
 
 1. Cria um pagamento pendente para um condominio
 2. Abre a cobranca PIX com QR Code e copia e cola
-3. O backend so libera o credito quando recebe a confirmacao do pagamento
+3. O backend so libera o credito quando a AbacatePay confirma o pagamento
 4. O sistema gera um credito em `BallInventoryMovement`
 5. O saldo de bolinhas fica visivel na dashboard
 
@@ -90,3 +90,17 @@ curl -X POST http://localhost:3000/api/pagamentos \
   -H "Content-Type: application/json" \
   -d "{\"condominiumId\":\"SEU_CONDOMINIUM_ID\",\"planId\":\"SEU_PLAN_ID\",\"method\":\"pix\"}"
 ```
+
+## Configuracao AbacatePay
+
+O fluxo de checkout agora nasce diretamente na AbacatePay. Para criar cobrancas
+PIX, configure no `.env.local`:
+
+```bash
+ABACATEPAY_API_KEY=sua_chave
+ABACATEPAY_WEBHOOK_SECRET=seu_segredo
+ABACATEPAY_PUBLIC_WEBHOOK_KEY=sua_chave_publica_do_webhook
+```
+
+Sem `ABACATEPAY_API_KEY`, a API passa a recusar a criacao de novas cobrancas
+com `503`.

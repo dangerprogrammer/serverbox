@@ -3,7 +3,6 @@ import { revalidatePath } from "next/cache";
 import { getPaymentDetails } from "@/lib/data/payment";
 import {
   simulateAbacatePixPayment,
-  simulateLocalPixPayment,
   syncAbacatePixPayment,
 } from "@/lib/payments/settle-payment";
 
@@ -34,23 +33,7 @@ export async function POST(
 
   try {
     const savedPayment = payload.simulate
-      ? await simulateAbacatePixPayment(paymentId).catch(async (error) => {
-          if (
-            error instanceof Error &&
-            error.message === "ABACATEPAY_API_KEY nao configurada."
-          ) {
-            return simulateLocalPixPayment(paymentId);
-          }
-
-          if (
-            error instanceof Error &&
-            error.message === "Pagamento nao esta vinculado a AbacatePay."
-          ) {
-            return simulateLocalPixPayment(paymentId);
-          }
-
-          throw error;
-        })
+      ? await simulateAbacatePixPayment(paymentId)
       : await syncAbacatePixPayment({ paymentId });
 
     if (!savedPayment) {
@@ -75,6 +58,13 @@ export async function POST(
 
     if (message === "Pagamento nao esta vinculado a AbacatePay.") {
       return Response.json({ error: message }, { status: 409 });
+    }
+
+    if (message === "ABACATEPAY_API_KEY nao configurada.") {
+      return Response.json(
+        { error: "Configure ABACATEPAY_API_KEY para operar pagamentos." },
+        { status: 503 },
+      );
     }
 
     return Response.json({ error: message }, { status: 400 });

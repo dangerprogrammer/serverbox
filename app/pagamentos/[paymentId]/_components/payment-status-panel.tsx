@@ -147,7 +147,7 @@ export function PaymentStatusPanel({
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
             {payment.status === "pending"
-              ? "O acesso so deve ser liberado depois que o PSP confirmar o pagamento deste PIX."
+              ? "O acesso so deve ser liberado depois que a AbacatePay confirmar o pagamento deste PIX."
               : "A cobranca ja recebeu um retorno definitivo do pagamento."}
           </p>
         </div>

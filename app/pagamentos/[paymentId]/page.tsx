@@ -32,14 +32,14 @@ export default async function PaymentPage({
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-sm uppercase tracking-[0.24em] text-accent-strong/80">
-              Checkout PIX
+              Checkout PIX AbacatePay
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900">
               QR Code e copia e cola com liberacao automatica.
             </h1>
             <p className="mt-4 text-base leading-8 text-slate-600">
               Esta cobranca fica em acompanhamento automatico. O site so deve
-              ser liberado quando o backend receber a confirmacao do pagamento.
+              ser liberado quando a AbacatePay confirmar o pagamento.
             </p>
           </div>
 
@@ -79,8 +79,9 @@ export default async function PaymentPage({
             )}
           </div>
           <p className="mt-4 text-sm leading-7 text-slate-300">
-            Escaneie o QR Code ou copie o codigo PIX. Assim que o PSP confirmar
-            a cobranca, o status muda automaticamente e o acesso pode ser liberado.
+            Escaneie o QR Code ou copie o codigo PIX. Assim que a AbacatePay
+            confirmar a cobranca, o status muda automaticamente e o acesso pode
+            ser liberado.
           </p>
         </section>
 

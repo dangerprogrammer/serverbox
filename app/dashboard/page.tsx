@@ -27,12 +27,12 @@ export default async function DashboardPage() {
               Dashboard administrativa
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
-              PIX confirmado vira saldo real de bolinhas.
+              AbacatePay confirmado vira saldo real de bolinhas.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              Cada cobranca nasce com um TXID unico. O credito so e liberado
-              depois que a transacao PIX e validada, evitando confirmar
-              pagamentos sem evidencia.
+              Cada cobranca nasce direto no checkout PIX da AbacatePay. O
+              credito so e liberado quando o provedor devolve um status valido,
+              evitando liberar saldo sem confirmacao real do gateway.
             </p>
           </div>
           <Link
@@ -78,12 +78,12 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <section className="rounded-[1.75rem] border border-border bg-white p-6 shadow-[0_18px_50px_rgba(30,41,59,0.08)]">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Registrar cobranca PIX
+              Registrar cobranca AbacatePay
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Cria uma cobranca PIX pendente para um condominio. Depois, o
-              sistema so liquida o pagamento quando o TXID recebido bater com a
-              cobranca esperada.
+              Cria uma cobranca PIX na AbacatePay para um condominio. Depois,
+              o sistema sincroniza o status com o provedor e so liquida o
+              pagamento quando recebe a confirmacao da cobranca.
             </p>
 
             <form action={createPaymentAction} className="mt-6 space-y-4">
@@ -121,12 +121,12 @@ export default async function DashboardPage() {
               </label>
 
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                Pagamento exclusivo via PIX com TXID unico e validacao antes da
-                liberacao do saldo.
+                Pagamento exclusivo via PIX com checkout e validacao
+                centralizados na AbacatePay antes da liberacao do saldo.
               </div>
 
               <SubmitButton
-                idleLabel="Criar cobranca PIX"
+                idleLabel="Criar cobranca AbacatePay"
                 pendingLabel="Criando..."
                 className="inline-flex h-12 w-full items-center justify-center rounded-full bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
           </section>
 
           <section className="rounded-[1.75rem] border border-border bg-slate-950 p-6 text-white shadow-2xl">
-            <h2 className="text-2xl font-semibold">Cobrancas PIX em aberto</h2>
+            <h2 className="text-2xl font-semibold">Cobrancas AbacatePay em aberto</h2>
             <div className="mt-5 space-y-4">
               {dashboard.pendingPayments.length === 0 ? (
                 <p className="text-sm text-slate-300">
@@ -175,7 +175,7 @@ export default async function DashboardPage() {
                           href={`/pagamentos/${payment.id}`}
                           className="inline-flex h-10 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-slate-950 transition hover:bg-orange-100"
                         >
-                          Abrir cobranca PIX
+                          Abrir checkout PIX
                         </Link>
                       </div>
                     </div>

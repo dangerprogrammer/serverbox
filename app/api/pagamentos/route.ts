@@ -1,20 +1,10 @@
 import { getDataSource } from "@/lib/db/data-source";
-import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import {
   CondominiumPaymentEntity,
   PaymentMethod,
-  PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { PlanEntity } from "@/lib/db/entities/plan.entity";
-import {
-  createAbacatePixCharge,
-  isAbacatePayConfigured,
-} from "@/lib/payments/abacatepay";
-import {
-  buildLocalPixProviderCharge,
-  buildPaymentReference,
-} from "@/lib/payments/pix";
+import { createCondominiumPayment } from "@/lib/payments/create-payment";
 
 type CreatePaymentPayload = {
   condominiumId?: string;
@@ -85,68 +75,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const dataSource = await getDataSource();
-  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-  const planRepository = dataSource.getRepository(PlanEntity);
-  const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
+  try {
+    const payment = await createCondominiumPayment({
+      condominiumId: payload.condominiumId,
+      planId: payload.planId,
+    });
 
-  const [condominium, plan] = await Promise.all([
-    condominiumRepository.findOne({
-      where: { id: payload.condominiumId },
-      relations: {
-        primaryAdmin: true,
-      },
-    }),
-    planRepository.findOneBy({ id: payload.planId }),
-  ]);
+    return Response.json(payment, { status: 201 });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha ao criar cobranca PIX.";
 
-  if (!condominium || !plan) {
-    return Response.json(
-      { error: "Condominio ou plano nao encontrado." },
-      { status: 404 },
-    );
+    if (message === "Condominio ou plano nao encontrado.") {
+      return Response.json({ error: message }, { status: 404 });
+    }
+
+    if (message === "ABACATEPAY_API_KEY nao configurada.") {
+      return Response.json(
+        { error: "Configure ABACATEPAY_API_KEY para criar cobrancas PIX." },
+        { status: 503 },
+      );
+    }
+
+    return Response.json({ error: message }, { status: 400 });
   }
-
-  const reference = buildPaymentReference();
-  const pixCharge = isAbacatePayConfigured()
-    ? await createAbacatePixCharge({
-        amountInCents: plan.monthlyPriceInCents,
-        reference,
-        customer: {
-          name: condominium.primaryAdmin.name,
-          email: condominium.primaryAdmin.email,
-        },
-        metadata: {
-          condominiumId: condominium.id,
-          planId: plan.id,
-        },
-      })
-    : buildLocalPixProviderCharge({
-        amountInCents: plan.monthlyPriceInCents,
-        reference,
-      });
-
-  const payment = await paymentRepository.save({
-    condominium,
-    plan,
-    reference,
-    method: PaymentMethod.PIX,
-    status: PaymentStatus.PENDING,
-    amountInCents: pixCharge.amountInCents,
-    ballQuantity: plan.monthlyBallAllowance,
-    provider: pixCharge.provider,
-    providerPaymentId: pixCharge.providerPaymentId,
-    providerRawStatus: pixCharge.providerRawStatus,
-    providerReceiptUrl: pixCharge.providerReceiptUrl,
-    providerDevMode: pixCharge.providerDevMode,
-    pixTransactionId: pixCharge.pixTransactionId,
-    pixQrCode: pixCharge.pixQrCode,
-    pixCopyPasteCode: pixCharge.pixCopyPasteCode,
-    pixExpiresAt: pixCharge.pixExpiresAt,
-    paidAt: null,
-    verifiedAt: null,
-    verificationSource: null,
-  });
-
-  return Response.json(payment, { status: 201 });
 }
