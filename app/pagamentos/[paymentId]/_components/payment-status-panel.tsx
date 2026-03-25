@@ -110,7 +110,7 @@ export function PaymentStatusPanel({
     setIsSimulating(true);
 
     try {
-      const response = await fetch(`/api/pagamentos/${payment.id}/confirmar`, {
+      const response = await fetch(`/api/pagamentos/${payment.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
