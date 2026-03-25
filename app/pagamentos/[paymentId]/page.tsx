@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 import { PaymentStatusPanel } from "@/app/pagamentos/[paymentId]/_components/payment-status-panel";
 import { getPaymentDetails } from "@/lib/data/payment";
@@ -10,6 +11,7 @@ export default async function PaymentPage({
 }: {
   params: Promise<{ paymentId: string }>;
 }) {
+  await connection();
   const { paymentId } = await params;
   const payment = await getPaymentDetails(paymentId);
 

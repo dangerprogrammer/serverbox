@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { getDashboardData } from "@/lib/data/dashboard";
 
@@ -8,6 +9,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 export default async function Home() {
+  await connection();
   const dashboard = await getDashboardData();
 
   return (

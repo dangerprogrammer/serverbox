@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { SubmitButton } from "@/app/dashboard/_components/submit-button";
 import { createPaymentAction } from "@/app/dashboard/actions";
@@ -14,6 +15,7 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
+  await connection();
   const dashboard = await getAdminDashboardData();
 
   return (
