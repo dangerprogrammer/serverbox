@@ -2,7 +2,9 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { SubmitButton } from "@/app/dashboard/_components/submit-button";
+import { logoutAdmin } from "@/app/login/actions";
 import { createPaymentAction } from "@/app/dashboard/actions";
+import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getAdminDashboardData } from "@/lib/data/admin-dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -15,6 +17,7 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
+  const administrator = await requireAuthenticatedAdmin();
   await connection();
   const dashboard = await getAdminDashboardData();
 
@@ -35,12 +38,31 @@ export default async function DashboardPage() {
               evitando liberar saldo sem confirmacao real do gateway.
             </p>
           </div>
-          <Link
-            href="/"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-          >
-            Voltar para a home
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+              {administrator.name}
+            </span>
+            <Link
+              href="/gerenciar-condominios"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Gerenciar condominios
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+            >
+              Voltar para a home
+            </Link>
+            <form action={logoutAdmin}>
+              <button
+                type="submit"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+              >
+                Sair
+              </button>
+            </form>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-4">

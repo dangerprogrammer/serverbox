@@ -107,6 +107,26 @@ export async function POST(request: Request) {
       );
     }
 
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nao configurado.") {
+      return Response.json(
+        {
+          error:
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar cobrancas PIX.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (message === "ABACATEPAY_API_BASE_URL invalida. Use uma URL da API v1 ou v2 da AbacatePay.") {
+      return Response.json(
+        {
+          error:
+            "A ABACATEPAY_API_BASE_URL configurada precisa apontar para uma URL valida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
+        },
+        { status: 503 },
+      );
+    }
+
     return Response.json({ error: message }, { status: 400 });
   }
 }

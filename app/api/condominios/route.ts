@@ -1,5 +1,6 @@
 import { getDataSource } from "@/lib/db/data-source";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import {
   CondominiumEntity,
   type Condominium,
@@ -21,6 +22,12 @@ type CreateCondominiumPayload = {
 };
 
 export async function GET() {
+  const administrator = await requireAdminApiSession();
+
+  if (administrator instanceof Response) {
+    return administrator;
+  }
+
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
 
@@ -60,6 +67,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const administrator = await requireAdminApiSession();
+
+  if (administrator instanceof Response) {
+    return administrator;
+  }
+
   const payload = (await request.json()) as CreateCondominiumPayload;
 
   if (!payload.name || !payload.city || !payload.state) {
@@ -76,7 +89,7 @@ export async function POST(request: Request) {
   const condominiumPlanRepository =
     dataSource.getRepository(CondominiumPlanEntity);
 
-  let administrator = payload.adminEmail
+  let assignedAdministrator = payload.adminEmail
     ? await administratorRepository.findOneBy({
         email: payload.adminEmail.trim().toLowerCase(),
       })
@@ -84,14 +97,14 @@ export async function POST(request: Request) {
         order: { createdAt: "ASC" },
       });
 
-  if (!administrator && payload.adminEmail) {
-    administrator = await administratorRepository.save({
+  if (!assignedAdministrator && payload.adminEmail) {
+    assignedAdministrator = await administratorRepository.save({
       name: payload.adminName?.trim() || "Administrador",
       email: payload.adminEmail.trim().toLowerCase(),
     });
   }
 
-  if (!administrator) {
+  if (!assignedAdministrator) {
     return Response.json(
       { error: "Nao foi possivel resolver um administrador para o condominio." },
       { status: 400 },
@@ -107,7 +120,7 @@ export async function POST(request: Request) {
       payload.activeResidents && payload.activeResidents >= 0
         ? payload.activeResidents
         : 0,
-    primaryAdmin: administrator,
+    primaryAdmin: assignedAdministrator,
   });
 
   const savedCondominium = await condominiumRepository.save(condominium);
@@ -144,9 +157,9 @@ export async function POST(request: Request) {
       city: savedCondominium.city,
       state: savedCondominium.state,
       administrator: {
-        id: administrator.id,
-        name: administrator.name,
-        email: administrator.email,
+        id: assignedAdministrator.id,
+        name: assignedAdministrator.name,
+        email: assignedAdministrator.email,
       },
       assignedPlanCount: uniquePlans.length,
     },

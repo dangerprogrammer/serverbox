@@ -67,6 +67,12 @@ export async function createCondominiumPayment({
     throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.");
   }
 
+  const defaultCustomerTaxId = getDefaultAbacatePayCustomerTaxId();
+
+  if (!defaultCustomerTaxId) {
+    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nao configurado.");
+  }
+
   const reference = buildPaymentReference();
   const charge = await createAbacatePixCharge({
     amountInCents: plan.monthlyPriceInCents,
@@ -75,7 +81,7 @@ export async function createCondominiumPayment({
       name: condominium.primaryAdmin.name,
       email: condominium.primaryAdmin.email,
       cellphone: defaultCustomerCellphone,
-      taxId: getDefaultAbacatePayCustomerTaxId() ?? undefined,
+      taxId: defaultCustomerTaxId,
     },
     metadata: {
       reference,

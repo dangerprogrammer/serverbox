@@ -12,12 +12,19 @@ import {
   PaymentVerificationSource,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity, PlanTier } from "@/lib/db/entities/plan.entity";
+import { hashPassword } from "@/lib/auth/password";
 import type { DataSource } from "typeorm";
 
 const administratorSeed = {
   name: "Operacao ServerBox",
   email: "admin@serverbox.local",
 };
+
+function getSeedAdminPasswordHash() {
+  const password = process.env.ADMIN_DEFAULT_PASSWORD?.trim() || "admin123456";
+
+  return hashPassword(password);
+}
 
 const planSeeds = [
   {
@@ -113,7 +120,13 @@ export async function seedDatabase(dataSource: DataSource) {
   });
 
   if (!administrator) {
-    administrator = await administratorRepository.save(administratorSeed);
+    administrator = await administratorRepository.save({
+      ...administratorSeed,
+      passwordHash: getSeedAdminPasswordHash(),
+    });
+  } else if (!administrator.passwordHash) {
+    administrator.passwordHash = getSeedAdminPasswordHash();
+    administrator = await administratorRepository.save(administrator);
   }
 
   const hasAnyPlans = await planRepository.exists();

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { getAuthenticatedAdmin } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/data/dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -10,6 +11,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 
 export default async function Home() {
   await connection();
+  const administrator = await getAuthenticatedAdmin();
   const dashboard = await getDashboardData();
 
   return (
@@ -58,11 +60,19 @@ export default async function Home() {
             </div>
             <div className="flex flex-col gap-4 pt-2 sm:flex-row">
               <Link
-                href="/dashboard"
+                href={administrator ? "/dashboard" : "/login"}
                 className="inline-flex h-12 items-center justify-center rounded-full bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong"
               >
-                Abrir dashboard de pagamentos
+                {administrator ? "Abrir dashboard de pagamentos" : "Entrar como admin"}
               </Link>
+              {administrator ? (
+                <Link
+                  href="/gerenciar-condominios"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                >
+                  Gerenciar condominios
+                </Link>
+              ) : null}
             </div>
           </div>
 

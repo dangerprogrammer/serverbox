@@ -1,5 +1,6 @@
 import { getDataSource } from "@/lib/db/data-source";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import { PlanEntity, PlanTier, type Plan } from "@/lib/db/entities/plan.entity";
 
 type CreatePlanPayload = {
@@ -25,6 +26,12 @@ function normalizeSlug(value: string) {
 }
 
 export async function GET() {
+  const administrator = await requireAdminApiSession();
+
+  if (administrator instanceof Response) {
+    return administrator;
+  }
+
   const dataSource = await getDataSource();
   const planRepository = dataSource.getRepository(PlanEntity);
 
@@ -62,6 +69,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authenticatedAdministrator = await requireAdminApiSession();
+
+  if (authenticatedAdministrator instanceof Response) {
+    return authenticatedAdministrator;
+  }
+
   const payload = (await request.json()) as CreatePlanPayload;
 
   if (!payload.name || !payload.description) {
@@ -84,7 +97,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let administrator = null;
+  let assignedAdministrator = null;
   const isDefault = Boolean(payload.isDefault);
   const tier = isDefault
     ? payload.tier === PlanTier.INTERMEDIATE || payload.tier === PlanTier.PREMIUM
@@ -100,12 +113,12 @@ export async function POST(request: Request) {
       );
     }
 
-    administrator = await administratorRepository.findOneBy({
+    assignedAdministrator = await administratorRepository.findOneBy({
       email: payload.adminEmail.trim().toLowerCase(),
     });
 
-    if (!administrator) {
-      administrator = await administratorRepository.save({
+    if (!assignedAdministrator) {
+      assignedAdministrator = await administratorRepository.save({
         name: payload.adminName?.trim() || "Administrador",
         email: payload.adminEmail.trim().toLowerCase(),
       });
@@ -131,7 +144,7 @@ export async function POST(request: Request) {
         : 0,
     isDefault,
     isActive: true,
-    createdBy: administrator,
+    createdBy: assignedAdministrator,
   });
 
   return Response.json(createdPlan, { status: 201 });

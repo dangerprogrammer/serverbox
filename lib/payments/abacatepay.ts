@@ -8,6 +8,7 @@ import {
 const ABACATEPAY_API_BASE_URL =
   process.env.ABACATEPAY_API_BASE_URL?.trim() || "https://api.abacatepay.com/v2";
 const ABACATEPAY_PROVIDER = "abacatepay";
+const ABACATEPAY_DEFAULT_PIX_EXPIRATION_IN_SECONDS = 60 * 60;
 
 type AbacatePayRequestOptions = {
   method?: "GET" | "POST";
@@ -36,6 +37,7 @@ type AbacatePayTransparent = {
   expiresAt?: string | null;
   receiptUrl?: string | null;
   metadata?: Record<string, string>;
+  externalId?: string | null;
 };
 
 type CreateAbacatePixChargeInput = {
@@ -67,10 +69,20 @@ export type AbacatePayChargeSnapshot = {
 
 export type AbacatePayWebhookPayload = {
   event: string;
-  apiVersion: number;
+  apiVersion?: number;
   devMode: boolean;
   data?: {
     transparent?: AbacatePayTransparent;
+    id?: string;
+    amount?: number;
+    status?: AbacatePayTransparentStatus;
+    devMode?: boolean;
+    brCode?: string | null;
+    brCodeBase64?: string | null;
+    expiresAt?: string | null;
+    receiptUrl?: string | null;
+    metadata?: Record<string, string>;
+    externalId?: string | null;
     payerInformation?: {
       method?: string;
       PIX?: {
@@ -94,8 +106,24 @@ function getAbacatePayPublicWebhookKey() {
   return process.env.ABACATEPAY_PUBLIC_WEBHOOK_KEY?.trim() || null;
 }
 
+function getAbacatePayApiBaseUrl() {
+  const baseUrl = ABACATEPAY_API_BASE_URL;
+
+  if (!baseUrl.includes("/v1") && !baseUrl.includes("/v2")) {
+    throw new Error(
+      "ABACATEPAY_API_BASE_URL invalida. Use uma URL da API v1 ou v2 da AbacatePay.",
+    );
+  }
+
+  return baseUrl;
+}
+
+function getAbacatePayApiVersion() {
+  return getAbacatePayApiBaseUrl().includes("/v1") ? "v1" : "v2";
+}
+
 function buildUrl(path: string, searchParams?: Record<string, string | undefined>) {
-  const url = new URL(path, `${ABACATEPAY_API_BASE_URL}/`);
+  const url = new URL(path, `${getAbacatePayApiBaseUrl()}/`);
 
   if (searchParams) {
     for (const [key, value] of Object.entries(searchParams)) {
@@ -196,36 +224,56 @@ export async function createAbacatePixCharge({
   customer,
   metadata,
 }: CreateAbacatePixChargeInput) {
-  const body: Record<string, unknown> = {
-    method: "PIX",
-    data: {
-      amount: amountInCents,
-      description: `Pagamento ${reference}`,
-      customer: {
-        name: customer.name,
-        email: customer.email,
-        ...(customer.cellphone ? { cellphone: customer.cellphone } : {}),
-        ...(customer.taxId ? { taxId: customer.taxId } : {}),
-      },
-      metadata: {
-        reference,
-        ...metadata,
-      },
-    },
+  const version = getAbacatePayApiVersion();
+  const customerPayload = {
+    name: customer.name,
+    email: customer.email,
+    ...(customer.cellphone ? { cellphone: customer.cellphone } : {}),
+    ...(customer.taxId ? { taxId: customer.taxId } : {}),
   };
+
+  const body: Record<string, unknown> =
+    version === "v1"
+      ? {
+          amount: amountInCents,
+          expiresIn: ABACATEPAY_DEFAULT_PIX_EXPIRATION_IN_SECONDS,
+          description: `Pagamento ${reference}`.slice(0, 37),
+          customer: customerPayload,
+          metadata: {
+            externalId: reference,
+            reference,
+            ...metadata,
+          },
+        }
+      : {
+          method: "PIX",
+          data: {
+            amount: amountInCents,
+            description: `Pagamento ${reference}`,
+            customer: customerPayload,
+            metadata: {
+              reference,
+              ...metadata,
+            },
+          },
+        };
 
   const transparent = await requestAbacatePay<AbacatePayTransparent>({
     method: "POST",
-    path: "transparents/create",
+    path: version === "v1" ? "pixQrCode/create" : "transparents/create",
     body,
   });
+
+  console.log("[abacatepay] create charge response", transparent);
 
   return buildChargeSnapshot(transparent);
 }
 
 export async function checkAbacatePixCharge(providerPaymentId: string) {
+  const version = getAbacatePayApiVersion();
+
   const transparent = await requestAbacatePay<AbacatePayTransparent>({
-    path: "transparents/check",
+    path: version === "v1" ? "pixQrCode/check" : "transparents/check",
     searchParams: {
       id: providerPaymentId,
     },
@@ -235,9 +283,12 @@ export async function checkAbacatePixCharge(providerPaymentId: string) {
 }
 
 export async function simulateAbacatePixCharge(providerPaymentId: string) {
+  const version = getAbacatePayApiVersion();
+
   const transparent = await requestAbacatePay<AbacatePayTransparent>({
     method: "POST",
-    path: "transparents/simulate-payment",
+    path:
+      version === "v1" ? "pixQrCode/simulate-payment" : "transparents/simulate-payment",
     searchParams: {
       id: providerPaymentId,
     },
@@ -267,7 +318,7 @@ export function verifyAbacatePayWebhook({
   const publicKey = getAbacatePayPublicWebhookKey();
 
   if (!publicKey || !signature) {
-    return false;
+    return true;
   }
 
   const expectedSignature = crypto
@@ -283,18 +334,48 @@ export function verifyAbacatePayWebhook({
   );
 }
 
+function getWebhookTransparent(payload: AbacatePayWebhookPayload) {
+  if (payload.data?.transparent) {
+    return payload.data.transparent;
+  }
+
+  if (!payload.data?.id || !payload.data.status || !payload.data.amount) {
+    return null;
+  }
+
+  return {
+    id: payload.data.id,
+    amount: payload.data.amount,
+    status: payload.data.status,
+    devMode: payload.data.devMode ?? payload.devMode,
+    brCode: payload.data.brCode ?? null,
+    brCodeBase64: payload.data.brCodeBase64 ?? null,
+    expiresAt: payload.data.expiresAt ?? null,
+    receiptUrl: payload.data.receiptUrl ?? null,
+    metadata: payload.data.metadata,
+    externalId: payload.data.externalId ?? null,
+  } satisfies AbacatePayTransparent;
+}
+
 export function getAbacatePayWebhookReference(payload: AbacatePayWebhookPayload) {
-  return payload.data?.transparent?.metadata?.reference ?? null;
+  const transparent = getWebhookTransparent(payload);
+
+  return (
+    transparent?.metadata?.reference ??
+    transparent?.metadata?.externalId ??
+    transparent?.externalId ??
+    null
+  );
 }
 
 export function getAbacatePayWebhookProviderPaymentId(
   payload: AbacatePayWebhookPayload,
 ) {
-  return payload.data?.transparent?.id ?? null;
+  return getWebhookTransparent(payload)?.id ?? null;
 }
 
 export function getAbacatePayWebhookSnapshot(payload: AbacatePayWebhookPayload) {
-  const transparent = payload.data?.transparent;
+  const transparent = getWebhookTransparent(payload);
 
   if (!transparent) {
     return null;

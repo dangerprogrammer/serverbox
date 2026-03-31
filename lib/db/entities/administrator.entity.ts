@@ -7,6 +7,7 @@ export type Administrator = {
   id: string;
   name: string;
   email: string;
+  passwordHash: string | null;
   createdAt: Date;
   updatedAt: Date;
   condominiums: Condominium[];
@@ -28,6 +29,10 @@ export const AdministratorEntity = new EntitySchema<Administrator>({
     email: {
       type: String,
       unique: true,
+    },
+    passwordHash: {
+      type: String,
+      nullable: true,
     },
     createdAt: {
       type: Date,
