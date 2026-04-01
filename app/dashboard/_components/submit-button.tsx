@@ -6,19 +6,22 @@ type SubmitButtonProps = {
   idleLabel: string;
   pendingLabel: string;
   className?: string;
+  disabled?: boolean;
 };
 
 export function SubmitButton({
   idleLabel,
   pendingLabel,
   className,
+  disabled = false,
 }: SubmitButtonProps) {
   const { pending } = useFormStatus();
+  const isDisabled = pending || disabled;
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={isDisabled}
       className={className}
     >
       {pending ? pendingLabel : idleLabel}

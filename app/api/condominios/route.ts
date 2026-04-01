@@ -5,9 +5,6 @@ import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
-import { CondominiumPlanEntity } from "@/lib/db/entities/condominium-plan.entity";
-import type { Plan } from "@/lib/db/entities/plan.entity";
-import { PlanEntity } from "@/lib/db/entities/plan.entity";
 
 type CreateCondominiumPayload = {
   name?: string;
@@ -17,8 +14,6 @@ type CreateCondominiumPayload = {
   activeResidents?: number;
   adminEmail?: string;
   adminName?: string;
-  customPlanIds?: string[];
-  includeDefaultPlans?: boolean;
 };
 
 export async function GET() {
@@ -34,7 +29,7 @@ export async function GET() {
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
-      planAssignments: { plan: true },
+      plans: true,
     },
     order: {
       createdAt: "DESC",
@@ -55,12 +50,11 @@ export async function GET() {
         name: condominium.primaryAdmin.name,
         email: condominium.primaryAdmin.email,
       },
-      plans: condominium.planAssignments.map((assignment) => ({
-        id: assignment.plan.id,
-        slug: assignment.plan.slug,
-        name: assignment.plan.name,
-        tier: assignment.plan.tier,
-        isDefault: assignment.plan.isDefault,
+      plans: condominium.plans.map((plan) => ({
+        id: plan.id,
+        slug: plan.slug,
+        name: plan.name,
+        tier: plan.tier,
       })),
     })),
   );
@@ -85,9 +79,6 @@ export async function POST(request: Request) {
   const dataSource = await getDataSource();
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-  const planRepository = dataSource.getRepository(PlanEntity);
-  const condominiumPlanRepository =
-    dataSource.getRepository(CondominiumPlanEntity);
 
   let assignedAdministrator = payload.adminEmail
     ? await administratorRepository.findOneBy({
@@ -111,7 +102,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const condominium = condominiumRepository.create({
+  const savedCondominium = await condominiumRepository.save({
     name: payload.name.trim(),
     city: payload.city.trim(),
     state: payload.state.trim().toUpperCase().slice(0, 2),
@@ -122,33 +113,6 @@ export async function POST(request: Request) {
         : 0,
     primaryAdmin: assignedAdministrator,
   });
-
-  const savedCondominium = await condominiumRepository.save(condominium);
-  const defaultPlans =
-    payload.includeDefaultPlans === false
-      ? []
-      : await planRepository.findBy({ isDefault: true });
-  const customPlans =
-    payload.customPlanIds && payload.customPlanIds.length > 0
-      ? await planRepository.findByIds(payload.customPlanIds)
-      : [];
-  const uniquePlans = [...defaultPlans, ...customPlans].reduce<Plan[]>(
-    (plans, currentPlan) =>
-      plans.some((plan) => plan.id === currentPlan.id)
-        ? plans
-        : [...plans, currentPlan],
-    [],
-  );
-
-  if (uniquePlans.length > 0) {
-    await condominiumPlanRepository.save(
-      uniquePlans.map((plan, index) => ({
-        condominium: savedCondominium,
-        plan,
-        isFeatured: index === 0,
-      })),
-    );
-  }
 
   return Response.json(
     {
@@ -161,7 +125,6 @@ export async function POST(request: Request) {
         name: assignedAdministrator.name,
         email: assignedAdministrator.email,
       },
-      assignedPlanCount: uniquePlans.length,
     },
     { status: 201 },
   );

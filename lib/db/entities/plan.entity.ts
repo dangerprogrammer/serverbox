@@ -1,7 +1,7 @@
 import { EntitySchema } from "typeorm";
 
 import type { Administrator } from "@/lib/db/entities/administrator.entity";
-import type { CondominiumPlan } from "@/lib/db/entities/condominium-plan.entity";
+import type { Condominium } from "@/lib/db/entities/condominium.entity";
 import type { CondominiumPayment } from "@/lib/db/entities/condominium-payment.entity";
 
 export enum PlanTier {
@@ -20,10 +20,9 @@ export type Plan = {
   monthlyBallAllowance: number;
   monthlyPriceInCents: number;
   overagePriceInCents: number;
-  isDefault: boolean;
   isActive: boolean;
   createdBy: Administrator | null;
-  condominiumPlans: CondominiumPlan[];
+  condominium: Condominium;
   payments: CondominiumPayment[];
 };
 
@@ -38,7 +37,6 @@ export const PlanEntity = new EntitySchema<Plan>({
     },
     slug: {
       type: String,
-      unique: true,
     },
     name: {
       type: String,
@@ -58,16 +56,28 @@ export const PlanEntity = new EntitySchema<Plan>({
     overagePriceInCents: {
       type: Number,
     },
-    isDefault: {
-      type: Boolean,
-      default: false,
-    },
     isActive: {
       type: Boolean,
       default: true,
     },
   },
+  uniques: [
+    {
+      name: "UQ_plan_slug_per_condominium",
+      columns: ["condominium", "slug"],
+    },
+  ],
   relations: {
+    condominium: {
+      type: "many-to-one",
+      target: "Condominium",
+      inverseSide: "plans",
+      joinColumn: {
+        name: "condominiumId",
+      },
+      nullable: false,
+      onDelete: "CASCADE",
+    },
     createdBy: {
       type: "many-to-one",
       target: "Administrator",
@@ -77,11 +87,6 @@ export const PlanEntity = new EntitySchema<Plan>({
       },
       nullable: true,
       onDelete: "SET NULL",
-    },
-    condominiumPlans: {
-      type: "one-to-many",
-      target: "CondominiumPlan",
-      inverseSide: "plan",
     },
     payments: {
       type: "one-to-many",

@@ -17,8 +17,7 @@ import {
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
-import type { CondominiumPlan } from "@/lib/db/entities/condominium-plan.entity";
-import { PlanEntity, type Plan } from "@/lib/db/entities/plan.entity";
+import { type Plan } from "@/lib/db/entities/plan.entity";
 
 function computeAvailableBalls(movements: BallInventoryMovement[]) {
   return movements.reduce((total, movement) => {
@@ -31,25 +30,19 @@ function computeAvailableBalls(movements: BallInventoryMovement[]) {
 export const getAdminDashboardData = cache(async () => {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-  const planRepository = dataSource.getRepository(PlanEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const movementRepository = dataSource.getRepository(BallInventoryMovementEntity);
 
-  const [condominiums, plans, payments, movements] = await Promise.all([
+  const [condominiums, payments, movements] = await Promise.all([
     condominiumRepository.find({
       relations: {
         primaryAdmin: true,
-        planAssignments: { plan: true },
+        plans: true,
         payments: { plan: true },
         ballMovements: { payment: true },
       },
       order: {
         createdAt: "ASC",
-      },
-    }),
-    planRepository.find({
-      order: {
-        monthlyPriceInCents: "ASC",
       },
     }),
     paymentRepository.find({
@@ -72,6 +65,17 @@ export const getAdminDashboardData = cache(async () => {
     }),
   ]);
 
+  const allPlans = condominiums.flatMap((condominium) =>
+    condominium.plans.map((plan: Plan) => ({
+      id: plan.id,
+      name: plan.name,
+      condominiumId: condominium.id,
+      condominiumName: condominium.name,
+      monthlyBallAllowance: plan.monthlyBallAllowance,
+      monthlyPriceInCents: plan.monthlyPriceInCents,
+    })),
+  );
+
   return {
     summary: {
       totalAvailableBalls: condominiums.reduce(
@@ -89,12 +93,7 @@ export const getAdminDashboardData = cache(async () => {
         .filter((movement) => movement.kind === BallMovementKind.CREDIT)
         .reduce((total, movement) => total + movement.quantity, 0),
     },
-    plans: plans.map((plan: Plan) => ({
-      id: plan.id,
-      name: plan.name,
-      monthlyBallAllowance: plan.monthlyBallAllowance,
-      monthlyPriceInCents: plan.monthlyPriceInCents,
-    })),
+    plans: allPlans,
     condominiums: condominiums.map((condominium: Condominium) => ({
       id: condominium.id,
       name: condominium.name,
@@ -108,9 +107,9 @@ export const getAdminDashboardData = cache(async () => {
       paidPayments: condominium.payments.filter(
         (payment: CondominiumPayment) => payment.status === PaymentStatus.PAID,
       ).length,
-      plans: condominium.planAssignments.map((assignment: CondominiumPlan) => ({
-        id: assignment.plan.id,
-        name: assignment.plan.name,
+      plans: condominium.plans.map((plan: Plan) => ({
+        id: plan.id,
+        name: plan.name,
       })),
       recentPayments: condominium.payments.slice(0, 3).map((payment) => ({
         id: payment.id,

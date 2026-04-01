@@ -1,5 +1,4 @@
 import { getDataSource } from "@/lib/db/data-source";
-import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import {
   CondominiumPaymentEntity,
   PaymentStatus,
@@ -11,8 +10,8 @@ import {
 } from "@/lib/payments/abacatepay";
 
 type CreateCondominiumPaymentInput = {
-  condominiumId: string;
   planId: string;
+  condominiumId?: string;
 };
 
 function getDefaultAbacatePayCustomerCellphone() {
@@ -35,30 +34,34 @@ function buildPaymentReference() {
 }
 
 export async function createCondominiumPayment({
-  condominiumId,
   planId,
+  condominiumId,
 }: CreateCondominiumPaymentInput) {
   if (!isAbacatePayConfigured()) {
     throw new Error("ABACATEPAY_API_KEY nao configurada.");
   }
 
   const dataSource = await getDataSource();
-  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const planRepository = dataSource.getRepository(PlanEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
 
-  const [condominium, plan] = await Promise.all([
-    condominiumRepository.findOne({
-      where: { id: condominiumId },
-      relations: {
+  const plan = await planRepository.findOne({
+    where: { id: planId },
+    relations: {
+      condominium: {
         primaryAdmin: true,
       },
-    }),
-    planRepository.findOneBy({ id: planId }),
-  ]);
+    },
+  });
 
-  if (!condominium || !plan) {
-    throw new Error("Condominio ou plano nao encontrado.");
+  if (!plan) {
+    throw new Error("Plano nao encontrado.");
+  }
+
+  const condominium = plan.condominium;
+
+  if (!condominium || (condominiumId && condominium.id !== condominiumId)) {
+    throw new Error("Plano nao pertence ao condominio informado.");
   }
 
   const defaultCustomerCellphone = getDefaultAbacatePayCustomerCellphone();
@@ -85,8 +88,8 @@ export async function createCondominiumPayment({
     },
     metadata: {
       reference,
-      condominiumId: condominium.id,
       planId: plan.id,
+      condominiumId: condominium.id,
     },
   });
 

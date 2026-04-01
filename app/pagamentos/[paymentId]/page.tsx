@@ -23,22 +23,22 @@ export default async function PaymentPage({
   const qrCodeSvg = payment.pixQrCode?.startsWith("data:image/")
     ? null
     : payment.pixCopyPasteCode
-    ? await buildPixQrCodeSvg(payment.pixCopyPasteCode)
-    : null;
+      ? await buildPixQrCodeSvg(payment.pixCopyPasteCode)
+      : null;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8 sm:px-10 lg:px-12">
-      <section className="rounded-[2rem] border border-border bg-surface px-6 py-8 shadow-[0_30px_90px_rgba(166,61,20,0.12)] sm:px-8">
+      <section className="rounded-[1.5rem] border border-border bg-surface px-6 py-8 shadow-sm sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.24em] text-accent-strong/80">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
               Checkout PIX AbacatePay
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900">
               QR Code e copia e cola com liberacao automatica.
             </h1>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              Esta cobranca fica em acompanhamento automatico. O site so deve
+              Esta cobranca fica em acompanhamento automatico. O saldo so deve
               ser liberado quando a AbacatePay confirmar o pagamento.
             </p>
           </div>
@@ -53,11 +53,11 @@ export default async function PaymentPage({
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-[1.75rem] border border-slate-900/10 bg-slate-950 p-6 text-white shadow-2xl">
-          <p className="text-sm uppercase tracking-[0.22em] text-orange-200/70">
+        <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+          <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
             Pague com PIX
           </p>
-          <div className="mt-6 rounded-[1.75rem] bg-white p-5">
+          <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
             {payment.pixQrCode?.startsWith("data:image/") ? (
               <Image
                 src={payment.pixQrCode}
@@ -73,15 +73,14 @@ export default async function PaymentPage({
                 dangerouslySetInnerHTML={{ __html: qrCodeSvg }}
               />
             ) : (
-              <div className="flex min-h-[280px] items-center justify-center rounded-[1.5rem] border border-dashed border-slate-300 text-sm text-slate-500">
+              <div className="flex min-h-[280px] items-center justify-center rounded-[1rem] border border-dashed border-slate-300 text-sm text-slate-500">
                 QR Code indisponivel
               </div>
             )}
           </div>
-          <p className="mt-4 text-sm leading-7 text-slate-300">
+          <p className="mt-4 text-sm leading-7 text-slate-600">
             Escaneie o QR Code ou copie o codigo PIX. Assim que a AbacatePay
-            confirmar a cobranca, o status muda automaticamente e o acesso pode
-            ser liberado.
+            confirmar a cobranca, o status muda automaticamente.
           </p>
         </section>
 

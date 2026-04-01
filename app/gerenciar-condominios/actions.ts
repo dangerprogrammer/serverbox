@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
-import { CondominiumPlanEntity } from "@/lib/db/entities/condominium-plan.entity";
 import { PlanEntity, PlanTier } from "@/lib/db/entities/plan.entity";
 
 function normalizeSlug(value: string) {
@@ -23,46 +22,10 @@ function parsePositiveNumber(value: FormDataEntryValue | null, fallback = 0) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
-function parsePlanIds(formData: FormData) {
-  return formData
-    .getAll("planIds")
-    .map((value) => String(value))
-    .filter(Boolean);
-}
-
-async function syncCondominiumPlans(condominiumId: string, planIds: string[]) {
-  const dataSource = await getDataSource();
-  const condominiumPlanRepository =
-    dataSource.getRepository(CondominiumPlanEntity);
-  const planRepository = dataSource.getRepository(PlanEntity);
-  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-
-  const condominium = await condominiumRepository.findOneBy({ id: condominiumId });
-
-  if (!condominium) {
-    throw new Error("Condominio nao encontrado.");
-  }
-
-  await condominiumPlanRepository
-    .createQueryBuilder()
-    .delete()
-    .from("condominium_plans")
-    .where("condominiumId = :condominiumId", { condominiumId })
-    .execute();
-
-  if (planIds.length === 0) {
-    return;
-  }
-
-  const plans = await planRepository.findByIds(planIds);
-
-  await condominiumPlanRepository.save(
-    plans.map((plan, index) => ({
-      condominium,
-      plan,
-      isFeatured: index === 0,
-    })),
-  );
+function revalidateManagementViews() {
+  revalidatePath("/gerenciar-condominios");
+  revalidatePath("/dashboard");
+  revalidatePath("/");
 }
 
 export async function createCondominiumAction(formData: FormData) {
@@ -81,9 +44,8 @@ export async function createCondominiumAction(formData: FormData) {
 
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-  const planIds = parsePlanIds(formData);
 
-  const condominium = await condominiumRepository.save({
+  await condominiumRepository.save({
     name,
     city,
     state,
@@ -92,8 +54,7 @@ export async function createCondominiumAction(formData: FormData) {
     primaryAdmin: administrator,
   });
 
-  await syncCondominiumPlans(condominium.id, planIds);
-  revalidatePath("/gerenciar-condominios");
+  revalidateManagementViews();
 }
 
 export async function updateCondominiumAction(formData: FormData) {
@@ -126,10 +87,7 @@ export async function updateCondominiumAction(formData: FormData) {
   );
 
   await condominiumRepository.save(existing);
-  await syncCondominiumPlans(condominiumId, parsePlanIds(formData));
-  revalidatePath("/gerenciar-condominios");
-  revalidatePath("/dashboard");
-  revalidatePath("/");
+  revalidateManagementViews();
 }
 
 export async function deleteCondominiumAction(formData: FormData) {
@@ -145,33 +103,52 @@ export async function deleteCondominiumAction(formData: FormData) {
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
 
   await condominiumRepository.delete({ id: condominiumId });
-  revalidatePath("/gerenciar-condominios");
-  revalidatePath("/dashboard");
-  revalidatePath("/");
+  revalidateManagementViews();
 }
 
 export async function createPlanAction(formData: FormData) {
   const administrator = await requireAuthenticatedAdmin();
+  const condominiumId = String(formData.get("condominiumId") ?? "").trim();
   const dataSource = await getDataSource();
   const planRepository = dataSource.getRepository(PlanEntity);
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const tierInput = String(formData.get("tier") ?? "").trim();
   const slug = normalizeSlug(String(formData.get("slug") ?? name));
 
+  if (!condominiumId) {
+    throw new Error("Condominio e obrigatorio para criar o plano.");
+  }
+
   if (!name || !description || !slug) {
     throw new Error("Nome, slug e descricao sao obrigatorios.");
   }
 
-  const existing = await planRepository.findOneBy({ slug });
+  const condominium = await condominiumRepository.findOneBy({ id: condominiumId });
+
+  if (!condominium) {
+    throw new Error("Condominio nao encontrado.");
+  }
+
+  const existing = await planRepository.findOne({
+    where: {
+      condominium: { id: condominiumId },
+      slug,
+    },
+    relations: {
+      condominium: true,
+    },
+  });
 
   if (existing) {
-    throw new Error("Ja existe um plano com esse slug.");
+    throw new Error("Ja existe um plano com esse slug nesse condominio.");
   }
 
   const allowedTiers = new Set<string>(Object.values(PlanTier));
 
   await planRepository.save({
+    condominium,
     slug,
     name,
     description,
@@ -190,14 +167,11 @@ export async function createPlanAction(formData: FormData) {
       formData.get("overagePriceInCents"),
       0,
     ),
-    isDefault: formData.get("isDefault") === "on",
     isActive: true,
     createdBy: administrator,
   });
 
-  revalidatePath("/gerenciar-condominios");
-  revalidatePath("/dashboard");
-  revalidatePath("/");
+  revalidateManagementViews();
 }
 
 export async function updatePlanAction(formData: FormData) {
@@ -211,7 +185,12 @@ export async function updatePlanAction(formData: FormData) {
 
   const dataSource = await getDataSource();
   const planRepository = dataSource.getRepository(PlanEntity);
-  const existing = await planRepository.findOneBy({ id: planId });
+  const existing = await planRepository.findOne({
+    where: { id: planId },
+    relations: {
+      condominium: true,
+    },
+  });
 
   if (!existing) {
     throw new Error("Plano nao encontrado.");
@@ -225,10 +204,18 @@ export async function updatePlanAction(formData: FormData) {
     throw new Error("Nome, slug e descricao sao obrigatorios.");
   }
 
-  const duplicate = await planRepository.findOneBy({ slug: requestedSlug });
+  const duplicate = await planRepository.findOne({
+    where: {
+      condominium: { id: existing.condominium.id },
+      slug: requestedSlug,
+    },
+    relations: {
+      condominium: true,
+    },
+  });
 
   if (duplicate && duplicate.id !== existing.id) {
-    throw new Error("Ja existe um plano com esse slug.");
+    throw new Error("Ja existe um plano com esse slug nesse condominio.");
   }
 
   const tierInput = String(formData.get("tier") ?? existing.tier).trim();
@@ -252,12 +239,9 @@ export async function updatePlanAction(formData: FormData) {
     formData.get("overagePriceInCents"),
     existing.overagePriceInCents,
   );
-  existing.isDefault = formData.get("isDefault") === "on";
 
   await planRepository.save(existing);
-  revalidatePath("/gerenciar-condominios");
-  revalidatePath("/dashboard");
-  revalidatePath("/");
+  revalidateManagementViews();
 }
 
 export async function deletePlanAction(formData: FormData) {
@@ -273,7 +257,5 @@ export async function deletePlanAction(formData: FormData) {
   const planRepository = dataSource.getRepository(PlanEntity);
 
   await planRepository.delete({ id: planId });
-  revalidatePath("/gerenciar-condominios");
-  revalidatePath("/dashboard");
-  revalidatePath("/");
+  revalidateManagementViews();
 }

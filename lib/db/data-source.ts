@@ -9,7 +9,6 @@ import Database from "better-sqlite3";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
 import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
-import { CondominiumPlanEntity } from "@/lib/db/entities/condominium-plan.entity";
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import { seedDatabase } from "@/lib/db/seed";
@@ -23,7 +22,6 @@ const entities = [
   AdministratorEntity,
   PlanEntity,
   CondominiumEntity,
-  CondominiumPlanEntity,
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
 ];
@@ -82,6 +80,13 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
         )
         .get(),
     );
+    const hasCondominiumPlansTable = Boolean(
+      database
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'condominium_plans'",
+        )
+        .get(),
+    );
     const hasPaymentTable = Boolean(
       database
         .prepare(
@@ -122,13 +127,21 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
     const hasVerificationSource = paymentTableInfo.some(
       (column) => column.name === "verificationSource",
     );
+    const planTableInfo = (
+      database.prepare("PRAGMA table_info('plans')").all() as Array<{ name: string }>
+    );
+    const hasCondominiumIdOnPlans = planTableInfo.some(
+      (column) => column.name === "condominiumId",
+    );
 
     database.close();
     database = null;
 
     if (
       hasLegacySubscriptionsTable ||
+      hasCondominiumPlansTable ||
       !hasPrimaryAdminId ||
+      !hasCondominiumIdOnPlans ||
       !hasPaymentTable ||
       !hasInventoryTable ||
       !hasPixTransactionId ||

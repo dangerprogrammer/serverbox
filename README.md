@@ -29,20 +29,14 @@ npm run dev
 Na primeira execucao, o banco e criado automaticamente em `data/serverbox.sqlite` e recebe seed com:
 
 - 1 administrador inicial
-- 3 planos padrao: basico, intermediario e premium
-- 1 plano personalizado de exemplo
-- 3 condominios de exemplo
-- vinculos entre condominios e os planos disponiveis para cada um
-- pagamentos seed ja confirmados, liberando saldo inicial de bolinhas
 
 Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 
 ## Estrutura inicial do dominio
 
 - `Administrator`: administrador que cria planos e gerencia condominios
-- `Plan`: catalogo dos planos vendidos
+- `Plan`: plano comercial pertencente a um condominio
 - `Condominium`: dados do condominio cliente
-- `CondominiumPlan`: vinculo entre condominio e planos disponiveis
 - `CondominiumPayment`: pagamento de um plano para um condominio
 - `BallInventoryMovement`: livro-caixa de credito e consumo de bolinhas
 
@@ -69,7 +63,7 @@ Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 
 Fluxo atual:
 
-1. Cria um pagamento pendente para um condominio
+1. Cria um pagamento pendente para um plano de um condominio
 2. Abre a cobranca PIX com QR Code e copia e cola
 3. O backend so libera o credito quando a AbacatePay confirma o pagamento
 4. O sistema gera um credito em `BallInventoryMovement`
@@ -80,7 +74,15 @@ Exemplo de criacao de condominio:
 ```bash
 curl -X POST http://localhost:3000/api/condominios \
   -H "Content-Type: application/json" \
-  -d "{\"name\":\"Condominio Parque Central\",\"city\":\"Sao Paulo\",\"state\":\"SP\",\"courts\":2,\"activeResidents\":180,\"adminEmail\":\"admin@serverbox.local\",\"includeDefaultPlans\":true}"
+  -d "{\"name\":\"Condominio Parque Central\",\"city\":\"Sao Paulo\",\"state\":\"SP\",\"courts\":2,\"activeResidents\":180,\"adminEmail\":\"admin@serverbox.local\"}"
+```
+
+Exemplo de criacao de plano dentro de um condominio:
+
+```bash
+curl -X POST http://localhost:3000/api/plans \
+  -H "Content-Type: application/json" \
+  -d "{\"condominiumId\":\"SEU_CONDOMINIUM_ID\",\"name\":\"Plano Quadra 1\",\"description\":\"Plano mensal da quadra principal\",\"monthlyBallAllowance\":48,\"monthlyPriceInCents\":14900,\"overagePriceInCents\":1390}"
 ```
 
 Exemplo de criacao de pagamento:
@@ -88,7 +90,7 @@ Exemplo de criacao de pagamento:
 ```bash
 curl -X POST http://localhost:3000/api/pagamentos \
   -H "Content-Type: application/json" \
-  -d "{\"condominiumId\":\"SEU_CONDOMINIUM_ID\",\"planId\":\"SEU_PLAN_ID\",\"method\":\"pix\"}"
+  -d "{\"planId\":\"SEU_PLAN_ID\",\"method\":\"pix\"}"
 ```
 
 ## Configuracao AbacatePay

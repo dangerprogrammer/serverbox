@@ -9,16 +9,14 @@ import { createCondominiumPayment } from "@/lib/payments/create-payment";
 export async function createPaymentAction(formData: FormData) {
   await requireAuthenticatedAdmin();
 
-  const condominiumId = String(formData.get("condominiumId") ?? "");
   const planId = String(formData.get("planId") ?? "");
 
-  if (!condominiumId || !planId) {
-    throw new Error("Condominio e plano sao obrigatorios para criar pagamento.");
+  if (!planId) {
+    throw new Error("Plano e obrigatorio para criar pagamento.");
   }
 
   try {
     const payment = await createCondominiumPayment({
-      condominiumId,
       planId,
     });
 

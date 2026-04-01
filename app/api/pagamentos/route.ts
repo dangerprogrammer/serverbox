@@ -7,8 +7,8 @@ import {
 import { createCondominiumPayment } from "@/lib/payments/create-payment";
 
 type CreatePaymentPayload = {
-  condominiumId?: string;
   planId?: string;
+  condominiumId?: string;
   method?: string;
 };
 
@@ -61,9 +61,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const payload = (await request.json()) as CreatePaymentPayload;
 
-  if (!payload.condominiumId || !payload.planId) {
+  if (!payload.planId) {
     return Response.json(
-      { error: "condominiumId e planId sao obrigatorios." },
+      { error: "planId e obrigatorio." },
       { status: 400 },
     );
   }
@@ -77,8 +77,8 @@ export async function POST(request: Request) {
 
   try {
     const payment = await createCondominiumPayment({
-      condominiumId: payload.condominiumId,
       planId: payload.planId,
+      condominiumId: payload.condominiumId,
     });
 
     return Response.json(payment, { status: 201 });
@@ -86,7 +86,11 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error ? error.message : "Falha ao criar cobranca PIX.";
 
-    if (message === "Condominio ou plano nao encontrado.") {
+    if (message === "Plano nao encontrado.") {
+      return Response.json({ error: message }, { status: 404 });
+    }
+
+    if (message === "Plano nao pertence ao condominio informado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 

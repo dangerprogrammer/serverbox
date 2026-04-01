@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f1e7;
-  --foreground: #1e293b;
-  --surface: #fff9f1;
-  --surface-strong: #fff4dd;
-  --accent: #d95f23;
-  --accent-strong: #a63d14;
-  --accent-soft: #ffd8b8;
-  --border: rgba(30, 41, 59, 0.1);
+  --background: #f7f7f5;
+  --foreground: #1f2937;
+  --surface: #ffffff;
+  --surface-strong: #f1f3f5;
+  --accent: #1f2937;
+  --accent-strong: #111827;
+  --accent-soft: #e5e7eb;
+  --border: rgba(31, 41, 55, 0.12);
 }
 
 @theme inline {
@@ -36,10 +36,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
-  background-image:
-    radial-gradient(circle at top left, rgba(255, 216, 184, 0.9), transparent 28%),
-    radial-gradient(circle at 85% 15%, rgba(217, 95, 35, 0.12), transparent 22%),
-    linear-gradient(180deg, #fffaf3 0%, #f8f1e7 55%, #f0e5d6 100%);
 }
 
 a {
@@ -48,12 +44,5 @@ a {
 }
 
 ::selection {
-  background: rgba(217, 95, 35, 0.18);
-}
-
-.card-grid {
-  background-image:
-    linear-gradient(rgba(30, 41, 59, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30, 41, 59, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background: rgba(31, 41, 55, 0.12);
 }
