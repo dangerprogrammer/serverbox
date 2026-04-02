@@ -96,7 +96,7 @@ export default async function Home() {
                           {condominium.name}
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
-                          {condominium.city}, {condominium.state} •{" "}
+                          {condominium.city}, {condominium.state} -{" "}
                           {condominium.courts} quadras
                         </p>
                       </div>
@@ -106,7 +106,7 @@ export default async function Home() {
                     </div>
                     <div className="mt-4 flex items-end justify-between gap-3 text-sm text-slate-600">
                       <span>
-                        {condominium.availableBalls} bolinhas •{" "}
+                        {condominium.availableBalls} bolinhas -{" "}
                         {condominium.paidPayments} pagamentos pagos
                       </span>
                       <strong className="text-base text-slate-900">

@@ -19,7 +19,6 @@ export async function GET() {
   const payments = await paymentRepository.find({
     relations: {
       condominium: true,
-      plan: true,
     },
     order: {
       createdAt: "DESC",
@@ -51,8 +50,8 @@ export async function GET() {
         name: payment.condominium.name,
       },
       plan: {
-        id: payment.plan.id,
-        name: payment.plan.name,
+        id: payment.planId,
+        name: payment.planName,
       },
     })),
   );

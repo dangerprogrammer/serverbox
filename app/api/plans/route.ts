@@ -1,7 +1,7 @@
 import { getDataSource } from "@/lib/db/data-source";
 import { requireAdminApiSession } from "@/lib/auth/session";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
-import { PlanEntity, PlanTier, type Plan } from "@/lib/db/entities/plan.entity";
+import { PlanTier } from "@/lib/domain/condominium-plan";
 
 type CreatePlanPayload = {
   condominiumId?: string;
@@ -31,38 +31,40 @@ export async function GET() {
   }
 
   const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
-
-  const plans = await planRepository.find({
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const condominiums = await condominiumRepository.find({
     relations: {
-      condominium: true,
-      createdBy: true,
+      primaryAdmin: true,
     },
     order: {
-      monthlyPriceInCents: "ASC",
+      createdAt: "ASC",
     },
   });
 
   return Response.json(
-    plans.map((plan: Plan) => ({
-      id: plan.id,
-      condominiumId: plan.condominium.id,
-      condominiumName: plan.condominium.name,
-      slug: plan.slug,
-      name: plan.name,
-      tier: plan.tier,
-      description: plan.description,
-      monthlyBallAllowance: plan.monthlyBallAllowance,
-      monthlyPriceInCents: plan.monthlyPriceInCents,
-      overagePriceInCents: plan.overagePriceInCents,
-      createdBy: plan.createdBy
-        ? {
-            id: plan.createdBy.id,
-            name: plan.createdBy.name,
-            email: plan.createdBy.email,
-          }
-        : null,
-    })),
+    condominiums
+      .flatMap((condominium) =>
+        condominium.plans.map((plan) => ({
+          id: plan.id,
+          condominiumId: condominium.id,
+          condominiumName: condominium.name,
+          slug: plan.slug,
+          name: plan.name,
+          tier: plan.tier,
+          description: plan.description,
+          monthlyBallAllowance: plan.monthlyBallAllowance,
+          monthlyPriceInCents: plan.monthlyPriceInCents,
+          overagePriceInCents: plan.overagePriceInCents,
+          createdBy: plan.createdByAdminId
+            ? {
+                id: plan.createdByAdminId,
+                name: plan.createdByName ?? condominium.primaryAdmin.name,
+                email: condominium.primaryAdmin.email,
+              }
+            : null,
+        })),
+      )
+      .sort((left, right) => left.monthlyPriceInCents - right.monthlyPriceInCents),
   );
 }
 
@@ -84,7 +86,6 @@ export async function POST(request: Request) {
 
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-  const planRepository = dataSource.getRepository(PlanEntity);
   const slug = normalizeSlug(payload.slug ?? payload.name);
   const condominium = await condominiumRepository.findOneBy({
     id: payload.condominiumId,
@@ -94,15 +95,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Condominio nao encontrado." }, { status: 404 });
   }
 
-  const existingPlan = await planRepository.findOne({
-    where: {
-      condominium: { id: payload.condominiumId },
-      slug,
-    },
-    relations: {
-      condominium: true,
-    },
-  });
+  const existingPlan = condominium.plans.find((plan) => plan.slug === slug);
 
   if (existingPlan) {
     return Response.json(
@@ -113,8 +106,8 @@ export async function POST(request: Request) {
 
   const allowedTiers = new Set<string>(Object.values(PlanTier));
 
-  const createdPlan = await planRepository.save({
-    condominium,
+  const createdPlan = {
+    id: crypto.randomUUID(),
     slug,
     name: payload.name.trim(),
     description: payload.description.trim(),
@@ -134,8 +127,12 @@ export async function POST(request: Request) {
         ? payload.overagePriceInCents
         : 0,
     isActive: true,
-    createdBy: authenticatedAdministrator,
-  });
+    createdByAdminId: authenticatedAdministrator.id,
+    createdByName: authenticatedAdministrator.name,
+  };
+
+  condominium.plans = [...condominium.plans, createdPlan];
+  await condominiumRepository.save(condominium);
 
   return Response.json(createdPlan, { status: 201 });
 }

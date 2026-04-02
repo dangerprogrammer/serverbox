@@ -1,9 +1,9 @@
 import { getDataSource } from "@/lib/db/data-source";
+import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import {
   CondominiumPaymentEntity,
   PaymentStatus,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import {
   createAbacatePixCharge,
   isAbacatePayConfigured,
@@ -42,26 +42,36 @@ export async function createCondominiumPayment({
   }
 
   const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
 
-  const plan = await planRepository.findOne({
-    where: { id: planId },
+  const condominiums = await condominiumRepository.find({
     relations: {
-      condominium: {
-        primaryAdmin: true,
-      },
+      primaryAdmin: true,
     },
   });
+  const condominium = condominiums.find(
+    (entry) =>
+      (!condominiumId || entry.id === condominiumId) &&
+      entry.plans.some((plan) => plan.id === planId),
+  );
+
+  if (!condominium) {
+    const hasPlan = condominiums.some((entry) =>
+      entry.plans.some((plan) => plan.id === planId),
+    );
+
+    if (!hasPlan) {
+      throw new Error("Plano nao encontrado.");
+    }
+
+    throw new Error("Plano nao pertence ao condominio informado.");
+  }
+
+  const plan = condominium.plans.find((entry) => entry.id === planId);
 
   if (!plan) {
     throw new Error("Plano nao encontrado.");
-  }
-
-  const condominium = plan.condominium;
-
-  if (!condominium || (condominiumId && condominium.id !== condominiumId)) {
-    throw new Error("Plano nao pertence ao condominio informado.");
   }
 
   const defaultCustomerCellphone = getDefaultAbacatePayCustomerCellphone();
@@ -88,14 +98,15 @@ export async function createCondominiumPayment({
     },
     metadata: {
       reference,
-      planId: plan.id,
+      planId,
       condominiumId: condominium.id,
     },
   });
 
   return paymentRepository.save({
     condominium,
-    plan,
+    planId: plan.id,
+    planName: plan.name,
     reference,
     method: charge.method,
     status: PaymentStatus.PENDING,

@@ -17,7 +17,7 @@ import {
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { type Plan } from "@/lib/db/entities/plan.entity";
+import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
 
 function computeAvailableBalls(movements: BallInventoryMovement[]) {
   return movements.reduce((total, movement) => {
@@ -37,8 +37,7 @@ export const getAdminDashboardData = cache(async () => {
     condominiumRepository.find({
       relations: {
         primaryAdmin: true,
-        plans: true,
-        payments: { plan: true },
+        payments: true,
         ballMovements: { payment: true },
       },
       order: {
@@ -48,7 +47,6 @@ export const getAdminDashboardData = cache(async () => {
     paymentRepository.find({
       relations: {
         condominium: true,
-        plan: true,
       },
       order: {
         createdAt: "DESC",
@@ -66,7 +64,7 @@ export const getAdminDashboardData = cache(async () => {
   ]);
 
   const allPlans = condominiums.flatMap((condominium) =>
-    condominium.plans.map((plan: Plan) => ({
+    condominium.plans.map((plan: CondominiumPlan) => ({
       id: plan.id,
       name: plan.name,
       condominiumId: condominium.id,
@@ -107,7 +105,7 @@ export const getAdminDashboardData = cache(async () => {
       paidPayments: condominium.payments.filter(
         (payment: CondominiumPayment) => payment.status === PaymentStatus.PAID,
       ).length,
-      plans: condominium.plans.map((plan: Plan) => ({
+      plans: condominium.plans.map((plan: CondominiumPlan) => ({
         id: plan.id,
         name: plan.name,
       })),
@@ -115,7 +113,7 @@ export const getAdminDashboardData = cache(async () => {
         id: payment.id,
         reference: payment.reference,
         status: payment.status,
-        planName: payment.plan.name,
+        planName: payment.planName,
         ballQuantity: payment.ballQuantity,
         amountInCents: payment.amountInCents,
       })),
@@ -126,7 +124,7 @@ export const getAdminDashboardData = cache(async () => {
         id: payment.id,
         reference: payment.reference,
         condominiumName: payment.condominium.name,
-        planName: payment.plan.name,
+        planName: payment.planName,
         amountInCents: payment.amountInCents,
         ballQuantity: payment.ballQuantity,
         method: payment.method,

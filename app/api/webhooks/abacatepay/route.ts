@@ -47,7 +47,6 @@ export async function POST(request: Request) {
     where: [{ reference }, { providerPaymentId }],
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 

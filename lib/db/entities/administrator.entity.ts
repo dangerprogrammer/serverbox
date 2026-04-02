@@ -1,7 +1,6 @@
 import { EntitySchema } from "typeorm";
 
 import type { Condominium } from "@/lib/db/entities/condominium.entity";
-import type { Plan } from "@/lib/db/entities/plan.entity";
 
 export type Administrator = {
   id: string;
@@ -11,7 +10,6 @@ export type Administrator = {
   createdAt: Date;
   updatedAt: Date;
   condominiums: Condominium[];
-  plans: Plan[];
 };
 
 export const AdministratorEntity = new EntitySchema<Administrator>({
@@ -48,11 +46,6 @@ export const AdministratorEntity = new EntitySchema<Administrator>({
       type: "one-to-many",
       target: "Condominium",
       inverseSide: "primaryAdmin",
-    },
-    plans: {
-      type: "one-to-many",
-      target: "Plan",
-      inverseSide: "createdBy",
     },
   },
 });

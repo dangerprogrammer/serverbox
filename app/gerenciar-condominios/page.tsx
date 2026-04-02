@@ -11,7 +11,7 @@ import {
 } from "@/app/gerenciar-condominios/actions";
 import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getCondominiumManagementData } from "@/lib/data/admin-management";
-import { PlanTier } from "@/lib/db/entities/plan.entity";
+import { PlanTier } from "@/lib/domain/condominium-plan";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -41,8 +41,8 @@ export default async function GerenciarCondominiosPage() {
               Cada condominio concentra seus proprios planos.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              O cadastro reflete a regra do negocio: plano nasce dentro do
-              condominio e nao em um catalogo separado.
+              O cadastro reflete a regra do negocio: plano e dado interno do
+              condominio, nao um cadastro separado.
             </p>
           </div>
 
@@ -68,13 +68,14 @@ export default async function GerenciarCondominiosPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">
             Novo condominio
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            O condominio nasce vazio e os planos sao cadastrados dentro dele.
+            O condominio nasce vazio e os planos passam a fazer parte dele logo
+            abaixo, no proprio card.
           </p>
 
           <form action={createCondominiumAction} className="mt-6 space-y-4">
@@ -120,95 +121,6 @@ export default async function GerenciarCondominiosPage() {
               Criar condominio
             </button>
           </form>
-
-          <div className="my-8 border-t border-slate-200" />
-
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">
-              Novo plano de condominio
-            </h3>
-            <p className="mt-2 text-sm leading-7 text-slate-600">
-              Selecione o condominio que vai receber o plano.
-            </p>
-
-            <form action={createPlanAction} className="mt-6 space-y-4">
-              <select
-                name="condominiumId"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                defaultValue={condominiums[0]?.id ?? ""}
-                disabled={condominiums.length === 0}
-              >
-                {condominiums.length > 0 ? (
-                  condominiums.map((condominium) => (
-                    <option key={condominium.id} value={condominium.id}>
-                      {condominium.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">Cadastre um condominio primeiro</option>
-                )}
-              </select>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <input
-                  name="name"
-                  placeholder="Nome do plano"
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-                <input
-                  name="slug"
-                  placeholder="slug-do-plano"
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-                <select
-                  name="tier"
-                  defaultValue={PlanTier.CUSTOM}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                >
-                  {Object.values(PlanTier).map((tier) => (
-                    <option key={tier} value={tier}>
-                      {tierLabels[tier]}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  name="monthlyBallAllowance"
-                  type="number"
-                  min={0}
-                  placeholder="Bolinhas por mes"
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-                <input
-                  name="monthlyPriceInCents"
-                  type="number"
-                  min={0}
-                  placeholder="Preco mensal em centavos"
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-                <input
-                  name="overagePriceInCents"
-                  type="number"
-                  min={0}
-                  placeholder="Preco excedente em centavos"
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </div>
-              <textarea
-                name="description"
-                rows={4}
-                placeholder="Descricao comercial do plano"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-              />
-
-              <button
-                type="submit"
-                disabled={condominiums.length === 0}
-                className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Criar plano
-              </button>
-            </form>
-          </div>
         </section>
 
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
@@ -261,7 +173,7 @@ export default async function GerenciarCondominiosPage() {
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                     />
                     <p className="text-sm text-slate-500">
-                      Admin responsavel: {condominium.administratorName} •{" "}
+                      Admin responsavel: {condominium.administratorName} -{" "}
                       {condominium.administratorEmail}
                     </p>
 
@@ -284,6 +196,69 @@ export default async function GerenciarCondominiosPage() {
                         {condominium.plans.length} cadastrados
                       </span>
                     </div>
+
+                    <form action={createPlanAction} className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <input type="hidden" name="condominiumId" value={condominium.id} />
+                      <p className="text-sm font-medium text-slate-900">
+                        Novo plano deste condominio
+                      </p>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input
+                          name="name"
+                          placeholder="Nome do plano"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        />
+                        <input
+                          name="slug"
+                          placeholder="slug-do-plano"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        />
+                        <select
+                          name="tier"
+                          defaultValue={PlanTier.CUSTOM}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        >
+                          {Object.values(PlanTier).map((tier) => (
+                            <option key={tier} value={tier}>
+                              {tierLabels[tier]}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          name="monthlyBallAllowance"
+                          type="number"
+                          min={0}
+                          placeholder="Bolinhas por mes"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        />
+                        <input
+                          name="monthlyPriceInCents"
+                          type="number"
+                          min={0}
+                          placeholder="Preco mensal em centavos"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        />
+                        <input
+                          name="overagePriceInCents"
+                          type="number"
+                          min={0}
+                          placeholder="Preco excedente em centavos"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        />
+                      </div>
+                      <textarea
+                        name="description"
+                        rows={3}
+                        placeholder="Descricao comercial do plano"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                      />
+                      <button
+                        type="submit"
+                        className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      >
+                        Criar plano
+                      </button>
+                    </form>
 
                     <div className="mt-4 space-y-4">
                       {condominium.plans.length === 0 ? (
@@ -350,7 +325,7 @@ export default async function GerenciarCondominiosPage() {
                               />
                               <p className="text-sm text-slate-500">
                                 {currencyFormatter.format(plan.monthlyPriceInCents / 100)}{" "}
-                                / mes • criado por {plan.createdByName}
+                                / mes - criado por {plan.createdByName}
                               </p>
                               <div className="flex flex-wrap gap-3">
                                 <button

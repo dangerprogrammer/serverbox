@@ -10,17 +10,22 @@ import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
 import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
-import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import { seedDatabase } from "@/lib/db/seed";
 import { DataSource, type DataSourceOptions } from "typeorm";
 
 declare global {
-  var __serverboxDataSourcePromise: Promise<DataSource> | undefined;
+  var __serverboxDataSourceCache:
+    | {
+        version: string;
+        promise: Promise<DataSource>;
+      }
+    | undefined;
 }
+
+const DATA_SOURCE_SCHEMA_VERSION = "2026-04-01-condominium-plans-embedded";
 
 const entities = [
   AdministratorEntity,
-  PlanEntity,
   CondominiumEntity,
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
@@ -80,10 +85,10 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
         )
         .get(),
     );
-    const hasCondominiumPlansTable = Boolean(
+    const hasLegacyPlanTable = Boolean(
       database
         .prepare(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'condominium_plans'",
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'plans'",
         )
         .get(),
     );
@@ -127,23 +132,24 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
     const hasVerificationSource = paymentTableInfo.some(
       (column) => column.name === "verificationSource",
     );
-    const planTableInfo = (
-      database.prepare("PRAGMA table_info('plans')").all() as Array<{ name: string }>
+    const hasPlansColumnOnCondominiums = tableInfo.some(
+      (column) => column.name === "plans",
     );
-    const hasCondominiumIdOnPlans = planTableInfo.some(
-      (column) => column.name === "condominiumId",
-    );
+    const hasPlanId = paymentTableInfo.some((column) => column.name === "planId");
+    const hasPlanName = paymentTableInfo.some((column) => column.name === "planName");
 
     database.close();
     database = null;
 
     if (
       hasLegacySubscriptionsTable ||
-      hasCondominiumPlansTable ||
+      hasLegacyPlanTable ||
       !hasPrimaryAdminId ||
-      !hasCondominiumIdOnPlans ||
+      !hasPlansColumnOnCondominiums ||
       !hasPaymentTable ||
       !hasInventoryTable ||
+      !hasPlanId ||
+      !hasPlanName ||
       !hasPixTransactionId ||
       !hasPixQrCode ||
       !hasPixCopyPasteCode ||
@@ -209,9 +215,26 @@ async function createDataSource() {
 }
 
 export async function getDataSource() {
-  if (!globalThis.__serverboxDataSourcePromise) {
-    globalThis.__serverboxDataSourcePromise = createDataSource();
+  const cached = globalThis.__serverboxDataSourceCache;
+
+  if (!cached || cached.version !== DATA_SOURCE_SCHEMA_VERSION) {
+    if (cached) {
+      cached.promise
+        .then(async (dataSource) => {
+          if (dataSource.isInitialized) {
+            await dataSource.destroy();
+          }
+        })
+        .catch(() => {
+          return;
+        });
+    }
+
+    globalThis.__serverboxDataSourceCache = {
+      version: DATA_SOURCE_SCHEMA_VERSION,
+      promise: createDataSource(),
+    };
   }
 
-  return globalThis.__serverboxDataSourcePromise;
+  return globalThis.__serverboxDataSourceCache!.promise;
 }

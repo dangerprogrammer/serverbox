@@ -7,7 +7,7 @@ import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
-import { type Plan } from "@/lib/db/entities/plan.entity";
+import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
 
 export const getCondominiumManagementData = cache(async () => {
   const dataSource = await getDataSource();
@@ -16,15 +16,9 @@ export const getCondominiumManagementData = cache(async () => {
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
-      plans: {
-        createdBy: true,
-      },
     },
     order: {
       createdAt: "ASC",
-      plans: {
-        monthlyPriceInCents: "ASC",
-      },
     },
   });
 
@@ -38,7 +32,9 @@ export const getCondominiumManagementData = cache(async () => {
       activeResidents: condominium.activeResidents,
       administratorName: condominium.primaryAdmin.name,
       administratorEmail: condominium.primaryAdmin.email,
-      plans: condominium.plans.map((plan: Plan) => ({
+      plans: [...condominium.plans]
+        .sort((left, right) => left.monthlyPriceInCents - right.monthlyPriceInCents)
+        .map((plan: CondominiumPlan) => ({
         id: plan.id,
         slug: plan.slug,
         name: plan.name,
@@ -47,7 +43,7 @@ export const getCondominiumManagementData = cache(async () => {
         monthlyBallAllowance: plan.monthlyBallAllowance,
         monthlyPriceInCents: plan.monthlyPriceInCents,
         overagePriceInCents: plan.overagePriceInCents,
-        createdByName: plan.createdBy?.name ?? condominium.primaryAdmin.name,
+        createdByName: plan.createdByName ?? condominium.primaryAdmin.name,
       })),
     })),
   };

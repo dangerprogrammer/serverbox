@@ -1,11 +1,13 @@
 'use server';
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 
 import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
-import { PlanEntity, PlanTier } from "@/lib/db/entities/plan.entity";
+import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
 
 function normalizeSlug(value: string) {
   return value
@@ -26,6 +28,16 @@ function revalidateManagementViews() {
   revalidatePath("/gerenciar-condominios");
   revalidatePath("/dashboard");
   revalidatePath("/");
+}
+
+function getAllowedTier(value: string) {
+  const allowedTiers = new Set<string>(Object.values(PlanTier));
+
+  return allowedTiers.has(value) ? (value as PlanTier) : PlanTier.CUSTOM;
+}
+
+function getPlansWithFallback(plans: CondominiumPlan[] | null | undefined) {
+  return Array.isArray(plans) ? plans : [];
 }
 
 export async function createCondominiumAction(formData: FormData) {
@@ -51,6 +63,7 @@ export async function createCondominiumAction(formData: FormData) {
     state,
     courts: parsePositiveNumber(formData.get("courts"), 1) || 1,
     activeResidents: parsePositiveNumber(formData.get("activeResidents"), 0),
+    plans: [],
     primaryAdmin: administrator,
   });
 
@@ -110,7 +123,6 @@ export async function createPlanAction(formData: FormData) {
   const administrator = await requireAuthenticatedAdmin();
   const condominiumId = String(formData.get("condominiumId") ?? "").trim();
   const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -131,45 +143,40 @@ export async function createPlanAction(formData: FormData) {
     throw new Error("Condominio nao encontrado.");
   }
 
-  const existing = await planRepository.findOne({
-    where: {
-      condominium: { id: condominiumId },
-      slug,
-    },
-    relations: {
-      condominium: true,
-    },
-  });
+  const existingPlans = getPlansWithFallback(condominium.plans);
+  const existing = existingPlans.find((plan) => plan.slug === slug);
 
   if (existing) {
     throw new Error("Ja existe um plano com esse slug nesse condominio.");
   }
 
-  const allowedTiers = new Set<string>(Object.values(PlanTier));
+  condominium.plans = [
+    ...existingPlans,
+    {
+      id: randomUUID(),
+      slug,
+      name,
+      description,
+      tier: getAllowedTier(tierInput),
+      monthlyBallAllowance: parsePositiveNumber(
+        formData.get("monthlyBallAllowance"),
+        0,
+      ),
+      monthlyPriceInCents: parsePositiveNumber(
+        formData.get("monthlyPriceInCents"),
+        0,
+      ),
+      overagePriceInCents: parsePositiveNumber(
+        formData.get("overagePriceInCents"),
+        0,
+      ),
+      isActive: true,
+      createdByAdminId: administrator.id,
+      createdByName: administrator.name,
+    },
+  ];
 
-  await planRepository.save({
-    condominium,
-    slug,
-    name,
-    description,
-    tier: allowedTiers.has(tierInput)
-      ? (tierInput as PlanTier)
-      : PlanTier.CUSTOM,
-    monthlyBallAllowance: parsePositiveNumber(
-      formData.get("monthlyBallAllowance"),
-      0,
-    ),
-    monthlyPriceInCents: parsePositiveNumber(
-      formData.get("monthlyPriceInCents"),
-      0,
-    ),
-    overagePriceInCents: parsePositiveNumber(
-      formData.get("overagePriceInCents"),
-      0,
-    ),
-    isActive: true,
-    createdBy: administrator,
-  });
+  await condominiumRepository.save(condominium);
 
   revalidateManagementViews();
 }
@@ -184,13 +191,18 @@ export async function updatePlanAction(formData: FormData) {
   }
 
   const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
-  const existing = await planRepository.findOne({
-    where: { id: planId },
-    relations: {
-      condominium: true,
-    },
-  });
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const condominiums = await condominiumRepository.find();
+  const condominium = condominiums.find((entry) =>
+    getPlansWithFallback(entry.plans).some((plan) => plan.id === planId),
+  );
+
+  if (!condominium) {
+    throw new Error("Plano nao encontrado.");
+  }
+
+  const plans = getPlansWithFallback(condominium.plans);
+  const existing = plans.find((plan) => plan.id === planId);
 
   if (!existing) {
     throw new Error("Plano nao encontrado.");
@@ -204,43 +216,39 @@ export async function updatePlanAction(formData: FormData) {
     throw new Error("Nome, slug e descricao sao obrigatorios.");
   }
 
-  const duplicate = await planRepository.findOne({
-    where: {
-      condominium: { id: existing.condominium.id },
-      slug: requestedSlug,
-    },
-    relations: {
-      condominium: true,
-    },
-  });
+  const duplicate = plans.find((plan) => plan.slug === requestedSlug);
 
   if (duplicate && duplicate.id !== existing.id) {
     throw new Error("Ja existe um plano com esse slug nesse condominio.");
   }
 
   const tierInput = String(formData.get("tier") ?? existing.tier).trim();
-  const allowedTiers = new Set<string>(Object.values(PlanTier));
 
-  existing.name = name;
-  existing.slug = requestedSlug;
-  existing.description = description;
-  existing.tier = allowedTiers.has(tierInput)
-    ? (tierInput as PlanTier)
-    : PlanTier.CUSTOM;
-  existing.monthlyBallAllowance = parsePositiveNumber(
-    formData.get("monthlyBallAllowance"),
-    existing.monthlyBallAllowance,
-  );
-  existing.monthlyPriceInCents = parsePositiveNumber(
-    formData.get("monthlyPriceInCents"),
-    existing.monthlyPriceInCents,
-  );
-  existing.overagePriceInCents = parsePositiveNumber(
-    formData.get("overagePriceInCents"),
-    existing.overagePriceInCents,
+  condominium.plans = plans.map((plan) =>
+    plan.id === existing.id
+      ? {
+          ...plan,
+          name,
+          slug: requestedSlug,
+          description,
+          tier: getAllowedTier(tierInput),
+          monthlyBallAllowance: parsePositiveNumber(
+            formData.get("monthlyBallAllowance"),
+            existing.monthlyBallAllowance,
+          ),
+          monthlyPriceInCents: parsePositiveNumber(
+            formData.get("monthlyPriceInCents"),
+            existing.monthlyPriceInCents,
+          ),
+          overagePriceInCents: parsePositiveNumber(
+            formData.get("overagePriceInCents"),
+            existing.overagePriceInCents,
+          ),
+        }
+      : plan,
   );
 
-  await planRepository.save(existing);
+  await condominiumRepository.save(condominium);
   revalidateManagementViews();
 }
 
@@ -254,8 +262,20 @@ export async function deletePlanAction(formData: FormData) {
   }
 
   const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const condominiums = await condominiumRepository.find();
+  const condominium = condominiums.find((entry) =>
+    getPlansWithFallback(entry.plans).some((plan) => plan.id === planId),
+  );
 
-  await planRepository.delete({ id: planId });
+  if (!condominium) {
+    throw new Error("Plano nao encontrado.");
+  }
+
+  condominium.plans = getPlansWithFallback(condominium.plans).filter(
+    (plan) => plan.id !== planId,
+  );
+
+  await condominiumRepository.save(condominium);
   revalidateManagementViews();
 }

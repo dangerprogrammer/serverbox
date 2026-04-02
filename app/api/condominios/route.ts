@@ -29,7 +29,6 @@ export async function GET() {
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
-      plans: true,
     },
     order: {
       createdAt: "DESC",

@@ -19,7 +19,7 @@ import {
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { PlanTier, type Plan } from "@/lib/db/entities/plan.entity";
+import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
 
 const tierLabels: Record<PlanTier, string> = {
   [PlanTier.BASIC]: "Basico",
@@ -45,7 +45,6 @@ export const getDashboardData = cache(async () => {
     administratorRepository.find({
       relations: {
         condominiums: true,
-        plans: true,
       },
       order: {
         createdAt: "ASC",
@@ -54,9 +53,6 @@ export const getDashboardData = cache(async () => {
     condominiumRepository.find({
       relations: {
         primaryAdmin: true,
-        plans: {
-          createdBy: true,
-        },
         payments: true,
         ballMovements: true,
       },
@@ -67,7 +63,7 @@ export const getDashboardData = cache(async () => {
   ]);
 
   const plans = condominiums.flatMap((condominium) =>
-    condominium.plans.map((plan: Plan) => ({
+    condominium.plans.map((plan: CondominiumPlan) => ({
       id: plan.id,
       slug: plan.slug,
       name: plan.name,
@@ -77,7 +73,7 @@ export const getDashboardData = cache(async () => {
       monthlyPriceInCents: plan.monthlyPriceInCents,
       overagePriceInCents: plan.overagePriceInCents,
       condominiumName: condominium.name,
-      createdByName: plan.createdBy?.name ?? condominium.primaryAdmin.name,
+      createdByName: plan.createdByName ?? condominium.primaryAdmin.name,
     })),
   );
 
@@ -112,7 +108,10 @@ export const getDashboardData = cache(async () => {
       name: administrator.name,
       email: administrator.email,
       condominiumCount: administrator.condominiums.length,
-      createdPlanCount: administrator.plans.length,
+      createdPlanCount: administrator.condominiums.reduce(
+        (total, condominium) => total + condominium.plans.length,
+        0,
+      ),
     })),
   };
 });

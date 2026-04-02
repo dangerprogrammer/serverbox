@@ -25,7 +25,6 @@ export async function GET() {
   const administrators = await administratorRepository.find({
     relations: {
       condominiums: true,
-      plans: true,
     },
     order: {
       createdAt: "ASC",
@@ -38,7 +37,10 @@ export async function GET() {
       name: administrator.name,
       email: administrator.email,
       condominiumCount: administrator.condominiums.length,
-      createdPlanCount: administrator.plans.length,
+      createdPlanCount: administrator.condominiums.reduce(
+        (total, condominium) => total + condominium.plans.length,
+        0,
+      ),
     })),
   );
 }
