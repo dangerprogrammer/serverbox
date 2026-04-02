@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { FloatingInput } from "@/app/_components/floating-field";
 import { loginAdmin } from "@/app/login/actions";
 
 const initialState = undefined;
@@ -11,27 +12,21 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="space-y-4">
-      <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Email</span>
-        <input
-          name="email"
-          type="email"
-          autoComplete="email"
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-          placeholder="admin@serverbox.local"
-        />
-      </label>
+      <FloatingInput
+        label="Email"
+        name="email"
+        type="email"
+        autoComplete="email"
+        placeholder="admin@serverbox.local"
+      />
 
-      <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Senha</span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-          placeholder="Sua senha de admin"
-        />
-      </label>
+      <FloatingInput
+        label="Senha"
+        name="password"
+        type="password"
+        autoComplete="current-password"
+        placeholder="Sua senha de admin"
+      />
 
       {state?.error ? (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">

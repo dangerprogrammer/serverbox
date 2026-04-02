@@ -46,3 +46,73 @@ a {
 ::selection {
   background: rgba(31, 41, 55, 0.12);
 }
+
+.floating-field {
+  position: relative;
+  display: block;
+}
+
+.floating-control {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240);
+  background: white;
+  padding: 1.5rem 1rem 0.75rem;
+  font-size: 0.875rem;
+  color: rgb(15 23 42);
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    padding 150ms ease;
+}
+
+.floating-control::placeholder {
+  color: transparent;
+}
+
+.floating-control:focus {
+  border-color: rgb(148 163 184);
+}
+
+.floating-label {
+  pointer-events: none;
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left top;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: rgb(100 116 139);
+  transition:
+    top 150ms ease,
+    transform 150ms ease,
+    font-size 150ms ease,
+    color 150ms ease;
+}
+
+.floating-control:focus + .floating-label,
+.floating-control:not(:placeholder-shown) + .floating-label {
+  top: 0.75rem;
+  transform: translateY(0);
+  font-size: 0.75rem;
+  color: rgb(71 85 105);
+}
+
+.floating-control:-webkit-autofill + .floating-label {
+  top: 0.75rem;
+  transform: translateY(0);
+  font-size: 0.75rem;
+  color: rgb(71 85 105);
+}
+
+.floating-textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.floating-textarea + .floating-label {
+  top: 1.5rem;
+  transform: translateY(-50%);
+}

@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  FloatingInput,
+  FloatingTextarea,
+} from "@/app/_components/floating-field";
 import { logoutAdmin } from "@/app/login/actions";
 import {
   createCondominiumAction,
@@ -80,38 +84,43 @@ export default async function GerenciarCondominiosPage() {
 
           <form action={createCondominiumAction} className="mt-6 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <input
+              <FloatingInput
+                label="Nome do condominio"
                 name="name"
                 placeholder="Nome do condominio"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                className="bg-white"
               />
-              <input
+              <FloatingInput
+                label="Cidade"
                 name="city"
                 placeholder="Cidade"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                className="bg-white"
               />
-              <input
+              <FloatingInput
+                label="UF"
                 name="state"
                 placeholder="UF"
                 maxLength={2}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm uppercase text-slate-900 outline-none"
+                className="bg-white uppercase"
               />
-              <input
+              <FloatingInput
+                label="Quadras"
                 name="courts"
                 type="number"
                 min={1}
                 defaultValue={1}
                 placeholder="Quadras"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                className="bg-white"
               />
             </div>
-            <input
+            <FloatingInput
+              label="Moradores ativos"
               name="activeResidents"
               type="number"
               min={0}
               defaultValue={0}
               placeholder="Moradores ativos"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+              className="bg-white"
             />
 
             <button
@@ -203,15 +212,17 @@ export default async function GerenciarCondominiosPage() {
                         Novo plano deste condominio
                       </p>
                       <div className="grid gap-3 md:grid-cols-2">
-                        <input
+                        <FloatingInput
+                          label="Nome do plano"
                           name="name"
                           placeholder="Nome do plano"
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          className="bg-white"
                         />
-                        <input
+                        <FloatingInput
+                          label="Slug do plano"
                           name="slug"
                           placeholder="slug-do-plano"
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          className="bg-white"
                         />
                         <select
                           name="tier"
@@ -224,33 +235,37 @@ export default async function GerenciarCondominiosPage() {
                             </option>
                           ))}
                         </select>
-                        <input
+                        <FloatingInput
+                          label="Bolinhas por mes"
                           name="monthlyBallAllowance"
                           type="number"
                           min={0}
                           placeholder="Bolinhas por mes"
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          className="bg-white"
                         />
-                        <input
+                        <FloatingInput
+                          label="Preco mensal em centavos"
                           name="monthlyPriceInCents"
                           type="number"
                           min={0}
                           placeholder="Preco mensal em centavos"
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          className="bg-white"
                         />
-                        <input
+                        <FloatingInput
+                          label="Preco excedente em centavos"
                           name="overagePriceInCents"
                           type="number"
                           min={0}
                           placeholder="Preco excedente em centavos"
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          className="bg-white"
                         />
                       </div>
-                      <textarea
+                      <FloatingTextarea
+                        label="Descricao comercial do plano"
                         name="description"
                         rows={3}
                         placeholder="Descricao comercial do plano"
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        className="bg-white"
                       />
                       <button
                         type="submit"
