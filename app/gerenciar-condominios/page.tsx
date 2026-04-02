@@ -143,240 +143,289 @@ export default async function GerenciarCondominiosPage() {
               </div>
             ) : (
               condominiums.map((condominium) => (
-                <article
+                <details
                   key={condominium.id}
-                  className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5"
+                  className="group rounded-[1.25rem] border border-slate-200 bg-slate-50"
                 >
-                  <form action={updateCondominiumAction} className="space-y-4">
-                    <input type="hidden" name="condominiumId" value={condominium.id} />
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <input
-                        name="name"
-                        defaultValue={condominium.name}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                      />
-                      <input
-                        name="city"
-                        defaultValue={condominium.city}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                      />
-                      <input
-                        name="state"
-                        maxLength={2}
-                        defaultValue={condominium.state}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm uppercase text-slate-900 outline-none"
-                      />
-                      <input
-                        name="courts"
-                        type="number"
-                        min={1}
-                        defaultValue={condominium.courts}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                      />
+                  <summary className="flex cursor-pointer list-none flex-col gap-4 p-5 marker:hidden md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          {condominium.name}
+                        </h3>
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                          {condominium.plans.length} planos
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-500">
+                        {condominium.city}, {condominium.state} -{" "}
+                        {condominium.courts} quadras - {condominium.activeResidents}{" "}
+                        moradores
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {condominium.administratorName} - {condominium.administratorEmail}
+                      </p>
                     </div>
-                    <input
-                      name="activeResidents"
-                      type="number"
-                      min={0}
-                      defaultValue={condominium.activeResidents}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                    />
-                    <p className="text-sm text-slate-500">
-                      Admin responsavel: {condominium.administratorName} -{" "}
-                      {condominium.administratorEmail}
-                    </p>
 
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        type="submit"
-                        className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                      >
-                        Salvar condominio
-                      </button>
-                    </div>
-                  </form>
-
-                  <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        Planos deste condominio
-                      </h3>
-                      <span className="text-sm text-slate-500">
-                        {condominium.plans.length} cadastrados
+                    <div className="flex items-center gap-3">
+                      <div className="grid grid-cols-2 gap-2 text-sm text-slate-600 sm:min-w-64">
+                        <span className="rounded-xl bg-white px-3 py-2 text-center">
+                          {condominium.courts} quadras
+                        </span>
+                        <span className="rounded-xl bg-white px-3 py-2 text-center">
+                          {condominium.activeResidents} moradores
+                        </span>
+                      </div>
+                      <span className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition group-open:rotate-180">
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          className="size-5"
+                        >
+                          <path
+                            d="M5 7.5 10 12.5 15 7.5"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
                       </span>
                     </div>
+                  </summary>
 
-                    <form action={createPlanAction} className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="border-t border-slate-200 bg-white p-5">
+                    <form action={updateCondominiumAction} className="space-y-4">
                       <input type="hidden" name="condominiumId" value={condominium.id} />
-                      <p className="text-sm font-medium text-slate-900">
-                        Novo plano deste condominio
-                      </p>
                       <div className="grid gap-3 md:grid-cols-2">
-                        <FloatingInput
-                          label="Nome do plano"
+                        <input
                           name="name"
-                          placeholder="Nome do plano"
-                          className="bg-white"
-                        />
-                        <FloatingInput
-                          label="Slug do plano"
-                          name="slug"
-                          placeholder="slug-do-plano"
-                          className="bg-white"
-                        />
-                        <select
-                          name="tier"
-                          defaultValue={PlanTier.CUSTOM}
+                          defaultValue={condominium.name}
                           className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                        >
-                          {Object.values(PlanTier).map((tier) => (
-                            <option key={tier} value={tier}>
-                              {tierLabels[tier]}
-                            </option>
-                          ))}
-                        </select>
-                        <FloatingInput
-                          label="Bolinhas por mes"
-                          name="monthlyBallAllowance"
-                          type="number"
-                          min={0}
-                          placeholder="Bolinhas por mes"
-                          className="bg-white"
                         />
-                        <FloatingInput
-                          label="Preco mensal em centavos"
-                          name="monthlyPriceInCents"
-                          type="number"
-                          min={0}
-                          placeholder="Preco mensal em centavos"
-                          className="bg-white"
+                        <input
+                          name="city"
+                          defaultValue={condominium.city}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                         />
-                        <FloatingInput
-                          label="Preco excedente em centavos"
-                          name="overagePriceInCents"
+                        <input
+                          name="state"
+                          maxLength={2}
+                          defaultValue={condominium.state}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm uppercase text-slate-900 outline-none"
+                        />
+                        <input
+                          name="courts"
                           type="number"
-                          min={0}
-                          placeholder="Preco excedente em centavos"
-                          className="bg-white"
+                          min={1}
+                          defaultValue={condominium.courts}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                         />
                       </div>
-                      <FloatingTextarea
-                        label="Descricao comercial do plano"
-                        name="description"
-                        rows={3}
-                        placeholder="Descricao comercial do plano"
-                        className="bg-white"
+                      <input
+                        name="activeResidents"
+                        type="number"
+                        min={0}
+                        defaultValue={condominium.activeResidents}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                       />
-                      <button
-                        type="submit"
-                        className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                      >
-                        Criar plano
-                      </button>
+
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="submit"
+                          className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                        >
+                          Salvar condominio
+                        </button>
+                      </div>
                     </form>
 
-                    <div className="mt-4 space-y-4">
-                      {condominium.plans.length === 0 ? (
-                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-500">
-                          Este condominio ainda nao possui planos.
-                        </div>
-                      ) : (
-                        condominium.plans.map((plan) => (
-                          <article
-                            key={plan.id}
-                            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                    <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <h4 className="text-lg font-semibold text-slate-900">
+                          Planos deste condominio
+                        </h4>
+                        <span className="text-sm text-slate-500">
+                          {condominium.plans.length} cadastrados
+                        </span>
+                      </div>
+
+                      <form
+                        action={createPlanAction}
+                        className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-white p-4"
+                      >
+                        <input type="hidden" name="condominiumId" value={condominium.id} />
+                        <p className="text-sm font-medium text-slate-900">
+                          Novo plano deste condominio
+                        </p>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <FloatingInput
+                            label="Nome do plano"
+                            name="name"
+                            placeholder="Nome do plano"
+                            className="bg-white"
+                          />
+                          <FloatingInput
+                            label="Slug do plano"
+                            name="slug"
+                            placeholder="slug-do-plano"
+                            className="bg-white"
+                          />
+                          <select
+                            name="tier"
+                            defaultValue={PlanTier.CUSTOM}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                           >
-                            <form action={updatePlanAction} className="space-y-4">
-                              <input type="hidden" name="planId" value={plan.id} />
-                              <div className="grid gap-3 md:grid-cols-2">
-                                <input
-                                  name="name"
-                                  defaultValue={plan.name}
-                                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                            {Object.values(PlanTier).map((tier) => (
+                              <option key={tier} value={tier}>
+                                {tierLabels[tier]}
+                              </option>
+                            ))}
+                          </select>
+                          <FloatingInput
+                            label="Bolinhas por mes"
+                            name="monthlyBallAllowance"
+                            type="number"
+                            min={0}
+                            placeholder="Bolinhas por mes"
+                            className="bg-white"
+                          />
+                          <FloatingInput
+                            label="Preco mensal em centavos"
+                            name="monthlyPriceInCents"
+                            type="number"
+                            min={0}
+                            placeholder="Preco mensal em centavos"
+                            className="bg-white"
+                          />
+                          <FloatingInput
+                            label="Preco excedente em centavos"
+                            name="overagePriceInCents"
+                            type="number"
+                            min={0}
+                            placeholder="Preco excedente em centavos"
+                            className="bg-white"
+                          />
+                        </div>
+                        <FloatingTextarea
+                          label="Descricao comercial do plano"
+                          name="description"
+                          rows={3}
+                          placeholder="Descricao comercial do plano"
+                          className="bg-white"
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                        >
+                          Criar plano
+                        </button>
+                      </form>
+
+                      <div className="mt-4 space-y-4">
+                        {condominium.plans.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-500">
+                            Este condominio ainda nao possui planos.
+                          </div>
+                        ) : (
+                          condominium.plans.map((plan) => (
+                            <article
+                              key={plan.id}
+                              className="rounded-xl border border-slate-200 bg-white p-4"
+                            >
+                              <form action={updatePlanAction} className="space-y-4">
+                                <input type="hidden" name="planId" value={plan.id} />
+                                <div className="grid gap-3 md:grid-cols-2">
+                                  <input
+                                    name="name"
+                                    defaultValue={plan.name}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                  <input
+                                    name="slug"
+                                    defaultValue={plan.slug}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                  <select
+                                    name="tier"
+                                    defaultValue={plan.tier}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                  >
+                                    {Object.values(PlanTier).map((tier) => (
+                                      <option key={tier} value={tier}>
+                                        {tierLabels[tier]}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    name="monthlyBallAllowance"
+                                    type="number"
+                                    min={0}
+                                    defaultValue={plan.monthlyBallAllowance}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                  <input
+                                    name="monthlyPriceInCents"
+                                    type="number"
+                                    min={0}
+                                    defaultValue={plan.monthlyPriceInCents}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                  <input
+                                    name="overagePriceInCents"
+                                    type="number"
+                                    min={0}
+                                    defaultValue={plan.overagePriceInCents}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                </div>
+                                <textarea
+                                  name="description"
+                                  rows={3}
+                                  defaultValue={plan.description}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                                 />
-                                <input
-                                  name="slug"
-                                  defaultValue={plan.slug}
-                                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                />
-                                <select
-                                  name="tier"
-                                  defaultValue={plan.tier}
-                                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                >
-                                  {Object.values(PlanTier).map((tier) => (
-                                    <option key={tier} value={tier}>
-                                      {tierLabels[tier]}
-                                    </option>
-                                  ))}
-                                </select>
-                                <input
-                                  name="monthlyBallAllowance"
-                                  type="number"
-                                  min={0}
-                                  defaultValue={plan.monthlyBallAllowance}
-                                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                />
-                                <input
-                                  name="monthlyPriceInCents"
-                                  type="number"
-                                  min={0}
-                                  defaultValue={plan.monthlyPriceInCents}
-                                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                />
-                                <input
-                                  name="overagePriceInCents"
-                                  type="number"
-                                  min={0}
-                                  defaultValue={plan.overagePriceInCents}
-                                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                />
-                              </div>
-                              <textarea
-                                name="description"
-                                rows={3}
-                                defaultValue={plan.description}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                              />
-                              <p className="text-sm text-slate-500">
-                                {currencyFormatter.format(plan.monthlyPriceInCents / 100)}{" "}
-                                / mes - criado por {plan.createdByName}
-                              </p>
-                              <div className="flex flex-wrap gap-3">
+                                <p className="text-sm text-slate-500">
+                                  {currencyFormatter.format(plan.monthlyPriceInCents / 100)}{" "}
+                                  / mes - criado por {plan.createdByName}
+                                </p>
+                                <div className="flex flex-wrap gap-3">
+                                  <button
+                                    type="submit"
+                                    className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                  >
+                                    Salvar plano
+                                  </button>
+                                </div>
+                              </form>
+
+                              <form action={deletePlanAction} className="mt-3">
+                                <input type="hidden" name="planId" value={plan.id} />
                                 <button
                                   type="submit"
-                                  className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
                                 >
-                                  Salvar plano
+                                  Excluir plano
                                 </button>
-                              </div>
-                            </form>
-
-                            <form action={deletePlanAction} className="mt-3">
-                              <input type="hidden" name="planId" value={plan.id} />
-                              <button
-                                type="submit"
-                                className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-                              >
-                                Excluir plano
-                              </button>
-                            </form>
-                          </article>
-                        ))
-                      )}
+                              </form>
+                            </article>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <form action={deleteCondominiumAction} className="mt-4">
-                    <input type="hidden" name="condominiumId" value={condominium.id} />
-                    <button
-                      type="submit"
-                      className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-                    >
-                      Excluir condominio
-                    </button>
-                  </form>
-                </article>
+                    <form action={deleteCondominiumAction} className="mt-4">
+                      <input type="hidden" name="condominiumId" value={condominium.id} />
+                      <button
+                        type="submit"
+                        className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                      >
+                        Excluir condominio
+                      </button>
+                    </form>
+                  </div>
+                </details>
               ))
             )}
           </div>
