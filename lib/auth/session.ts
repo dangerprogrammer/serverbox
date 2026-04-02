@@ -22,7 +22,11 @@ type SessionPayload = {
 };
 
 function getSessionSecret() {
-  const secret = process.env.SESSION_SECRET?.trim();
+  return process.env.SESSION_SECRET?.trim() || null;
+}
+
+function requireSessionSecret() {
+  const secret = getSessionSecret();
 
   if (!secret) {
     throw new Error("SESSION_SECRET nao configurado.");
@@ -36,7 +40,7 @@ function encodePayload(payload: SessionPayload) {
 }
 
 function signPayload(encodedPayload: string) {
-  return createHmac("sha256", getSessionSecret())
+  return createHmac("sha256", requireSessionSecret())
     .update(encodedPayload)
     .digest("base64url");
 }
@@ -87,21 +91,33 @@ export function getAdminSessionFromRaw(rawSession: string | undefined) {
     return null;
   }
 
+  const secret = getSessionSecret();
+
+  if (!secret) {
+    return null;
+  }
+
   const [encodedPayload, signature] = rawSession.split(".");
 
   if (!encodedPayload || !signature) {
     return null;
   }
 
-  const expectedSignature = signPayload(encodedPayload);
-  const provided = Buffer.from(signature);
-  const expected = Buffer.from(expectedSignature);
+  try {
+    const expectedSignature = createHmac("sha256", secret)
+      .update(encodedPayload)
+      .digest("base64url");
+    const provided = Buffer.from(signature);
+    const expected = Buffer.from(expectedSignature);
 
-  if (provided.length !== expected.length) {
-    return null;
-  }
+    if (provided.length !== expected.length) {
+      return null;
+    }
 
-  if (!timingSafeEqual(provided, expected)) {
+    if (!timingSafeEqual(provided, expected)) {
+      return null;
+    }
+  } catch {
     return null;
   }
 

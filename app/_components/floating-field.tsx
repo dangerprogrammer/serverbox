@@ -22,12 +22,12 @@ export function FloatingInput({
 }: FloatingInputProps) {
   return (
     <label className="floating-field">
+      <span className="floating-label">{label}</span>
       <input
         {...props}
-        placeholder={placeholder ?? " "}
+        placeholder={placeholder}
         className={joinClassNames("floating-control", className)}
       />
-      <span className="floating-label">{label}</span>
     </label>
   );
 }
@@ -40,12 +40,12 @@ export function FloatingTextarea({
 }: FloatingTextareaProps) {
   return (
     <label className="floating-field">
+      <span className="floating-label">{label}</span>
       <textarea
         {...props}
-        placeholder={placeholder ?? " "}
+        placeholder={placeholder}
         className={joinClassNames("floating-control floating-textarea", className)}
       />
-      <span className="floating-label">{label}</span>
     </label>
   );
 }

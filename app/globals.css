@@ -48,7 +48,6 @@ a {
 }
 
 .floating-field {
-  position: relative;
   display: block;
 }
 
@@ -57,18 +56,17 @@ a {
   border-radius: 0.75rem;
   border: 1px solid rgb(226 232 240);
   background: white;
-  padding: 1.5rem 1rem 0.75rem;
+  padding: 0.95rem 1rem;
   font-size: 0.875rem;
   color: rgb(15 23 42);
   outline: none;
   transition:
     border-color 150ms ease,
-    box-shadow 150ms ease,
-    padding 150ms ease;
+    box-shadow 150ms ease;
 }
 
 .floating-control::placeholder {
-  color: transparent;
+  color: rgb(148 163 184);
 }
 
 .floating-control:focus {
@@ -76,43 +74,14 @@ a {
 }
 
 .floating-label {
-  pointer-events: none;
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  transform-origin: left top;
+  display: block;
+  margin-bottom: 0.75rem;
   font-size: 0.875rem;
-  line-height: 1;
-  color: rgb(100 116 139);
-  transition:
-    top 150ms ease,
-    transform 150ms ease,
-    font-size 150ms ease,
-    color 150ms ease;
-}
-
-.floating-control:focus + .floating-label,
-.floating-control:not(:placeholder-shown) + .floating-label {
-  top: 0.75rem;
-  transform: translateY(0);
-  font-size: 0.75rem;
-  color: rgb(71 85 105);
-}
-
-.floating-control:-webkit-autofill + .floating-label {
-  top: 0.75rem;
-  transform: translateY(0);
-  font-size: 0.75rem;
-  color: rgb(71 85 105);
+  font-weight: 600;
+  color: rgb(30 41 59);
 }
 
 .floating-textarea {
   min-height: 7rem;
   resize: vertical;
-}
-
-.floating-textarea + .floating-label {
-  top: 1.5rem;
-  transform: translateY(-50%);
 }
