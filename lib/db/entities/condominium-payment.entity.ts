@@ -1,7 +1,6 @@
 import { EntitySchema } from "typeorm";
 
 import type { Condominium } from "@/lib/db/entities/condominium.entity";
-import type { Plan } from "@/lib/db/entities/plan.entity";
 
 export enum PaymentMethod {
   PIX = "pix",
@@ -43,7 +42,8 @@ export type CondominiumPayment = {
   createdAt: Date;
   updatedAt: Date;
   condominium: Condominium;
-  plan: Plan;
+  planId: string;
+  planName: string;
 };
 
 export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
@@ -70,6 +70,12 @@ export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
     },
     ballQuantity: {
       type: Number,
+    },
+    planId: {
+      type: String,
+    },
+    planName: {
+      type: String,
     },
     provider: {
       type: String,
@@ -140,17 +146,6 @@ export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
       },
       nullable: false,
       onDelete: "CASCADE",
-    },
-    plan: {
-      type: "many-to-one",
-      target: "Plan",
-      inverseSide: "payments",
-      joinColumn: {
-        name: "planId",
-      },
-      eager: true,
-      nullable: false,
-      onDelete: "RESTRICT",
     },
   },
 });

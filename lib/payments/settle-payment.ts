@@ -96,7 +96,6 @@ export async function syncAbacatePixPayment({
     where: { id: paymentId },
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 
@@ -128,7 +127,6 @@ export async function simulateAbacatePixPayment(paymentId: string) {
     where: { id: paymentId },
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 

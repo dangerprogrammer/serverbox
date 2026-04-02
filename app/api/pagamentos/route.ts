@@ -7,8 +7,8 @@ import {
 import { createCondominiumPayment } from "@/lib/payments/create-payment";
 
 type CreatePaymentPayload = {
-  condominiumId?: string;
   planId?: string;
+  condominiumId?: string;
   method?: string;
 };
 
@@ -19,7 +19,6 @@ export async function GET() {
   const payments = await paymentRepository.find({
     relations: {
       condominium: true,
-      plan: true,
     },
     order: {
       createdAt: "DESC",
@@ -51,8 +50,8 @@ export async function GET() {
         name: payment.condominium.name,
       },
       plan: {
-        id: payment.plan.id,
-        name: payment.plan.name,
+        id: payment.planId,
+        name: payment.planName,
       },
     })),
   );
@@ -61,9 +60,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const payload = (await request.json()) as CreatePaymentPayload;
 
-  if (!payload.condominiumId || !payload.planId) {
+  if (!payload.planId) {
     return Response.json(
-      { error: "condominiumId e planId sao obrigatorios." },
+      { error: "planId e obrigatorio." },
       { status: 400 },
     );
   }
@@ -77,8 +76,8 @@ export async function POST(request: Request) {
 
   try {
     const payment = await createCondominiumPayment({
-      condominiumId: payload.condominiumId,
       planId: payload.planId,
+      condominiumId: payload.condominiumId,
     });
 
     return Response.json(payment, { status: 201 });
@@ -86,7 +85,11 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error ? error.message : "Falha ao criar cobranca PIX.";
 
-    if (message === "Condominio ou plano nao encontrado.") {
+    if (message === "Plano nao encontrado.") {
+      return Response.json({ error: message }, { status: 404 });
+    }
+
+    if (message === "Plano nao pertence ao condominio informado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 
@@ -102,6 +105,26 @@ export async function POST(request: Request) {
         {
           error:
             "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar cobrancas PIX.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nao configurado.") {
+      return Response.json(
+        {
+          error:
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar cobrancas PIX.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (message === "ABACATEPAY_API_BASE_URL invalida. Use uma URL da API v1 ou v2 da AbacatePay.") {
+      return Response.json(
+        {
+          error:
+            "A ABACATEPAY_API_BASE_URL configurada precisa apontar para uma URL valida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
         },
         { status: 503 },
       );

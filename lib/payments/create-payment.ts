@@ -4,15 +4,14 @@ import {
   CondominiumPaymentEntity,
   PaymentStatus,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { PlanEntity } from "@/lib/db/entities/plan.entity";
 import {
   createAbacatePixCharge,
   isAbacatePayConfigured,
 } from "@/lib/payments/abacatepay";
 
 type CreateCondominiumPaymentInput = {
-  condominiumId: string;
   planId: string;
+  condominiumId?: string;
 };
 
 function getDefaultAbacatePayCustomerCellphone() {
@@ -35,8 +34,8 @@ function buildPaymentReference() {
 }
 
 export async function createCondominiumPayment({
-  condominiumId,
   planId,
+  condominiumId,
 }: CreateCondominiumPaymentInput) {
   if (!isAbacatePayConfigured()) {
     throw new Error("ABACATEPAY_API_KEY nao configurada.");
@@ -44,27 +43,47 @@ export async function createCondominiumPayment({
 
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-  const planRepository = dataSource.getRepository(PlanEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
 
-  const [condominium, plan] = await Promise.all([
-    condominiumRepository.findOne({
-      where: { id: condominiumId },
-      relations: {
-        primaryAdmin: true,
-      },
-    }),
-    planRepository.findOneBy({ id: planId }),
-  ]);
+  const condominiums = await condominiumRepository.find({
+    relations: {
+      primaryAdmin: true,
+    },
+  });
+  const condominium = condominiums.find(
+    (entry) =>
+      (!condominiumId || entry.id === condominiumId) &&
+      entry.plans.some((plan) => plan.id === planId),
+  );
 
-  if (!condominium || !plan) {
-    throw new Error("Condominio ou plano nao encontrado.");
+  if (!condominium) {
+    const hasPlan = condominiums.some((entry) =>
+      entry.plans.some((plan) => plan.id === planId),
+    );
+
+    if (!hasPlan) {
+      throw new Error("Plano nao encontrado.");
+    }
+
+    throw new Error("Plano nao pertence ao condominio informado.");
+  }
+
+  const plan = condominium.plans.find((entry) => entry.id === planId);
+
+  if (!plan) {
+    throw new Error("Plano nao encontrado.");
   }
 
   const defaultCustomerCellphone = getDefaultAbacatePayCustomerCellphone();
 
   if (!defaultCustomerCellphone) {
     throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.");
+  }
+
+  const defaultCustomerTaxId = getDefaultAbacatePayCustomerTaxId();
+
+  if (!defaultCustomerTaxId) {
+    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nao configurado.");
   }
 
   const reference = buildPaymentReference();
@@ -75,18 +94,19 @@ export async function createCondominiumPayment({
       name: condominium.primaryAdmin.name,
       email: condominium.primaryAdmin.email,
       cellphone: defaultCustomerCellphone,
-      taxId: getDefaultAbacatePayCustomerTaxId() ?? undefined,
+      taxId: defaultCustomerTaxId,
     },
     metadata: {
       reference,
+      planId,
       condominiumId: condominium.id,
-      planId: plan.id,
     },
   });
 
   return paymentRepository.save({
     condominium,
-    plan,
+    planId: plan.id,
+    planName: plan.name,
     reference,
     method: charge.method,
     status: PaymentStatus.PENDING,

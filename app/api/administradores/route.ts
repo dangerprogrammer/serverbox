@@ -1,4 +1,6 @@
 import { getDataSource } from "@/lib/db/data-source";
+import { requireAdminApiSession } from "@/lib/auth/session";
+import { hashPassword } from "@/lib/auth/password";
 import {
   AdministratorEntity,
   type Administrator,
@@ -7,16 +9,22 @@ import {
 type CreateAdministratorPayload = {
   name?: string;
   email?: string;
+  password?: string;
 };
 
 export async function GET() {
+  const administrator = await requireAdminApiSession();
+
+  if (administrator instanceof Response) {
+    return administrator;
+  }
+
   const dataSource = await getDataSource();
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
 
   const administrators = await administratorRepository.find({
     relations: {
       condominiums: true,
-      plans: true,
     },
     order: {
       createdAt: "ASC",
@@ -29,12 +37,21 @@ export async function GET() {
       name: administrator.name,
       email: administrator.email,
       condominiumCount: administrator.condominiums.length,
-      createdPlanCount: administrator.plans.length,
+      createdPlanCount: administrator.condominiums.reduce(
+        (total, condominium) => total + condominium.plans.length,
+        0,
+      ),
     })),
   );
 }
 
 export async function POST(request: Request) {
+  const authenticatedAdministrator = await requireAdminApiSession();
+
+  if (authenticatedAdministrator instanceof Response) {
+    return authenticatedAdministrator;
+  }
+
   const payload = (await request.json()) as CreateAdministratorPayload;
 
   if (!payload.name || !payload.email) {
@@ -62,6 +79,9 @@ export async function POST(request: Request) {
   const administrator = await administratorRepository.save({
     name: payload.name.trim(),
     email: normalizedEmail,
+    passwordHash: payload.password?.trim()
+      ? hashPassword(payload.password.trim())
+      : null,
   });
 
   return Response.json(administrator, { status: 201 });

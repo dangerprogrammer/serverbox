@@ -1,7 +1,6 @@
 import { EntitySchema } from "typeorm";
 
 import type { Condominium } from "@/lib/db/entities/condominium.entity";
-import type { Plan } from "@/lib/db/entities/plan.entity";
 
 export enum SubscriptionStatus {
   ACTIVE = "active",
@@ -17,7 +16,8 @@ export type Subscription = {
   createdAt: Date;
   updatedAt: Date;
   condominium: Condominium;
-  plan: Plan;
+  planId: string;
+  planName: string;
 };
 
 export const SubscriptionEntity = new EntitySchema<Subscription>({
@@ -39,6 +39,12 @@ export const SubscriptionEntity = new EntitySchema<Subscription>({
       type: "text",
       nullable: true,
     },
+    planId: {
+      type: String,
+    },
+    planName: {
+      type: String,
+    },
     createdAt: {
       type: Date,
       createDate: true,
@@ -58,17 +64,6 @@ export const SubscriptionEntity = new EntitySchema<Subscription>({
       },
       nullable: false,
       onDelete: "CASCADE",
-    },
-    plan: {
-      type: "many-to-one",
-      target: "Plan",
-      inverseSide: "subscriptions",
-      joinColumn: {
-        name: "planId",
-      },
-      eager: true,
-      nullable: false,
-      onDelete: "RESTRICT",
     },
   },
 });

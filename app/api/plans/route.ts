@@ -1,8 +1,10 @@
 import { getDataSource } from "@/lib/db/data-source";
-import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
-import { PlanEntity, PlanTier, type Plan } from "@/lib/db/entities/plan.entity";
+import { requireAdminApiSession } from "@/lib/auth/session";
+import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
+import { PlanTier } from "@/lib/domain/condominium-plan";
 
 type CreatePlanPayload = {
+  condominiumId?: string;
   name?: string;
   slug?: string;
   description?: string;
@@ -10,9 +12,6 @@ type CreatePlanPayload = {
   monthlyPriceInCents?: number;
   overagePriceInCents?: number;
   tier?: string;
-  adminEmail?: string;
-  adminName?: string;
-  isDefault?: boolean;
 };
 
 function normalizeSlug(value: string) {
@@ -25,98 +24,96 @@ function normalizeSlug(value: string) {
 }
 
 export async function GET() {
-  const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
+  const administrator = await requireAdminApiSession();
 
-  const plans = await planRepository.find({
+  if (administrator instanceof Response) {
+    return administrator;
+  }
+
+  const dataSource = await getDataSource();
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const condominiums = await condominiumRepository.find({
     relations: {
-      condominiumPlans: true,
-      createdBy: true,
+      primaryAdmin: true,
     },
     order: {
-      monthlyPriceInCents: "ASC",
+      createdAt: "ASC",
     },
   });
 
   return Response.json(
-    plans.map((plan: Plan) => ({
-      id: plan.id,
-      slug: plan.slug,
-      name: plan.name,
-      tier: plan.tier,
-      description: plan.description,
-      monthlyBallAllowance: plan.monthlyBallAllowance,
-      monthlyPriceInCents: plan.monthlyPriceInCents,
-      overagePriceInCents: plan.overagePriceInCents,
-      isDefault: plan.isDefault,
-      condominiumCount: plan.condominiumPlans.length,
-      createdBy: plan.createdBy
-        ? {
-            id: plan.createdBy.id,
-            name: plan.createdBy.name,
-            email: plan.createdBy.email,
-          }
-        : null,
-    })),
+    condominiums
+      .flatMap((condominium) =>
+        condominium.plans.map((plan) => ({
+          id: plan.id,
+          condominiumId: condominium.id,
+          condominiumName: condominium.name,
+          slug: plan.slug,
+          name: plan.name,
+          tier: plan.tier,
+          description: plan.description,
+          monthlyBallAllowance: plan.monthlyBallAllowance,
+          monthlyPriceInCents: plan.monthlyPriceInCents,
+          overagePriceInCents: plan.overagePriceInCents,
+          createdBy: plan.createdByAdminId
+            ? {
+                id: plan.createdByAdminId,
+                name: plan.createdByName ?? condominium.primaryAdmin.name,
+                email: condominium.primaryAdmin.email,
+              }
+            : null,
+        })),
+      )
+      .sort((left, right) => left.monthlyPriceInCents - right.monthlyPriceInCents),
   );
 }
 
 export async function POST(request: Request) {
+  const authenticatedAdministrator = await requireAdminApiSession();
+
+  if (authenticatedAdministrator instanceof Response) {
+    return authenticatedAdministrator;
+  }
+
   const payload = (await request.json()) as CreatePlanPayload;
 
-  if (!payload.name || !payload.description) {
+  if (!payload.condominiumId || !payload.name || !payload.description) {
     return Response.json(
-      { error: "name e description sao obrigatorios." },
+      { error: "condominiumId, name e description sao obrigatorios." },
       { status: 400 },
     );
   }
 
   const dataSource = await getDataSource();
-  const planRepository = dataSource.getRepository(PlanEntity);
-  const administratorRepository = dataSource.getRepository(AdministratorEntity);
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const slug = normalizeSlug(payload.slug ?? payload.name);
+  const condominium = await condominiumRepository.findOneBy({
+    id: payload.condominiumId,
+  });
 
-  const existingPlan = await planRepository.findOneBy({ slug });
+  if (!condominium) {
+    return Response.json({ error: "Condominio nao encontrado." }, { status: 404 });
+  }
+
+  const existingPlan = condominium.plans.find((plan) => plan.slug === slug);
+
   if (existingPlan) {
     return Response.json(
-      { error: "Ja existe um plano com esse slug." },
+      { error: "Ja existe um plano com esse slug nesse condominio." },
       { status: 409 },
     );
   }
 
-  let administrator = null;
-  const isDefault = Boolean(payload.isDefault);
-  const tier = isDefault
-    ? payload.tier === PlanTier.INTERMEDIATE || payload.tier === PlanTier.PREMIUM
-      ? payload.tier
-      : PlanTier.BASIC
-    : PlanTier.CUSTOM;
+  const allowedTiers = new Set<string>(Object.values(PlanTier));
 
-  if (!isDefault) {
-    if (!payload.adminEmail) {
-      return Response.json(
-        { error: "Planos personalizados exigem adminEmail." },
-        { status: 400 },
-      );
-    }
-
-    administrator = await administratorRepository.findOneBy({
-      email: payload.adminEmail.trim().toLowerCase(),
-    });
-
-    if (!administrator) {
-      administrator = await administratorRepository.save({
-        name: payload.adminName?.trim() || "Administrador",
-        email: payload.adminEmail.trim().toLowerCase(),
-      });
-    }
-  }
-
-  const createdPlan = await planRepository.save({
+  const createdPlan = {
+    id: crypto.randomUUID(),
     slug,
     name: payload.name.trim(),
     description: payload.description.trim(),
-    tier,
+    tier: allowedTiers.has(String(payload.tier ?? "").trim())
+      ? (String(payload.tier) as PlanTier)
+      : PlanTier.CUSTOM,
     monthlyBallAllowance:
       payload.monthlyBallAllowance && payload.monthlyBallAllowance > 0
         ? payload.monthlyBallAllowance
@@ -129,10 +126,13 @@ export async function POST(request: Request) {
       payload.overagePriceInCents && payload.overagePriceInCents >= 0
         ? payload.overagePriceInCents
         : 0,
-    isDefault,
     isActive: true,
-    createdBy: administrator,
-  });
+    createdByAdminId: authenticatedAdministrator.id,
+    createdByName: authenticatedAdministrator.name,
+  };
+
+  condominium.plans = [...condominium.plans, createdPlan];
+  await condominiumRepository.save(condominium);
 
   return Response.json(createdPlan, { status: 201 });
 }
