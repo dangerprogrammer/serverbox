@@ -77,7 +77,7 @@ export function PaymentStatusPanel({
 
   const expirationLabel = useMemo(() => {
     if (!payment.pixExpiresAt) {
-      return "Sem expiracao informada";
+      return "Sem expiração informada";
     }
 
     return new Intl.DateTimeFormat("pt-BR", {
@@ -140,15 +140,15 @@ export function PaymentStatusPanel({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-            Status da cobranca
+            Status da cobrança
           </p>
           <h2 className="mt-2 text-3xl font-semibold text-slate-900">
             {statusLabels[payment.status]}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
             {payment.status === "pending"
-              ? "O saldo so deve ser liberado depois que a AbacatePay confirmar o pagamento deste PIX."
-              : "A cobranca ja recebeu um retorno definitivo do pagamento."}
+              ? "O saldo só deve ser liberado depois que a AbacatePay confirmar o pagamento deste PIX."
+              : "A cobrança já recebeu um retorno definitivo do pagamento."}
           </p>
         </div>
 
@@ -159,19 +159,19 @@ export function PaymentStatusPanel({
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <div className="rounded-[1.25rem] border border-border bg-slate-50 p-4">
-          <p className="text-sm text-slate-500">Condominio</p>
+          <p className="text-sm text-slate-500">Condomínio</p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {payment.condominiumName}
           </p>
         </div>
         <div className="rounded-[1.25rem] border border-border bg-slate-50 p-4">
-          <p className="text-sm text-slate-500">Plano</p>
+          <p className="text-sm text-slate-500">Item</p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {payment.planName}
           </p>
         </div>
         <div className="rounded-[1.25rem] border border-border bg-slate-50 p-4">
-          <p className="text-sm text-slate-500">Liberacao</p>
+          <p className="text-sm text-slate-500">Liberação</p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {payment.status === "paid" ? "Saldo liberado" : "Aguardando"}
           </p>
@@ -181,9 +181,9 @@ export function PaymentStatusPanel({
       <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Codigo copia e cola</p>
+            <p className="text-sm text-slate-500">Código copia e cola</p>
             <p className="mt-2 break-all font-mono text-sm text-slate-900">
-              {payment.pixCopyPasteCode ?? "Codigo PIX indisponivel"}
+              {payment.pixCopyPasteCode ?? "Código PIX indisponível"}
             </p>
           </div>
           <button
@@ -192,7 +192,7 @@ export function PaymentStatusPanel({
             disabled={!payment.pixCopyPasteCode}
             className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            {copied ? "Copiado" : "Copiar codigo"}
+            {copied ? "Copiado" : "Copiar código"}
           </button>
         </div>
       </div>
@@ -205,7 +205,7 @@ export function PaymentStatusPanel({
                 Ambiente de desenvolvimento da AbacatePay
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Voce pode simular a confirmacao para testar a liberacao do saldo.
+                Você pode simular a confirmação para testar a liberação do saldo.
               </p>
             </div>
             <button
@@ -248,7 +248,7 @@ export function PaymentStatusPanel({
         <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
           <p className="text-sm text-slate-500">Gateway</p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
-            {payment.provider ?? "Nao informado"}
+            {payment.provider ?? "Não informado"}
           </p>
         </div>
         <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
@@ -270,7 +270,7 @@ export function PaymentStatusPanel({
                 Abrir recibo
               </a>
             ) : (
-              "Indisponivel"
+              "Indisponível"
             )}
           </p>
         </div>

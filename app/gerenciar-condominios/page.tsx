@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CurrencyInput } from "@/app/_components/currency-input";
 import {
   FloatingInput,
   FloatingTextarea,
@@ -30,7 +31,7 @@ const tierLabels: Record<string, string> = {
 };
 
 export default async function GerenciarCondominiosPage() {
-  const administrator = await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdmin();
   const { condominiums } = await getCondominiumManagementData();
 
   return (
@@ -39,21 +40,18 @@ export default async function GerenciarCondominiosPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-              Gestao administrativa
+              Gestão administrativa
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
-              Cada condominio concentra seus proprios planos.
+              Cada condomínio concentra seus próprios planos.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              O cadastro reflete a regra do negocio: plano e dado interno do
-              condominio, nao um cadastro separado.
+              O cadastro reflete a regra do negócio: plano e dado interno do
+              condomínio, não um cadastro separado.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
-              {administrator.name}
-            </span>
             <Link
               href="/dashboard"
               className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
@@ -72,22 +70,22 @@ export default async function GerenciarCondominiosPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr] xl:items-start">
+        <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm xl:sticky xl:top-8">
           <h2 className="text-2xl font-semibold text-slate-900">
-            Novo condominio
+            Novo condomínio
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            O condominio nasce vazio e os planos passam a fazer parte dele logo
-            abaixo, no proprio card.
+            O condomínio nasce vazio e os planos passam a fazer parte dele logo
+            abaixo, no próprio card.
           </p>
 
           <form action={createCondominiumAction} className="mt-6 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <FloatingInput
-                label="Nome do condominio"
+                label="Nome do condomínio"
                 name="name"
-                placeholder="Nome do condominio"
+                placeholder="Nome do condomínio"
                 className="bg-white"
               />
               <FloatingInput
@@ -127,19 +125,19 @@ export default async function GerenciarCondominiosPage() {
               type="submit"
               className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Criar condominio
+              Criar condomínio
             </button>
           </form>
         </section>
 
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">
-            Condominios cadastrados
+            Condomínios cadastrados
           </h2>
           <div className="mt-6 space-y-5">
             {condominiums.length === 0 ? (
               <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-                Nenhum condominio cadastrado ainda.
+                Nenhum condomínio cadastrado ainda.
               </div>
             ) : (
               condominiums.map((condominium) => (
@@ -161,9 +159,6 @@ export default async function GerenciarCondominiosPage() {
                         {condominium.city}, {condominium.state} -{" "}
                         {condominium.courts} quadras - {condominium.activeResidents}{" "}
                         moradores
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {condominium.administratorName} - {condominium.administratorEmail}
                       </p>
                     </div>
 
@@ -198,37 +193,47 @@ export default async function GerenciarCondominiosPage() {
                   <div className="border-t border-slate-200 bg-white p-5">
                     <form action={updateCondominiumAction} className="space-y-4">
                       <input type="hidden" name="condominiumId" value={condominium.id} />
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <input
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FloatingInput
+                          label="Nome do condomínio"
                           name="name"
                           defaultValue={condominium.name}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          placeholder="Nome do condomínio"
+                          className="bg-white"
                         />
-                        <input
+                        <FloatingInput
+                          label="Cidade"
                           name="city"
                           defaultValue={condominium.city}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          placeholder="Cidade"
+                          className="bg-white"
                         />
-                        <input
+                        <FloatingInput
+                          label="UF"
                           name="state"
                           maxLength={2}
                           defaultValue={condominium.state}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm uppercase text-slate-900 outline-none"
+                          placeholder="UF"
+                          className="bg-white uppercase"
                         />
-                        <input
+                        <FloatingInput
+                          label="Quadras"
                           name="courts"
                           type="number"
                           min={1}
                           defaultValue={condominium.courts}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                          placeholder="Quadras"
+                          className="bg-white"
                         />
                       </div>
-                      <input
+                      <FloatingInput
+                        label="Moradores ativos"
                         name="activeResidents"
                         type="number"
                         min={0}
                         defaultValue={condominium.activeResidents}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                        placeholder="Moradores ativos"
+                        className="bg-white"
                       />
 
                       <div className="flex flex-wrap gap-3">
@@ -236,7 +241,7 @@ export default async function GerenciarCondominiosPage() {
                           type="submit"
                           className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
-                          Salvar condominio
+                          Salvar condomínio
                         </button>
                       </div>
                     </form>
@@ -244,7 +249,7 @@ export default async function GerenciarCondominiosPage() {
                     <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <h4 className="text-lg font-semibold text-slate-900">
-                          Planos deste condominio
+                          Planos deste condomínio
                         </h4>
                         <span className="text-sm text-slate-500">
                           {condominium.plans.length} cadastrados
@@ -257,19 +262,13 @@ export default async function GerenciarCondominiosPage() {
                       >
                         <input type="hidden" name="condominiumId" value={condominium.id} />
                         <p className="text-sm font-medium text-slate-900">
-                          Novo plano deste condominio
+                          Novo plano deste condomínio
                         </p>
                         <div className="grid gap-3 md:grid-cols-2">
                           <FloatingInput
                             label="Nome do plano"
                             name="name"
                             placeholder="Nome do plano"
-                            className="bg-white"
-                          />
-                          <FloatingInput
-                            label="Slug do plano"
-                            name="slug"
-                            placeholder="slug-do-plano"
                             className="bg-white"
                           />
                           <select
@@ -284,35 +283,25 @@ export default async function GerenciarCondominiosPage() {
                             ))}
                           </select>
                           <FloatingInput
-                            label="Bolinhas por mes"
+                            label="Bolinhas por mês"
                             name="monthlyBallAllowance"
                             type="number"
                             min={0}
-                            placeholder="Bolinhas por mes"
+                            placeholder="Bolinhas por mês"
                             className="bg-white"
                           />
-                          <FloatingInput
-                            label="Preco mensal em centavos"
+                          <CurrencyInput
+                            label="Preço mensal"
                             name="monthlyPriceInCents"
-                            type="number"
-                            min={0}
-                            placeholder="Preco mensal em centavos"
-                            className="bg-white"
-                          />
-                          <FloatingInput
-                            label="Preco excedente em centavos"
-                            name="overagePriceInCents"
-                            type="number"
-                            min={0}
-                            placeholder="Preco excedente em centavos"
+                            defaultValueInCents={0}
                             className="bg-white"
                           />
                         </div>
                         <FloatingTextarea
-                          label="Descricao comercial do plano"
+                          label="Descrição comercial do plano"
                           name="description"
                           rows={3}
-                          placeholder="Descricao comercial do plano"
+                          placeholder="Descrição comercial do plano"
                           className="bg-white"
                         />
                         <button
@@ -326,7 +315,7 @@ export default async function GerenciarCondominiosPage() {
                       <div className="mt-4 space-y-4">
                         {condominium.plans.length === 0 ? (
                           <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-500">
-                            Este condominio ainda nao possui planos.
+                            Este condomínio ainda não possui planos.
                           </div>
                         ) : (
                           condominium.plans.map((plan) => (
@@ -340,11 +329,6 @@ export default async function GerenciarCondominiosPage() {
                                   <input
                                     name="name"
                                     defaultValue={plan.name}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                  />
-                                  <input
-                                    name="slug"
-                                    defaultValue={plan.slug}
                                     className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                                   />
                                   <select
@@ -365,19 +349,11 @@ export default async function GerenciarCondominiosPage() {
                                     defaultValue={plan.monthlyBallAllowance}
                                     className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                                   />
-                                  <input
+                                  <CurrencyInput
+                                    label="Preço mensal"
                                     name="monthlyPriceInCents"
-                                    type="number"
-                                    min={0}
-                                    defaultValue={plan.monthlyPriceInCents}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                  />
-                                  <input
-                                    name="overagePriceInCents"
-                                    type="number"
-                                    min={0}
-                                    defaultValue={plan.overagePriceInCents}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                                    defaultValueInCents={plan.monthlyPriceInCents}
+                                    className="bg-white"
                                   />
                                 </div>
                                 <textarea
@@ -388,7 +364,7 @@ export default async function GerenciarCondominiosPage() {
                                 />
                                 <p className="text-sm text-slate-500">
                                   {currencyFormatter.format(plan.monthlyPriceInCents / 100)}{" "}
-                                  / mes - criado por {plan.createdByName}
+                                  / mês - criado por {plan.createdByName}
                                 </p>
                                 <div className="flex flex-wrap gap-3">
                                   <button
@@ -421,7 +397,7 @@ export default async function GerenciarCondominiosPage() {
                         type="submit"
                         className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
                       >
-                        Excluir condominio
+                        Excluir condomínio
                       </button>
                     </form>
                   </div>

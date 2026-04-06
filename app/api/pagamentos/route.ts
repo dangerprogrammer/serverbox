@@ -4,11 +4,16 @@ import {
   PaymentMethod,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { createCondominiumPayment } from "@/lib/payments/create-payment";
+import {
+  createCondominiumPayment,
+  createStandaloneBallPayment,
+} from "@/lib/payments/create-payment";
 
 type CreatePaymentPayload = {
   planId?: string;
   condominiumId?: string;
+  ballQuantity?: number;
+  amountInCents?: number;
   method?: string;
 };
 
@@ -60,71 +65,74 @@ export async function GET() {
 export async function POST(request: Request) {
   const payload = (await request.json()) as CreatePaymentPayload;
 
-  if (!payload.planId) {
-    return Response.json(
-      { error: "planId e obrigatorio." },
-      { status: 400 },
-    );
-  }
-
   if (payload.method && payload.method !== PaymentMethod.PIX) {
     return Response.json(
-      { error: "Somente pagamentos PIX sao suportados." },
+      { error: "Somente pagamentos PIX são suportados." },
       { status: 400 },
     );
   }
 
   try {
-    const payment = await createCondominiumPayment({
-      planId: payload.planId,
-      condominiumId: payload.condominiumId,
-    });
+    const payment = payload.planId
+      ? await createCondominiumPayment({
+          planId: payload.planId,
+          condominiumId: payload.condominiumId,
+        })
+      : await createStandaloneBallPayment({
+          condominiumId: String(payload.condominiumId ?? ""),
+          ballQuantity: Number(payload.ballQuantity),
+          amountInCents: Number(payload.amountInCents),
+        });
 
     return Response.json(payment, { status: 201 });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao criar cobranca PIX.";
+      error instanceof Error ? error.message : "Falha ao criar cobrança PIX.";
 
-    if (message === "Plano nao encontrado.") {
+    if (message === "Plano não encontrado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 
-    if (message === "Plano nao pertence ao condominio informado.") {
+    if (message === "Plano não pertence ao condomínio informado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 
-    if (message === "ABACATEPAY_API_KEY nao configurada.") {
+    if (message === "Condomínio não encontrado.") {
+      return Response.json({ error: message }, { status: 404 });
+    }
+
+    if (message === "ABACATEPAY_API_KEY não configurada.") {
       return Response.json(
-        { error: "Configure ABACATEPAY_API_KEY para criar cobrancas PIX." },
+        { error: "Configure ABACATEPAY_API_KEY para criar cobranças PIX." },
         { status: 503 },
       );
     }
 
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.") {
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       return Response.json(
         {
           error:
-            "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar cobrancas PIX.",
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar cobranças PIX.",
         },
         { status: 503 },
       );
     }
 
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nao configurado.") {
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
       return Response.json(
         {
           error:
-            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar cobrancas PIX.",
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar cobranças PIX.",
         },
         { status: 503 },
       );
     }
 
-    if (message === "ABACATEPAY_API_BASE_URL invalida. Use uma URL da API v1 ou v2 da AbacatePay.") {
+    if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
       return Response.json(
         {
           error:
-            "A ABACATEPAY_API_BASE_URL configurada precisa apontar para uma URL valida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
+            "A ABACATEPAY_API_BASE_URL configurada precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
         },
         { status: 503 },
       );

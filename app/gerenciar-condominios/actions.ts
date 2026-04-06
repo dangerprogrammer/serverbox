@@ -24,6 +24,22 @@ function parsePositiveNumber(value: FormDataEntryValue | null, fallback = 0) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
+function parseCurrencyToCents(value: FormDataEntryValue | null, fallback = 0) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const digits = value.replace(/\D/g, "");
+
+  if (!digits) {
+    return fallback;
+  }
+
+  const parsed = Number(digits);
+
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
 function revalidateManagementViews() {
   revalidatePath("/gerenciar-condominios");
   revalidatePath("/dashboard");
@@ -51,7 +67,7 @@ export async function createCondominiumAction(formData: FormData) {
     .slice(0, 2);
 
   if (!name || !city || !state) {
-    throw new Error("Nome, cidade e UF sao obrigatorios.");
+    throw new Error("Nome, cidade e UF são obrigatórios.");
   }
 
   const dataSource = await getDataSource();
@@ -76,7 +92,7 @@ export async function updateCondominiumAction(formData: FormData) {
   const condominiumId = String(formData.get("condominiumId") ?? "");
 
   if (!condominiumId) {
-    throw new Error("Condominio invalido.");
+    throw new Error("Condomínio inválido.");
   }
 
   const dataSource = await getDataSource();
@@ -84,7 +100,7 @@ export async function updateCondominiumAction(formData: FormData) {
   const existing = await condominiumRepository.findOneBy({ id: condominiumId });
 
   if (!existing) {
-    throw new Error("Condominio nao encontrado.");
+    throw new Error("Condomínio não encontrado.");
   }
 
   existing.name = String(formData.get("name") ?? "").trim();
@@ -109,7 +125,7 @@ export async function deleteCondominiumAction(formData: FormData) {
   const condominiumId = String(formData.get("condominiumId") ?? "");
 
   if (!condominiumId) {
-    throw new Error("Condominio invalido.");
+    throw new Error("Condomínio inválido.");
   }
 
   const dataSource = await getDataSource();
@@ -130,24 +146,24 @@ export async function createPlanAction(formData: FormData) {
   const slug = normalizeSlug(String(formData.get("slug") ?? name));
 
   if (!condominiumId) {
-    throw new Error("Condominio e obrigatorio para criar o plano.");
+    throw new Error("Condomínio é obrigatório para criar o plano.");
   }
 
   if (!name || !description || !slug) {
-    throw new Error("Nome, slug e descricao sao obrigatorios.");
+    throw new Error("Nome e descrição são obrigatórios.");
   }
 
   const condominium = await condominiumRepository.findOneBy({ id: condominiumId });
 
   if (!condominium) {
-    throw new Error("Condominio nao encontrado.");
+    throw new Error("Condomínio não encontrado.");
   }
 
   const existingPlans = getPlansWithFallback(condominium.plans);
   const existing = existingPlans.find((plan) => plan.slug === slug);
 
   if (existing) {
-    throw new Error("Ja existe um plano com esse slug nesse condominio.");
+    throw new Error("Já existe um plano com esse slug nesse condomínio.");
   }
 
   condominium.plans = [
@@ -162,14 +178,11 @@ export async function createPlanAction(formData: FormData) {
         formData.get("monthlyBallAllowance"),
         0,
       ),
-      monthlyPriceInCents: parsePositiveNumber(
+      monthlyPriceInCents: parseCurrencyToCents(
         formData.get("monthlyPriceInCents"),
         0,
       ),
-      overagePriceInCents: parsePositiveNumber(
-        formData.get("overagePriceInCents"),
-        0,
-      ),
+      overagePriceInCents: 0,
       isActive: true,
       createdByAdminId: administrator.id,
       createdByName: administrator.name,
@@ -187,7 +200,7 @@ export async function updatePlanAction(formData: FormData) {
   const planId = String(formData.get("planId") ?? "");
 
   if (!planId) {
-    throw new Error("Plano invalido.");
+    throw new Error("Plano inválido.");
   }
 
   const dataSource = await getDataSource();
@@ -198,14 +211,14 @@ export async function updatePlanAction(formData: FormData) {
   );
 
   if (!condominium) {
-    throw new Error("Plano nao encontrado.");
+    throw new Error("Plano não encontrado.");
   }
 
   const plans = getPlansWithFallback(condominium.plans);
   const existing = plans.find((plan) => plan.id === planId);
 
   if (!existing) {
-    throw new Error("Plano nao encontrado.");
+    throw new Error("Plano não encontrado.");
   }
 
   const name = String(formData.get("name") ?? "").trim();
@@ -213,13 +226,13 @@ export async function updatePlanAction(formData: FormData) {
   const requestedSlug = normalizeSlug(String(formData.get("slug") ?? name));
 
   if (!name || !description || !requestedSlug) {
-    throw new Error("Nome, slug e descricao sao obrigatorios.");
+    throw new Error("Nome e descrição são obrigatórios.");
   }
 
   const duplicate = plans.find((plan) => plan.slug === requestedSlug);
 
   if (duplicate && duplicate.id !== existing.id) {
-    throw new Error("Ja existe um plano com esse slug nesse condominio.");
+    throw new Error("Já existe um plano com esse slug nesse condomínio.");
   }
 
   const tierInput = String(formData.get("tier") ?? existing.tier).trim();
@@ -236,14 +249,11 @@ export async function updatePlanAction(formData: FormData) {
             formData.get("monthlyBallAllowance"),
             existing.monthlyBallAllowance,
           ),
-          monthlyPriceInCents: parsePositiveNumber(
+          monthlyPriceInCents: parseCurrencyToCents(
             formData.get("monthlyPriceInCents"),
             existing.monthlyPriceInCents,
           ),
-          overagePriceInCents: parsePositiveNumber(
-            formData.get("overagePriceInCents"),
-            existing.overagePriceInCents,
-          ),
+          overagePriceInCents: 0,
         }
       : plan,
   );
@@ -258,7 +268,7 @@ export async function deletePlanAction(formData: FormData) {
   const planId = String(formData.get("planId") ?? "");
 
   if (!planId) {
-    throw new Error("Plano invalido.");
+    throw new Error("Plano inválido.");
   }
 
   const dataSource = await getDataSource();
@@ -269,7 +279,7 @@ export async function deletePlanAction(formData: FormData) {
   );
 
   if (!condominium) {
-    throw new Error("Plano nao encontrado.");
+    throw new Error("Plano não encontrado.");
   }
 
   condominium.plans = getPlansWithFallback(condominium.plans).filter(

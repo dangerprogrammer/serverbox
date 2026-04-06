@@ -111,7 +111,7 @@ function getAbacatePayApiBaseUrl() {
 
   if (!baseUrl.includes("/v1") && !baseUrl.includes("/v2")) {
     throw new Error(
-      "ABACATEPAY_API_BASE_URL invalida. Use uma URL da API v1 ou v2 da AbacatePay.",
+      "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.",
     );
   }
 
@@ -145,7 +145,7 @@ async function requestAbacatePay<T>({
   const apiKey = getAbacatePayApiKey();
 
   if (!apiKey) {
-    throw new Error("ABACATEPAY_API_KEY nao configurada.");
+    throw new Error("ABACATEPAY_API_KEY não configurada.");
   }
 
   const response = await fetch(buildUrl(path, searchParams), {

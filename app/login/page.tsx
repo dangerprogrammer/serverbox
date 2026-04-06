@@ -17,14 +17,14 @@ export default async function LoginPage() {
         <div className="px-8 py-10 sm:px-10 sm:py-12">
           <div className="max-w-2xl space-y-6">
             <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
-              Area administrativa
+              Área administrativa
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-              Login para acessar a operacao administrativa.
+              Login para acessar a operação administrativa.
             </h1>
             <p className="max-w-xl text-base leading-8 text-slate-600">
-              O dashboard de cobrancas e a gestao de condominios ficam
-              disponiveis apenas para administradores autenticados.
+              O dashboard de cobranças e a gestão de condomínios ficam
+              disponíveis apenas para administradores autenticados.
             </p>
             <div className="rounded-[1.25rem] border border-border bg-surface-strong p-6">
               <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
@@ -59,10 +59,10 @@ export default async function LoginPage() {
           </div>
 
           <Link
-            href="/"
+            href="/sobre-nos"
             className="mt-6 text-sm font-medium text-slate-600 transition hover:text-slate-900"
           >
-            Voltar para a home
+            Ir para Sobre nós
           </Link>
         </div>
       </section>

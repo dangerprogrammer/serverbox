@@ -32,7 +32,7 @@ export async function loginAdmin(
 
   if (!administrator || !verifyPassword(password, administrator.passwordHash)) {
     return {
-      error: "Credenciais invalidas.",
+      error: "Credenciais inválidas.",
     };
   }
 

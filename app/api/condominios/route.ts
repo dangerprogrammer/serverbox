@@ -96,7 +96,7 @@ export async function POST(request: Request) {
 
   if (!assignedAdministrator) {
     return Response.json(
-      { error: "Nao foi possivel resolver um administrador para o condominio." },
+      { error: "Não foi possível resolver um administrador para o condomínio." },
       { status: 400 },
     );
   }

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ServerBox | Bolinhas de tenis para condominios",
+  title: "ServerBox | Bolinhas de tênis para condomínios",
   description:
-    "Gestao de planos de bolinhas de tenis para condominios com Next.js e TypeORM.",
+    "Gestão de planos de bolinhas de tênis para condomínios com Next.js e TypeORM.",
 };
 
 export default function RootLayout({

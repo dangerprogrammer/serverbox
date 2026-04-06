@@ -18,7 +18,7 @@ export async function GET(
   const payment = await getPaymentDetails(paymentId);
 
   if (!payment) {
-    return Response.json({ error: "Pagamento nao encontrado." }, { status: 404 });
+    return Response.json({ error: "Pagamento não encontrado." }, { status: 404 });
   }
 
   return Response.json(payment);
@@ -52,15 +52,15 @@ export async function POST(
     const message =
       error instanceof Error ? error.message : "Falha ao sincronizar pagamento.";
 
-    if (message === "Pagamento nao encontrado.") {
+    if (message === "Pagamento não encontrado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 
-    if (message === "Pagamento nao esta vinculado a AbacatePay.") {
+    if (message === "Pagamento não está vinculado a AbacatePay.") {
       return Response.json({ error: message }, { status: 409 });
     }
 
-    if (message === "ABACATEPAY_API_KEY nao configurada.") {
+    if (message === "ABACATEPAY_API_KEY não configurada.") {
       return Response.json(
         { error: "Configure ABACATEPAY_API_KEY para operar pagamentos." },
         { status: 503 },

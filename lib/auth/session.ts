@@ -29,7 +29,7 @@ function requireSessionSecret() {
   const secret = getSessionSecret();
 
   if (!secret) {
-    throw new Error("SESSION_SECRET nao configurado.");
+    throw new Error("SESSION_SECRET não configurado.");
   }
 
   return secret;
@@ -157,7 +157,7 @@ export async function requireAdminApiSession() {
   const administrator = await getAuthenticatedAdmin();
 
   if (!administrator) {
-    return Response.json({ error: "Nao autenticado." }, { status: 401 });
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   return administrator;

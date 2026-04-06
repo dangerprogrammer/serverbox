@@ -3,7 +3,7 @@ import { hashPassword } from "@/lib/auth/password";
 import type { DataSource } from "typeorm";
 
 const administratorSeed = {
-  name: "Operacao ServerBox",
+  name: "Operação ServerBox",
   email: "admin@serverbox.local",
 };
 

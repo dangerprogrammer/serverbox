@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
   if (!payload.condominiumId || !payload.name || !payload.description) {
     return Response.json(
-      { error: "condominiumId, name e description sao obrigatorios." },
+      { error: "condominiumId, name e description são obrigatórios." },
       { status: 400 },
     );
   }
@@ -92,14 +92,14 @@ export async function POST(request: Request) {
   });
 
   if (!condominium) {
-    return Response.json({ error: "Condominio nao encontrado." }, { status: 404 });
+    return Response.json({ error: "Condomínio não encontrado." }, { status: 404 });
   }
 
   const existingPlan = condominium.plans.find((plan) => plan.slug === slug);
 
   if (existingPlan) {
     return Response.json(
-      { error: "Ja existe um plano com esse slug nesse condominio." },
+      { error: "Já existe um plano com esse slug nesse condomínio." },
       { status: 409 },
     );
   }
@@ -122,10 +122,7 @@ export async function POST(request: Request) {
       payload.monthlyPriceInCents && payload.monthlyPriceInCents >= 0
         ? payload.monthlyPriceInCents
         : 0,
-    overagePriceInCents:
-      payload.overagePriceInCents && payload.overagePriceInCents >= 0
-        ? payload.overagePriceInCents
-        : 0,
+    overagePriceInCents: 0,
     isActive: true,
     createdByAdminId: authenticatedAdministrator.id,
     createdByName: authenticatedAdministrator.name,
