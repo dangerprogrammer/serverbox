@@ -62,10 +62,17 @@ function getDatabaseUrl() {
   return process.env.DATABASE_URL?.trim() || ormConfig.url?.trim();
 }
 
+function isVercelRuntime() {
+  return process.env.VERCEL === "1";
+}
+
 function getDatabasePath() {
+  const baseDirectory = isVercelRuntime()
+    ? path.join("/tmp", "serverbox")
+    : path.join(process.cwd(), "data");
+
   return path.join(
-    process.cwd(),
-    "data",
+    baseDirectory,
     ormConfig.database ?? process.env.DB_FILENAME ?? "serverbox.sqlite",
   );
 }
@@ -169,10 +176,8 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
 
 function createDataSourceOptions(): DataSourceOptions {
   const databaseUrl = getDatabaseUrl();
-  const databaseType =
-    ormConfig.type === "better-sqlite3" ? "better-sqlite3" : "postgres";
 
-  if (databaseUrl && databaseType === "postgres") {
+  if (databaseUrl) {
     return {
       type: "postgres",
       url: databaseUrl,
