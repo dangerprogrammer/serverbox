@@ -15,6 +15,13 @@ export async function loginAdmin(
   _state: LoginState | undefined,
   formData: FormData,
 ): Promise<LoginState | undefined> {
+  if (!process.env.SESSION_SECRET?.trim()) {
+    return {
+      error:
+        "Login temporariamente indisponível. Configure SESSION_SECRET no ambiente do deploy.",
+    };
+  }
+
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
