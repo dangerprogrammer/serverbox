@@ -416,7 +416,7 @@ export default async function DashboardPage() {
                 </p>
                 <Link
                   href="/gerenciar-condominios"
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-sky-700 px-5 text-sm font-semibold !text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
                 >
                   Cadastrar primeiro condomínio
                 </Link>
