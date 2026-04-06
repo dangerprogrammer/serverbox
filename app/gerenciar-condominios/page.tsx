@@ -5,6 +5,8 @@ import {
   FloatingInput,
   FloatingTextarea,
 } from "@/app/_components/floating-field";
+import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
+import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
 import { logoutAdmin } from "@/app/login/actions";
 import {
   createCondominiumAction,
@@ -191,60 +193,14 @@ export default async function GerenciarCondominiosPage() {
                   </summary>
 
                   <div className="border-t border-slate-200 bg-white p-5">
-                    <form action={updateCondominiumAction} className="space-y-4">
-                      <input type="hidden" name="condominiumId" value={condominium.id} />
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FloatingInput
-                          label="Nome do condomínio"
-                          name="name"
-                          defaultValue={condominium.name}
-                          placeholder="Nome do condomínio"
-                          className="bg-white"
-                        />
-                        <FloatingInput
-                          label="Cidade"
-                          name="city"
-                          defaultValue={condominium.city}
-                          placeholder="Cidade"
-                          className="bg-white"
-                        />
-                        <FloatingInput
-                          label="UF"
-                          name="state"
-                          maxLength={2}
-                          defaultValue={condominium.state}
-                          placeholder="UF"
-                          className="bg-white uppercase"
-                        />
-                        <FloatingInput
-                          label="Quadras"
-                          name="courts"
-                          type="number"
-                          min={1}
-                          defaultValue={condominium.courts}
-                          placeholder="Quadras"
-                          className="bg-white"
-                        />
-                      </div>
-                      <FloatingInput
-                        label="Moradores ativos"
-                        name="activeResidents"
-                        type="number"
-                        min={0}
-                        defaultValue={condominium.activeResidents}
-                        placeholder="Moradores ativos"
-                        className="bg-white"
-                      />
-
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="submit"
-                          className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                        >
-                          Salvar condomínio
-                        </button>
-                      </div>
-                    </form>
+                    <UpdateCondominiumForm
+                      condominiumId={condominium.id}
+                      name={condominium.name}
+                      city={condominium.city}
+                      state={condominium.state}
+                      courts={condominium.courts}
+                      activeResidents={condominium.activeResidents}
+                    />
 
                     <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-3">
@@ -269,6 +225,7 @@ export default async function GerenciarCondominiosPage() {
                             label="Nome do plano"
                             name="name"
                             placeholder="Nome do plano"
+                            required
                             className="bg-white"
                           />
                           <select
@@ -302,6 +259,7 @@ export default async function GerenciarCondominiosPage() {
                           name="description"
                           rows={3}
                           placeholder="Descrição comercial do plano"
+                          required
                           className="bg-white"
                         />
                         <button
@@ -323,58 +281,20 @@ export default async function GerenciarCondominiosPage() {
                               key={plan.id}
                               className="rounded-xl border border-slate-200 bg-white p-4"
                             >
-                              <form action={updatePlanAction} className="space-y-4">
-                                <input type="hidden" name="planId" value={plan.id} />
-                                <div className="grid gap-3 md:grid-cols-2">
-                                  <input
-                                    name="name"
-                                    defaultValue={plan.name}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                  />
-                                  <select
-                                    name="tier"
-                                    defaultValue={plan.tier}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                  >
-                                    {Object.values(PlanTier).map((tier) => (
-                                      <option key={tier} value={tier}>
-                                        {tierLabels[tier]}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <input
-                                    name="monthlyBallAllowance"
-                                    type="number"
-                                    min={0}
-                                    defaultValue={plan.monthlyBallAllowance}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                  />
-                                  <CurrencyInput
-                                    label="Preço mensal"
-                                    name="monthlyPriceInCents"
-                                    defaultValueInCents={plan.monthlyPriceInCents}
-                                    className="bg-white"
-                                  />
-                                </div>
-                                <textarea
-                                  name="description"
-                                  rows={3}
-                                  defaultValue={plan.description}
-                                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                                />
-                                <p className="text-sm text-slate-500">
-                                  {currencyFormatter.format(plan.monthlyPriceInCents / 100)}{" "}
-                                  / mês - criado por {plan.createdByName}
-                                </p>
-                                <div className="flex flex-wrap gap-3">
-                                  <button
-                                    type="submit"
-                                    className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                                  >
-                                    Salvar plano
-                                  </button>
-                                </div>
-                              </form>
+                              <UpdatePlanForm
+                                planId={plan.id}
+                                name={plan.name}
+                                tier={plan.tier}
+                                monthlyBallAllowance={plan.monthlyBallAllowance}
+                                monthlyPriceInCents={plan.monthlyPriceInCents}
+                                description={plan.description}
+                                tierLabels={tierLabels}
+                              />
+
+                              <p className="mt-4 text-sm text-slate-500">
+                                {currencyFormatter.format(plan.monthlyPriceInCents / 100)}{" "}
+                                / mês - criado por {plan.createdByName}
+                              </p>
 
                               <form action={deletePlanAction} className="mt-3">
                                 <input type="hidden" name="planId" value={plan.id} />
