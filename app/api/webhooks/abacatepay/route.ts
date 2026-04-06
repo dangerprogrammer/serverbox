@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   });
 
   if (!isVerified) {
-    return Response.json({ error: "Webhook invalido." }, { status: 401 });
+    return Response.json({ error: "Webhook inválido." }, { status: 401 });
   }
 
   if (!payload.event.startsWith("transparent.")) {
@@ -47,12 +47,11 @@ export async function POST(request: Request) {
     where: [{ reference }, { providerPaymentId }],
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 
   if (!payment) {
-    return Response.json({ error: "Pagamento nao encontrado." }, { status: 404 });
+    return Response.json({ error: "Pagamento não encontrado." }, { status: 404 });
   }
 
   await applyProviderPaymentSnapshot({

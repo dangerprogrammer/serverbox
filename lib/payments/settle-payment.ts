@@ -40,7 +40,7 @@ export async function applyProviderPaymentSnapshot({
   payment.pixExpiresAt = snapshot.pixExpiresAt;
 
   if (snapshot.amountInCents !== payment.amountInCents) {
-    throw new Error("O valor recebido difere do valor esperado da cobranca.");
+    throw new Error("O valor recebido difere do valor esperado da cobrança.");
   }
 
   const existingCredit = await movementRepository.findOne({
@@ -96,7 +96,6 @@ export async function syncAbacatePixPayment({
     where: { id: paymentId },
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 
@@ -119,7 +118,7 @@ export async function syncAbacatePixPayment({
 
 export async function simulateAbacatePixPayment(paymentId: string) {
   if (!isAbacatePayConfigured()) {
-    throw new Error("ABACATEPAY_API_KEY nao configurada.");
+    throw new Error("ABACATEPAY_API_KEY não configurada.");
   }
 
   const dataSource = await getDataSource();
@@ -128,16 +127,15 @@ export async function simulateAbacatePixPayment(paymentId: string) {
     where: { id: paymentId },
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 
   if (!payment) {
-    throw new Error("Pagamento nao encontrado.");
+    throw new Error("Pagamento não encontrado.");
   }
 
   if (payment.provider !== getAbacatePayProviderName() || !payment.providerPaymentId) {
-    throw new Error("Pagamento nao esta vinculado a AbacatePay.");
+    throw new Error("Pagamento não está vinculado a AbacatePay.");
   }
 
   const snapshot = await simulateAbacatePixCharge(payment.providerPaymentId);

@@ -2,8 +2,8 @@ import { EntitySchema } from "typeorm";
 
 import type { Administrator } from "@/lib/db/entities/administrator.entity";
 import type { BallInventoryMovement } from "@/lib/db/entities/ball-inventory-movement.entity";
-import type { CondominiumPlan } from "@/lib/db/entities/condominium-plan.entity";
 import type { CondominiumPayment } from "@/lib/db/entities/condominium-payment.entity";
+import type { CondominiumPlan } from "@/lib/domain/condominium-plan";
 
 export type Condominium = {
   id: string;
@@ -15,7 +15,7 @@ export type Condominium = {
   createdAt: Date;
   updatedAt: Date;
   primaryAdmin: Administrator;
-  planAssignments: CondominiumPlan[];
+  plans: CondominiumPlan[];
   payments: CondominiumPayment[];
   ballMovements: BallInventoryMovement[];
 };
@@ -47,6 +47,10 @@ export const CondominiumEntity = new EntitySchema<Condominium>({
       type: Number,
       default: 0,
     },
+    plans: {
+      type: "simple-json",
+      default: "[]",
+    },
     createdAt: {
       type: Date,
       createDate: true,
@@ -66,11 +70,6 @@ export const CondominiumEntity = new EntitySchema<Condominium>({
       },
       nullable: false,
       onDelete: "RESTRICT",
-    },
-    planAssignments: {
-      type: "one-to-many",
-      target: "CondominiumPlan",
-      inverseSide: "condominium",
     },
     payments: {
       type: "one-to-many",

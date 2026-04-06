@@ -3,19 +3,48 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createCondominiumPayment } from "@/lib/payments/create-payment";
+import { requireAuthenticatedAdmin } from "@/lib/auth/session";
+import {
+  createCondominiumPayment,
+  createStandaloneBallPayment,
+} from "@/lib/payments/create-payment";
+
+function parsePositiveInteger(value: FormDataEntryValue | null, fieldLabel: string) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0 || !Number.isInteger(parsed)) {
+    throw new Error(`${fieldLabel} inválido.`);
+  }
+
+  return parsed;
+}
+
+function parseCurrencyToCents(value: FormDataEntryValue | null, fieldLabel: string) {
+  if (typeof value !== "string") {
+    throw new Error(`${fieldLabel} inválido.`);
+  }
+
+  const digits = value.replace(/\D/g, "");
+  const parsed = Number(digits);
+
+  if (!digits || !Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`${fieldLabel} inválido.`);
+  }
+
+  return parsed;
+}
 
 export async function createPaymentAction(formData: FormData) {
-  const condominiumId = String(formData.get("condominiumId") ?? "");
+  await requireAuthenticatedAdmin();
+
   const planId = String(formData.get("planId") ?? "");
 
-  if (!condominiumId || !planId) {
-    throw new Error("Condominio e plano sao obrigatorios para criar pagamento.");
+  if (!planId) {
+    throw new Error("Plano é obrigatório para criar pagamento.");
   }
 
   try {
     const payment = await createCondominiumPayment({
-      condominiumId,
       planId,
     });
 
@@ -23,11 +52,76 @@ export async function createPaymentAction(formData: FormData) {
     redirect(`/pagamentos/${payment.id}`);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao criar cobranca PIX.";
+      error instanceof Error ? error.message : "Falha ao criar cobrança PIX.";
 
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nao configurado.") {
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       throw new Error(
-        "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobrancas na AbacatePay.",
+        "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobranças na AbacatePay.",
+      );
+    }
+
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
+      throw new Error(
+        "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID no .env.local para criar cobranças na AbacatePay.",
+      );
+    }
+
+    if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
+      throw new Error(
+        "A ABACATEPAY_API_BASE_URL do .env.local precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
+      );
+    }
+
+    throw error;
+  }
+}
+
+export async function createStandalonePaymentAction(formData: FormData) {
+  await requireAuthenticatedAdmin();
+
+  const condominiumId = String(formData.get("condominiumId") ?? "");
+
+  if (!condominiumId) {
+    throw new Error("Condomínio é obrigatório para criar compra avulsa.");
+  }
+
+  const ballQuantity = parsePositiveInteger(
+    formData.get("ballQuantity"),
+    "Quantidade de bolinhas",
+  );
+  const amountInCents = parseCurrencyToCents(
+    formData.get("amountInCents"),
+    "Valor",
+  );
+
+  try {
+    const payment = await createStandaloneBallPayment({
+      condominiumId,
+      ballQuantity,
+      amountInCents,
+    });
+
+    revalidatePath("/dashboard");
+    redirect(`/pagamentos/${payment.id}`);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha ao criar cobrança PIX.";
+
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
+      throw new Error(
+        "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobranças na AbacatePay.",
+      );
+    }
+
+    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
+      throw new Error(
+        "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID no .env.local para criar cobranças na AbacatePay.",
+      );
+    }
+
+    if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
+      throw new Error(
+        "A ABACATEPAY_API_BASE_URL do .env.local precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
       );
     }
 

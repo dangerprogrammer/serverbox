@@ -37,7 +37,6 @@ export async function getPaymentDetails(paymentId: string) {
     where: { id: paymentId },
     relations: {
       condominium: true,
-      plan: true,
     },
   });
 
@@ -69,6 +68,6 @@ export async function getPaymentDetails(paymentId: string) {
     paidAt: freshPayment.paidAt,
     verifiedAt: freshPayment.verifiedAt,
     condominiumName: freshPayment.condominium.name,
-    planName: freshPayment.plan.name,
+    planName: freshPayment.planName,
   };
 }
