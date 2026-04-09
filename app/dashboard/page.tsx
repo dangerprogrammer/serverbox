@@ -31,15 +31,15 @@ export default async function DashboardPage() {
   const canCreateStandalonePayment = hasCondominiums;
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-6 py-8 sm:px-10 lg:px-12">
-      <section className="rounded-[1.5rem] border border-border bg-surface px-6 py-8 shadow-sm sm:px-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
+      <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
                 Dashboard administrativa
               </p>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
                 Operação financeira e saldo por condomínio.
               </h1>
               <p className="max-w-3xl text-base leading-8 text-slate-600">
@@ -50,20 +50,20 @@ export default async function DashboardPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/gerenciar-condominios"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
               >
                 Gerenciar Condomínios
               </Link>
               <Link
                 href="/sobre-nos"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
               >
                 Ir para Sobre nós
               </Link>
-              <form action={logoutAdmin}>
+              <form action={logoutAdmin} className="w-full sm:w-auto">
                 <button
                   type="submit"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
                 >
                   Sair
                 </button>
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
                 idleLabel="Criar cobrança AbacatePay"
                 pendingLabel="Criando..."
                 disabled={!canCreatePayment}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </form>
 
@@ -248,7 +248,7 @@ export default async function DashboardPage() {
                 idleLabel="Criar compra avulsa"
                 pendingLabel="Criando..."
                 disabled={!canCreateStandalonePayment}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </form>
           </section>
@@ -272,7 +272,7 @@ export default async function DashboardPage() {
                     className="rounded-[1.25rem] border border-border bg-slate-50 p-4"
                   >
                     <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <p className="text-base font-medium text-slate-900">
                             {payment.condominiumName}
@@ -292,13 +292,13 @@ export default async function DashboardPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm text-slate-600">
                           +{payment.ballQuantity} bolinhas
                         </div>
                         <Link
                           href={`/pagamentos/${payment.id}`}
-                          className="inline-flex h-10 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                          className="inline-flex h-10 w-full items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto"
                         >
                           Abrir checkout PIX
                         </Link>
@@ -416,7 +416,7 @@ export default async function DashboardPage() {
                 </p>
                 <Link
                   href="/gerenciar-condominios"
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-sky-700 px-5 text-sm font-semibold !text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
+                  className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 sm:w-auto"
                 >
                   Cadastrar primeiro condomínio
                 </Link>

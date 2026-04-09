@@ -27,14 +27,14 @@ export default async function PaymentPage({
       : null;
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8 sm:px-10 lg:px-12">
-      <section className="rounded-[1.5rem] border border-border bg-surface px-6 py-8 shadow-sm sm:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
+      <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
               Checkout PIX AbacatePay
             </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               QR Code e copia e cola com liberação automática.
             </h1>
             <p className="mt-4 text-base leading-8 text-slate-600">
@@ -45,7 +45,7 @@ export default async function PaymentPage({
 
           <Link
             href="/dashboard"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+            className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
           >
             Voltar ao dashboard
           </Link>

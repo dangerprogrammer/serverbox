@@ -13,8 +13,6 @@ import {
   createPlanAction,
   deleteCondominiumAction,
   deletePlanAction,
-  updateCondominiumAction,
-  updatePlanAction,
 } from "@/app/gerenciar-condominios/actions";
 import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getCondominiumManagementData } from "@/lib/data/admin-management";
@@ -37,14 +35,14 @@ export default async function GerenciarCondominiosPage() {
   const { condominiums } = await getCondominiumManagementData();
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-6 py-8 sm:px-10 lg:px-12">
-      <section className="rounded-[1.5rem] border border-border bg-surface px-6 py-8 shadow-sm sm:px-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
+      <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
               Gestão administrativa
             </p>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               Cada condomínio concentra seus próprios planos.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
@@ -56,14 +54,14 @@ export default async function GerenciarCondominiosPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/dashboard"
-              className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 sm:w-auto"
             >
               Abrir dashboard
             </Link>
-            <form action={logoutAdmin}>
+            <form action={logoutAdmin} className="w-full sm:w-auto">
               <button
                 type="submit"
-                className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
               >
                 Sair
               </button>

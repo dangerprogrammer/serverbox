@@ -8,6 +8,8 @@
   --accent: #1f2937;
   --accent-strong: #111827;
   --accent-soft: #e5e7eb;
+  --secondary: #f59e0b;
+  --secondary-strong: #d97706;
   --border: rgba(31, 41, 55, 0.12);
 }
 
@@ -19,6 +21,8 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-strong: var(--secondary-strong);
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

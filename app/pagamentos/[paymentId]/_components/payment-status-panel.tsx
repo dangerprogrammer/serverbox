@@ -142,7 +142,7 @@ export function PaymentStatusPanel({
           <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
             Status da cobrança
           </p>
-          <h2 className="mt-2 text-3xl font-semibold text-slate-900">
+          <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">
             {statusLabels[payment.status]}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
@@ -152,7 +152,7 @@ export function PaymentStatusPanel({
           </p>
         </div>
 
-        <span className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
+        <span className="max-w-full break-all rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
           {payment.reference}
         </span>
       </div>
@@ -190,7 +190,7 @@ export function PaymentStatusPanel({
             type="button"
             onClick={copyPixCode}
             disabled={!payment.pixCopyPasteCode}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
           >
             {copied ? "Copiado" : "Copiar código"}
           </button>
@@ -212,7 +212,7 @@ export function PaymentStatusPanel({
               type="button"
               onClick={simulatePayment}
               disabled={isSimulating || payment.status !== "pending"}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               {isSimulating ? "Simulando..." : "Simular pagamento"}
             </button>

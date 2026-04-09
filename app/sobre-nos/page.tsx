@@ -45,15 +45,15 @@ export default async function SobreNosPage() {
   const { administrator, dashboard } = await getPublicPageData();
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-6 py-8 sm:px-10 lg:px-12">
-      <section className="rounded-[1.5rem] border border-border bg-surface px-6 py-8 shadow-sm sm:px-8 lg:px-12 lg:py-12">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
+      <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8 lg:px-12 lg:py-12">
         <div className="grid gap-10 lg:grid-cols-[1.35fr_0.95fr]">
           <div className="space-y-8">
             <div className="inline-flex rounded-full border border-border bg-surface-strong px-4 py-2 text-sm font-medium text-slate-700">
               Sobre nós
             </div>
             <div className="max-w-3xl space-y-5">
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
                 Venda recorrente de bolinhas de tênis para condomínios.
               </h1>
               <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
@@ -90,14 +90,14 @@ export default async function SobreNosPage() {
             <div className="flex flex-col gap-4 pt-2 sm:flex-row">
               <Link
                 href={administrator ? "/dashboard" : "/login"}
-                className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 sm:w-auto"
               >
                 {administrator ? "Abrir dashboard" : "Entrar como admin"}
               </Link>
               {administrator ? (
                 <Link
                   href="/gerenciar-condominios"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
                 >
                   Gerenciar condomínios
                 </Link>
@@ -120,7 +120,7 @@ export default async function SobreNosPage() {
                     key={condominium.id}
                     className="rounded-[1.25rem] border border-border bg-white p-4"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <h2 className="text-lg font-medium text-slate-900">
                           {condominium.name}
@@ -134,7 +134,7 @@ export default async function SobreNosPage() {
                         {condominium.availablePlanCount} planos
                       </span>
                     </div>
-                    <div className="mt-4 flex items-end justify-between gap-3 text-sm text-slate-600">
+                    <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-end sm:justify-between">
                       <span>
                         {condominium.availableBalls} bolinhas -{" "}
                         {condominium.paidPayments} pagamentos pagos
@@ -152,7 +152,7 @@ export default async function SobreNosPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
-        <div className="rounded-[1.5rem] border border-border bg-white p-7 shadow-sm">
+        <div className="rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-7">
           <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
             Estrutura
           </p>
@@ -178,7 +178,7 @@ export default async function SobreNosPage() {
               key={plan.id}
               className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm"
             >
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
                   {plan.tierLabel}
                 </span>
