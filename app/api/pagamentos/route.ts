@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     return Response.json(payment, { status: 201 });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao criar cobrança PIX.";
+      error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
 
     if (message === "Plano não encontrado.") {
       return Response.json({ error: message }, { status: 404 });
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
     if (message === "ABACATEPAY_API_KEY não configurada.") {
       return Response.json(
-        { error: "Configure ABACATEPAY_API_KEY para criar cobranças PIX." },
+        { error: "Configure ABACATEPAY_API_KEY para criar planos mensais/anuais." },
         { status: 503 },
       );
     }
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       return Response.json(
         {
           error:
-            "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar cobranças PIX.",
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar planos mensais/anuais.",
         },
         { status: 503 },
       );
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       return Response.json(
         {
           error:
-            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar cobranças PIX.",
+            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar planos mensais/anuais.",
         },
         { status: 503 },
       );

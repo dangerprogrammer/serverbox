@@ -52,7 +52,7 @@ export async function createPaymentAction(formData: FormData) {
     redirect(`/pagamentos/${payment.id}`);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao criar cobrança PIX.";
+      error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
 
     if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       throw new Error(
@@ -105,7 +105,7 @@ export async function createStandalonePaymentAction(formData: FormData) {
     redirect(`/pagamentos/${payment.id}`);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao criar cobrança PIX.";
+      error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
 
     if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       throw new Error(

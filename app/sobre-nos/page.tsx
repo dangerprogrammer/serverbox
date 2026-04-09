@@ -58,7 +58,7 @@ export default async function SobreNosPage() {
               </h1>
               <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
                 Uma base administrativa simples para organizar condomínios,
-                planos próprios por cliente e cobranças PIX sem planilhas ou
+                planos próprios por cliente e planos mensais/anuais sem planilhas ou
                 controles paralelos.
               </p>
             </div>

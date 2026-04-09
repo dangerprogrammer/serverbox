@@ -43,7 +43,7 @@ export default async function DashboardPage() {
                 Operação financeira e saldo por condomínio.
               </h1>
               <p className="max-w-3xl text-base leading-8 text-slate-600">
-                Acompanhe cobranças PIX, saldo liberado e o que ainda falta
+                Acompanhe planos mensais/anuais, saldo liberado e o que ainda falta
                 cadastrar para a operação rodar com dados reais.
               </p>
             </div>
@@ -126,8 +126,8 @@ export default async function DashboardPage() {
                 </div>
                 <div className="rounded-xl border border-dashed border-border bg-white px-4 py-4 leading-7">
                   {canCreatePayment
-                    ? "Já existe base suficiente para emitir cobranças PIX reais."
-                    : "Cadastre ao menos um condomínio com plano para liberar a emissão de cobranças PIX."}
+                    ? "Já existe base suficiente para operar planos mensais/anuais reais."
+                    : "Cadastre ao menos um condomínio com plano para liberar a operação de planos mensais/anuais."}
                 </div>
               </div>
             </div>
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Nova cobrança PIX
+              Novo plano mensal/anual
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
               Escolha um plano já vinculado a um condomínio. O crédito de
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
               </div>
 
               <SubmitButton
-                idleLabel="Criar cobrança AbacatePay"
+                idleLabel="Criar plano mensal/anual"
                 pendingLabel="Criando..."
                 disabled={!canCreatePayment}
                 className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreateStandalonePayment
-                  ? "A cobrança PIX avulsa também libera saldo só depois da confirmação do pagamento."
+                  ? "A compra avulsa do plano mensal/anual também libera saldo só depois da confirmação do pagamento."
                   : "Cadastre ao menos um condomínio para emitir compra avulsa de bolinhas."}
               </div>
 
