@@ -35,6 +35,30 @@ function requireSessionSecret() {
   return secret;
 }
 
+function getSessionCookieDomain() {
+  const domain = process.env.SESSION_COOKIE_DOMAIN?.trim();
+
+  if (!domain) {
+    return undefined;
+  }
+
+  return domain.replace(/^\.+/, "");
+}
+
+function getSessionCookieOptions(expiresAt: number) {
+  return {
+    httpOnly: true,
+    secure:
+      process.env.SESSION_COOKIE_SECURE?.trim() === "false"
+        ? false
+        : process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    expires: new Date(expiresAt),
+    domain: getSessionCookieDomain(),
+  };
+}
+
 function encodePayload(payload: SessionPayload) {
   return Buffer.from(JSON.stringify(payload)).toString("base64url");
 }
@@ -65,18 +89,20 @@ export async function createAdminSession(adminId: string) {
   const signature = signPayload(payload);
   const cookieStore = await cookies();
 
-  cookieStore.set(SESSION_COOKIE_NAME, `${payload}.${signature}`, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    expires: new Date(expiresAt),
-  });
+  cookieStore.set(
+    SESSION_COOKIE_NAME,
+    `${payload}.${signature}`,
+    getSessionCookieOptions(expiresAt),
+  );
 }
 
 export async function deleteAdminSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE_NAME);
+
+  cookieStore.set(SESSION_COOKIE_NAME, "", {
+    ...getSessionCookieOptions(Date.now() - 1000),
+    maxAge: 0,
+  });
 }
 
 export async function readAdminSession() {

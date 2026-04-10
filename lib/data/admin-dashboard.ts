@@ -192,3 +192,58 @@ export const getAdminDashboardData = cache(async () => {
       })),
   };
 });
+
+export const getAdminCondominiumDetails = cache(async (condominiumId: string) => {
+  const dataSource = await getDataSource();
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+
+  const condominium = await condominiumRepository.findOne({
+    where: { id: condominiumId },
+    relations: {
+      primaryAdmin: true,
+      payments: true,
+      ballMovements: { payment: true },
+    },
+  });
+
+  if (!condominium) {
+    return null;
+  }
+
+  const sortedPayments = [...condominium.payments].sort(
+    (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
+  );
+
+  return {
+    id: condominium.id,
+    name: condominium.name,
+    city: condominium.city,
+    state: condominium.state,
+    courts: condominium.courts,
+    ballQuantity: condominium.ballQuantity,
+    administratorName: condominium.primaryAdmin.name,
+    availableBalls: computeAvailableBalls(condominium.ballMovements),
+    paidBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PAID),
+    pendingBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PENDING),
+    paidRevenueInCents: sumAmountByStatus(condominium.payments, PaymentStatus.PAID),
+    pendingRevenueInCents: sumAmountByStatus(
+      condominium.payments,
+      PaymentStatus.PENDING,
+    ),
+    plans: condominium.plans.map((plan: CondominiumPlan) => ({
+      id: plan.id,
+      name: plan.name,
+      monthlyBallAllowance: plan.monthlyBallAllowance,
+      monthlyPriceInCents: plan.monthlyPriceInCents,
+    })),
+    payments: sortedPayments.map((payment) => ({
+      id: payment.id,
+      reference: payment.reference,
+      status: payment.status,
+      planName: payment.planName,
+      amountInCents: payment.amountInCents,
+      ballQuantity: payment.ballQuantity,
+      createdAt: payment.createdAt,
+    })),
+  };
+});

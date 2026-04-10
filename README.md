@@ -69,6 +69,23 @@ Fluxo atual:
 4. O sistema gera um credito em `BallInventoryMovement`
 5. O saldo de bolinhas fica visivel na dashboard
 
+## Sessao administrativa
+
+Se o site em producao usar mais de um host, como `www.seudominio.com` e `seudominio.com`,
+configure a mesma base de dominio para o cookie da sessao:
+
+```bash
+SESSION_COOKIE_DOMAIN=seudominio.com
+```
+
+Se precisar forcar ou desativar `secure` em ambientes especificos, use:
+
+```bash
+SESSION_COOKIE_SECURE=true
+```
+
+Por padrao, o cookie continua `httpOnly`, com `sameSite=lax` e validade de 7 dias.
+
 Exemplo de criacao de condominio:
 
 ```bash

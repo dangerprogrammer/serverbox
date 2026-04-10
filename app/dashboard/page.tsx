@@ -352,9 +352,12 @@ export default async function DashboardPage() {
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <h3 className="text-xl font-semibold text-slate-900">
+                      <Link
+                        href={`/dashboard/${condominium.id}`}
+                        className="text-xl font-semibold text-slate-900 transition hover:text-slate-700"
+                      >
                         {condominium.name}
-                      </h3>
+                      </Link>
                       <p className="mt-1 text-sm text-slate-500">
                         {condominium.city}, {condominium.state} -{" "}
                         {condominium.administratorName}
@@ -367,6 +370,12 @@ export default async function DashboardPage() {
                       <p className="mt-1 text-sm text-slate-600">
                         Base configurada: {condominium.ballQuantity} bolinhas
                       </p>
+                      <Link
+                        href={`/dashboard/${condominium.id}`}
+                        className="mt-3 inline-flex h-10 items-center justify-center rounded-full border border-slate-300 px-4 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                      >
+                        Ver detalhes do condomínio
+                      </Link>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl bg-white px-4 py-3">
