@@ -10,7 +10,7 @@ type UpdateCondominiumFormProps = {
   city: string;
   state: string;
   courts: number;
-  activeResidents: number;
+  ballQuantity: number;
 };
 
 export function UpdateCondominiumForm({
@@ -19,20 +19,20 @@ export function UpdateCondominiumForm({
   city: initialCity,
   state: initialState,
   courts: initialCourts,
-  activeResidents: initialActiveResidents,
+  ballQuantity: initialBallQuantity,
 }: UpdateCondominiumFormProps) {
   const [name, setName] = useState(initialName);
   const [city, setCity] = useState(initialCity);
   const [state, setState] = useState(initialState);
   const [courts, setCourts] = useState(String(initialCourts));
-  const [activeResidents, setActiveResidents] = useState(String(initialActiveResidents));
+  const [ballQuantity, setBallQuantity] = useState(String(initialBallQuantity));
 
   const hasChanges =
     name !== initialName ||
     city !== initialCity ||
     state !== initialState ||
     courts !== String(initialCourts) ||
-    activeResidents !== String(initialActiveResidents);
+    ballQuantity !== String(initialBallQuantity);
 
   const handleSubmit = async (formData: FormData) => {
     await updateCondominiumAction(formData);
@@ -79,13 +79,13 @@ export function UpdateCondominiumForm({
         />
       </div>
       <FloatingInput
-        label="Moradores ativos"
-        name="activeResidents"
+        label="Quantidade de bolinhas"
+        name="ballQuantity"
         type="number"
         min={0}
-        value={activeResidents}
-        onChange={(e) => setActiveResidents(e.target.value)}
-        placeholder="Moradores ativos"
+        value={ballQuantity}
+        onChange={(e) => setBallQuantity(e.target.value)}
+        placeholder="Quantidade de bolinhas"
         className="bg-white"
       />
 

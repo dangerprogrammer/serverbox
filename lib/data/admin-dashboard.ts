@@ -27,6 +27,24 @@ function computeAvailableBalls(movements: BallInventoryMovement[]) {
   }, 0);
 }
 
+function sumBallsByStatus(
+  payments: CondominiumPayment[],
+  status: PaymentStatus,
+) {
+  return payments
+    .filter((payment) => payment.status === status)
+    .reduce((total, payment) => total + payment.ballQuantity, 0);
+}
+
+function sumAmountByStatus(
+  payments: CondominiumPayment[],
+  status: PaymentStatus,
+) {
+  return payments
+    .filter((payment) => payment.status === status)
+    .reduce((total, payment) => total + payment.amountInCents, 0);
+}
+
 export const getAdminDashboardData = cache(async () => {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
@@ -74,6 +92,40 @@ export const getAdminDashboardData = cache(async () => {
     })),
   );
 
+  const condominiumPerformance = condominiums.map((condominium) => ({
+    id: condominium.id,
+    name: condominium.name,
+    paidBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PAID),
+    paidRevenueInCents: sumAmountByStatus(
+      condominium.payments,
+      PaymentStatus.PAID,
+    ),
+  }));
+
+  const topCondominiumBySales = condominiumPerformance.reduce(
+    (top, current) => {
+      if (!top) {
+        return current;
+      }
+
+      if (current.paidBalls > top.paidBalls) {
+        return current;
+      }
+
+      if (
+        current.paidBalls === top.paidBalls &&
+        current.paidRevenueInCents > top.paidRevenueInCents
+      ) {
+        return current;
+      }
+
+      return top;
+    },
+    null as
+      | (typeof condominiumPerformance)[number]
+      | null,
+  );
+
   return {
     summary: {
       totalAvailableBalls: condominiums.reduce(
@@ -81,15 +133,19 @@ export const getAdminDashboardData = cache(async () => {
           total + computeAvailableBalls(condominium.ballMovements),
         0,
       ),
-      paidPayments: payments.filter(
-        (payment) => payment.status === PaymentStatus.PAID,
-      ).length,
-      pendingPayments: payments.filter(
-        (payment) => payment.status === PaymentStatus.PENDING,
-      ).length,
+      confirmedBalls: payments
+        .filter((payment) => payment.status === PaymentStatus.PAID)
+        .reduce((total, payment) => total + payment.ballQuantity, 0),
+      pendingBalls: payments
+        .filter((payment) => payment.status === PaymentStatus.PENDING)
+        .reduce((total, payment) => total + payment.ballQuantity, 0),
       creditedBalls: movements
         .filter((movement) => movement.kind === BallMovementKind.CREDIT)
         .reduce((total, movement) => total + movement.quantity, 0),
+      totalRevenueInCents: payments
+        .filter((payment) => payment.status === PaymentStatus.PAID)
+        .reduce((total, payment) => total + payment.amountInCents, 0),
+      topCondominiumBySales,
     },
     plans: allPlans,
     condominiums: condominiums.map((condominium: Condominium) => ({
@@ -97,14 +153,14 @@ export const getAdminDashboardData = cache(async () => {
       name: condominium.name,
       city: condominium.city,
       state: condominium.state,
+      ballQuantity: condominium.ballQuantity,
       administratorName: condominium.primaryAdmin.name,
       availableBalls: computeAvailableBalls(condominium.ballMovements),
-      pendingPayments: condominium.payments.filter(
-        (payment: CondominiumPayment) => payment.status === PaymentStatus.PENDING,
-      ).length,
-      paidPayments: condominium.payments.filter(
-        (payment: CondominiumPayment) => payment.status === PaymentStatus.PAID,
-      ).length,
+      pendingBalls: sumBallsByStatus(
+        condominium.payments,
+        PaymentStatus.PENDING,
+      ),
+      paidBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PAID),
       plans: condominium.plans.map((plan: CondominiumPlan) => ({
         id: plan.id,
         name: plan.name,

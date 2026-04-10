@@ -11,6 +11,7 @@ type CreateCondominiumPayload = {
   city?: string;
   state?: string;
   courts?: number;
+  ballQuantity?: number;
   activeResidents?: number;
   adminEmail?: string;
   adminName?: string;
@@ -42,7 +43,7 @@ export async function GET() {
       city: condominium.city,
       state: condominium.state,
       courts: condominium.courts,
-      activeResidents: condominium.activeResidents,
+      ballQuantity: condominium.ballQuantity,
       createdAt: condominium.createdAt,
       administrator: {
         id: condominium.primaryAdmin.id,
@@ -106,9 +107,13 @@ export async function POST(request: Request) {
     city: payload.city.trim(),
     state: payload.state.trim().toUpperCase().slice(0, 2),
     courts: payload.courts && payload.courts > 0 ? payload.courts : 1,
-    activeResidents:
-      payload.activeResidents && payload.activeResidents >= 0
-        ? payload.activeResidents
+    ballQuantity:
+      payload.ballQuantity !== undefined
+        ? payload.ballQuantity >= 0
+          ? payload.ballQuantity
+          : 0
+        : payload.activeResidents && payload.activeResidents >= 0
+          ? payload.activeResidents
         : 0,
     primaryAdmin: assignedAdministrator,
   });

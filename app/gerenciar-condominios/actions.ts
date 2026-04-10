@@ -78,7 +78,7 @@ export async function createCondominiumAction(formData: FormData) {
     city,
     state,
     courts: parsePositiveNumber(formData.get("courts"), 1) || 1,
-    activeResidents: parsePositiveNumber(formData.get("activeResidents"), 0),
+    ballQuantity: parsePositiveNumber(formData.get("ballQuantity"), 0),
     plans: [],
     primaryAdmin: administrator,
   });
@@ -110,8 +110,8 @@ export async function updateCondominiumAction(formData: FormData) {
     .toUpperCase()
     .slice(0, 2);
   existing.courts = parsePositiveNumber(formData.get("courts"), 1) || 1;
-  existing.activeResidents = parsePositiveNumber(
-    formData.get("activeResidents"),
+  existing.ballQuantity = parsePositiveNumber(
+    formData.get("ballQuantity"),
     0,
   );
 

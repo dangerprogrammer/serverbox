@@ -29,7 +29,7 @@ export const getCondominiumManagementData = cache(async () => {
       city: condominium.city,
       state: condominium.state,
       courts: condominium.courts,
-      activeResidents: condominium.activeResidents,
+      ballQuantity: condominium.ballQuantity,
       administratorName: condominium.primaryAdmin.name,
       administratorEmail: condominium.primaryAdmin.email,
       plans: [...condominium.plans]

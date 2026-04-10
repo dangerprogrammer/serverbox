@@ -11,7 +11,7 @@ export type Condominium = {
   city: string;
   state: string;
   courts: number;
-  activeResidents: number;
+  ballQuantity: number;
   createdAt: Date;
   updatedAt: Date;
   primaryAdmin: Administrator;
@@ -43,7 +43,8 @@ export const CondominiumEntity = new EntitySchema<Condominium>({
       type: Number,
       default: 1,
     },
-    activeResidents: {
+    ballQuantity: {
+      name: "activeResidents",
       type: Number,
       default: 0,
     },

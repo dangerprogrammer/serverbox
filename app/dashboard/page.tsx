@@ -25,10 +25,19 @@ export default async function DashboardPage() {
   await requireAuthenticatedAdmin();
   await connection();
   const dashboard = await getAdminDashboardData();
+  const eligibleCondominiums = dashboard.condominiums.filter(
+    (condominium) => condominium.ballQuantity > 0,
+  );
+  const eligibleCondominiumIds = new Set(
+    eligibleCondominiums.map((condominium) => condominium.id),
+  );
+  const eligiblePlans = dashboard.plans.filter((plan) =>
+    eligibleCondominiumIds.has(plan.condominiumId),
+  );
   const hasCondominiums = dashboard.condominiums.length > 0;
-  const hasPlans = dashboard.plans.length > 0;
-  const canCreatePayment = hasPlans;
-  const canCreateStandalonePayment = hasCondominiums;
+  const hasEligibleCondominiums = eligibleCondominiums.length > 0;
+  const canCreateStandalonePayment = hasEligibleCondominiums;
+  const canCreatePayment = eligiblePlans.length > 0;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -43,8 +52,8 @@ export default async function DashboardPage() {
                 Operação financeira e saldo por condomínio.
               </h1>
               <p className="max-w-3xl text-base leading-8 text-slate-600">
-                Acompanhe planos mensais/anuais, saldo liberado e o que ainda falta
-                cadastrar para a operação rodar com dados reais.
+                Priorize compras avulsas e mantenha planos mensais/anuais ativos
+                quando o condomínio tiver base de bolinhas configurada.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -74,34 +83,36 @@ export default async function DashboardPage() {
           <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
             <div className="rounded-[1.25rem] border border-border bg-white p-5">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Panorama do momento
+                Indicadores de venda
               </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Saldo total</p>
+                  <p className="text-sm text-slate-500">Faturamento confirmado</p>
                   <p className="mt-2 text-3xl font-semibold text-slate-900">
-                    {dashboard.summary.totalAvailableBalls}
+                    {currencyFormatter.format(
+                      dashboard.summary.totalRevenueInCents / 100,
+                    )}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-                    bolinhas disponíveis
+                    vendas já pagas
                   </p>
                 </div>
                 <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Pagamentos pagos</p>
-                  <p className="mt-2 text-3xl font-semibold text-slate-900">
-                    {dashboard.summary.paidPayments}
+                  <p className="text-sm text-slate-500">Condomínio líder</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    {dashboard.summary.topCondominiumBySales?.name ?? "—"}
+                  </p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+                    mais bolinhas vendidas
                   </p>
                 </div>
                 <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Pagamentos pendentes</p>
+                  <p className="text-sm text-slate-500">Bolinhas vendidas</p>
                   <p className="mt-2 text-3xl font-semibold text-slate-900">
-                    {dashboard.summary.pendingPayments}
+                    {dashboard.summary.confirmedBalls}
                   </p>
-                </div>
-                <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Bolinhas creditadas</p>
-                  <p className="mt-2 text-3xl font-semibold text-slate-900">
-                    {dashboard.summary.creditedBalls}
+                  <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+                    compras confirmadas
                   </p>
                 </div>
               </div>
@@ -124,10 +135,18 @@ export default async function DashboardPage() {
                     {dashboard.plans.length}
                   </strong>
                 </div>
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-3">
+                  <span>Condomínios habilitados</span>
+                  <strong className="text-base text-slate-900">
+                    {eligibleCondominiums.length}
+                  </strong>
+                </div>
                 <div className="rounded-xl border border-dashed border-border bg-white px-4 py-4 leading-7">
-                  {canCreatePayment
-                    ? "Já existe base suficiente para operar planos mensais/anuais reais."
-                    : "Cadastre ao menos um condomínio com plano para liberar a operação de planos mensais/anuais."}
+                  {!hasEligibleCondominiums
+                    ? "Defina a quantidade de bolinhas dos condomínios para liberar compras avulsas e planos."
+                    : canCreatePayment
+                      ? "Compras avulsas liberadas e planos mensais/anuais prontos para operar."
+                      : "Compras avulsas já liberadas. Cadastre planos para ativar cobrança mensal/anual."}
                 </div>
               </div>
             </div>
@@ -136,8 +155,8 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.45fr]">
-        <div className="space-y-6">
-          <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-6">
+          <section className="order-2 rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900">
               Novo plano mensal/anual
             </h2>
@@ -151,12 +170,12 @@ export default async function DashboardPage() {
                 <span className="text-sm font-medium text-slate-700">Plano</span>
                 <select
                   name="planId"
-                  disabled={!hasPlans}
+                  disabled={!canCreatePayment}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                  defaultValue={dashboard.plans[0]?.id ?? ""}
+                  defaultValue={eligiblePlans[0]?.id ?? ""}
                 >
-                  {hasPlans ? (
-                    dashboard.plans.map((plan) => (
+                  {canCreatePayment ? (
+                    eligiblePlans.map((plan) => (
                       <option key={plan.id} value={plan.id}>
                         {plan.condominiumName} - {plan.name} -{" "}
                         {plan.monthlyBallAllowance} bolinhas -{" "}
@@ -164,7 +183,7 @@ export default async function DashboardPage() {
                       </option>
                     ))
                   ) : (
-                    <option value="">Nenhum plano cadastrado</option>
+                    <option value="">Sem planos habilitados para cobrança</option>
                   )}
                 </select>
               </label>
@@ -172,7 +191,7 @@ export default async function DashboardPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreatePayment
                   ? "O checkout abre em seguida para copiar o código PIX ou acompanhar o QR Code."
-                  : "Antes de cobrar, cadastre a base operacional em Gerenciar Condomínios."}
+                  : "Defina quantidade de bolinhas e cadastre ao menos um plano para liberar cobrança mensal/anual."}
               </div>
 
               <SubmitButton
@@ -185,12 +204,12 @@ export default async function DashboardPage() {
 
             {!canCreatePayment ? (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Sem plano vinculado a condomínio não existe cobrança real para emitir.
+                Sem base de bolinhas e plano vinculado não existe cobrança mensal/anual para emitir.
               </div>
             ) : null}
           </section>
 
-          <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+          <section className="order-1 rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900">
               Compra avulsa de bolinhas
             </h2>
@@ -206,16 +225,16 @@ export default async function DashboardPage() {
                   name="condominiumId"
                   disabled={!canCreateStandalonePayment}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                  defaultValue={dashboard.condominiums[0]?.id ?? ""}
+                  defaultValue={eligibleCondominiums[0]?.id ?? ""}
                 >
-                  {hasCondominiums ? (
-                    dashboard.condominiums.map((condominium) => (
+                  {canCreateStandalonePayment ? (
+                    eligibleCondominiums.map((condominium) => (
                       <option key={condominium.id} value={condominium.id}>
                         {condominium.name} - {condominium.city}/{condominium.state}
                       </option>
                     ))
                   ) : (
-                    <option value="">Nenhum condomínio cadastrado</option>
+                    <option value="">Nenhum condomínio habilitado</option>
                   )}
                 </select>
               </label>
@@ -241,7 +260,7 @@ export default async function DashboardPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreateStandalonePayment
                   ? "A compra avulsa do plano mensal/anual também libera saldo só depois da confirmação do pagamento."
-                  : "Cadastre ao menos um condomínio para emitir compra avulsa de bolinhas."}
+                  : "Defina quantidade de bolinhas no condomínio para habilitar compra avulsa."}
               </div>
 
               <SubmitButton
@@ -345,11 +364,14 @@ export default async function DashboardPage() {
                           ? `Planos disponíveis: ${condominium.plans.map((plan) => plan.name).join(", ")}`
                           : "Nenhum plano vinculado a este condomínio ainda."}
                       </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Base configurada: {condominium.ballQuantity} bolinhas
+                      </p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Saldo
+                          Bolinhas restantes
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
                           {condominium.availableBalls}
@@ -357,18 +379,18 @@ export default async function DashboardPage() {
                       </div>
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Pagos
+                          Bolinhas confirmadas
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
-                          {condominium.paidPayments}
+                          {condominium.paidBalls}
                         </p>
                       </div>
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Pendentes
+                          Bolinhas pendentes
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
-                          {condominium.pendingPayments}
+                          {condominium.pendingBalls}
                         </p>
                       </div>
                     </div>

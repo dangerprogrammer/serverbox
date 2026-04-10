@@ -112,12 +112,12 @@ export default async function GerenciarCondominiosPage() {
               />
             </div>
             <FloatingInput
-              label="Moradores ativos"
-              name="activeResidents"
+              label="Quantidade de bolinhas"
+              name="ballQuantity"
               type="number"
               min={0}
               defaultValue={0}
-              placeholder="Moradores ativos"
+              placeholder="Quantidade de bolinhas"
               className="bg-white"
             />
 
@@ -157,8 +157,8 @@ export default async function GerenciarCondominiosPage() {
                       </div>
                       <p className="text-sm text-slate-500">
                         {condominium.city}, {condominium.state} -{" "}
-                        {condominium.courts} quadras - {condominium.activeResidents}{" "}
-                        moradores
+                        {condominium.courts} quadras - {condominium.ballQuantity}{" "}
+                        bolinhas
                       </p>
                     </div>
 
@@ -168,7 +168,7 @@ export default async function GerenciarCondominiosPage() {
                           {condominium.courts} quadras
                         </span>
                         <span className="rounded-xl bg-white px-3 py-2 text-center">
-                          {condominium.activeResidents} moradores
+                          {condominium.ballQuantity} bolinhas
                         </span>
                       </div>
                       <span className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition group-open:rotate-180">
@@ -197,7 +197,7 @@ export default async function GerenciarCondominiosPage() {
                       city={condominium.city}
                       state={condominium.state}
                       courts={condominium.courts}
-                      activeResidents={condominium.activeResidents}
+                      ballQuantity={condominium.ballQuantity}
                     />
 
                     <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">

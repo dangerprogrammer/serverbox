@@ -95,7 +95,7 @@ export const getDashboardData = cache(async () => {
       city: condominium.city,
       state: condominium.state,
       courts: condominium.courts,
-      activeResidents: condominium.activeResidents,
+      ballQuantity: condominium.ballQuantity,
       administratorName: condominium.primaryAdmin.name,
       availablePlanCount: condominium.plans.length,
       availableBalls: computeAvailableBalls(condominium.ballMovements),
