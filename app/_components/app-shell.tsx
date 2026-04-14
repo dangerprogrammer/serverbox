@@ -7,6 +7,10 @@ import { AppSidebar } from "@/app/_components/app-sidebar";
 type AppShellProps = {
   children: React.ReactNode;
   logoutAction: () => Promise<void>;
+  condominiums: Array<{
+    id: string;
+    name: string;
+  }>;
 };
 
 const hiddenSidebarPaths = ["/login"];
@@ -17,7 +21,7 @@ function shouldHideSidebar(pathname: string) {
   );
 }
 
-export function AppShell({ children, logoutAction }: AppShellProps) {
+export function AppShell({ children, logoutAction, condominiums }: AppShellProps) {
   const pathname = usePathname();
 
   if (shouldHideSidebar(pathname)) {
@@ -26,7 +30,7 @@ export function AppShell({ children, logoutAction }: AppShellProps) {
 
   return (
     <div className="min-h-screen">
-      <AppSidebar logoutAction={logoutAction} />
+      <AppSidebar logoutAction={logoutAction} condominiums={condominiums} />
       <div className="min-w-0 lg:pl-72">{children}</div>
     </div>
   );

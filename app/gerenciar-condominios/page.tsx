@@ -136,9 +136,7 @@ export default async function GerenciarCondominiosPage() {
                         </span>
                       </div>
                       <p className="text-sm text-slate-500">
-                        {condominium.city}, {condominium.state} -{" "}
-                        {condominium.courts} quadras - {condominium.ballQuantity}{" "}
-                        bolinhas
+                        {condominium.courts} quadras - {condominium.ballQuantity} bolinhas
                       </p>
                     </div>
 

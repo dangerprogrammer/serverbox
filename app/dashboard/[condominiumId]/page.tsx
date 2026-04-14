@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
+import { SalesCharts } from "@/app/dashboard/[condominiumId]/_components/sales-charts";
 import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getAdminCondominiumDetails } from "@/lib/data/admin-dashboard";
 
@@ -28,6 +29,15 @@ export default async function CondominiumDashboardPage({
   if (!condominium) {
     notFound();
   }
+
+  const chartPayments = condominium.payments.map((payment) => ({
+    id: payment.id,
+    status: payment.status,
+    planName: payment.planName,
+    amountInCents: payment.amountInCents,
+    ballQuantity: payment.ballQuantity,
+    createdAt: payment.createdAt.toISOString(),
+  }));
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -71,6 +81,8 @@ export default async function CondominiumDashboardPage({
           </div>
         </div>
       </section>
+
+      <SalesCharts payments={chartPayments} />
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.45fr]">
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">

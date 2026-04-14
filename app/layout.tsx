@@ -4,6 +4,8 @@ import "./globals.css";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { logoutAdmin } from "@/app/login/actions";
+import { getAuthenticatedAdmin } from "@/lib/auth/session";
+import { getCondominiumManagementData } from "@/lib/data/admin-management";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,18 +23,39 @@ export const metadata: Metadata = {
     "Gestão de planos de bolinhas de tênis para condomínios com Next.js e TypeORM.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const loadSidebarCondominiums = async () => {
+    const admin = await getAuthenticatedAdmin();
+
+    if (!admin) {
+      return [] as Array<{ id: string; name: string }>;
+    }
+
+    const managementData = await getCondominiumManagementData();
+
+    return managementData.condominiums
+      .map((condominium) => ({
+        id: condominium.id,
+        name: condominium.name,
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name, "pt-BR"));
+  };
+
+  const condominiums = await loadSidebarCondominiums();
+
   return (
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppShell logoutAction={logoutAdmin}>{children}</AppShell>
+        <AppShell logoutAction={logoutAdmin} condominiums={condominiums}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );
