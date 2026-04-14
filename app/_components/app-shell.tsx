@@ -6,6 +6,7 @@ import { AppSidebar } from "@/app/_components/app-sidebar";
 
 type AppShellProps = {
   children: React.ReactNode;
+  logoutAction: () => Promise<void>;
 };
 
 const hiddenSidebarPaths = ["/login"];
@@ -16,7 +17,7 @@ function shouldHideSidebar(pathname: string) {
   );
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, logoutAction }: AppShellProps) {
   const pathname = usePathname();
 
   if (shouldHideSidebar(pathname)) {
@@ -24,9 +25,9 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <AppSidebar />
-      <div className="min-w-0 flex-1">{children}</div>
+    <div className="min-h-screen">
+      <AppSidebar logoutAction={logoutAction} />
+      <div className="min-w-0 lg:pl-72">{children}</div>
     </div>
   );
 }

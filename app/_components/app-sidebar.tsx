@@ -70,12 +70,16 @@ function InfoIcon({ className }: { className?: string }) {
   );
 }
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  logoutAction: () => Promise<void>;
+};
+
+export function AppSidebar({ logoutAction }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
     <>
-      <aside className="hidden lg:flex lg:w-72 lg:flex-col lg:gap-6 lg:border-r lg:border-border lg:bg-white lg:px-5 lg:py-6">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-72 lg:flex-col lg:gap-6 lg:border-r lg:border-border lg:bg-white lg:px-5 lg:py-6 lg:overflow-y-auto">
         <div>
           <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
             ServerBox
@@ -106,6 +110,15 @@ export function AppSidebar() {
             );
           })}
         </nav>
+
+        <form action={logoutAction} className="mt-auto">
+          <button
+            type="submit"
+            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Sair
+          </button>
+        </form>
       </aside>
 
       <div className="lg:hidden sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
@@ -129,6 +142,15 @@ export function AppSidebar() {
               </Link>
             );
           })}
+
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="inline-flex h-[2.625rem] items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Sair
+            </button>
+          </form>
         </div>
       </div>
     </>

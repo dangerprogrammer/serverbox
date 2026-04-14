@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
@@ -33,25 +32,16 @@ export default async function CondominiumDashboardPage({
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
       <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-              Dashboard do condomínio
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              {condominium.name}
-            </h1>
-            <p className="text-sm leading-7 text-slate-600">
-              {condominium.city}, {condominium.state} - Operação {condominium.administratorName}
-            </p>
-          </div>
-
-          <Link
-            href="/dashboard"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-          >
-            Voltar para dashboard
-          </Link>
+        <div className="space-y-3">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+            Dashboard do condomínio
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            {condominium.name}
+          </h1>
+          <p className="text-sm leading-7 text-slate-600">
+            {condominium.city}, {condominium.state} - Operação {condominium.administratorName}
+          </p>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

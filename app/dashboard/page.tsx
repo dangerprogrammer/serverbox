@@ -4,7 +4,6 @@ import { connection } from "next/server";
 import { CurrencyInput } from "@/app/_components/currency-input";
 import { SubmitButton } from "@/app/dashboard/_components/submit-button";
 import { FloatingInput } from "@/app/_components/floating-field";
-import { logoutAdmin } from "@/app/login/actions";
 import {
   createPaymentAction,
   createStandalonePaymentAction,
@@ -43,41 +42,17 @@ export default async function DashboardPage() {
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
       <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-3">
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-                Dashboard administrativa
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                Operação financeira e saldo por condomínio.
-              </h1>
-              <p className="max-w-3xl text-base leading-8 text-slate-600">
-                Priorize compras avulsas e mantenha planos mensais/anuais ativos
-                quando o condomínio tiver base de bolinhas configurada.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/gerenciar-condominios"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
-              >
-                Gerenciar Condomínios
-              </Link>
-              <Link
-                href="/sobre-nos"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
-              >
-                Ir para Sobre nós
-              </Link>
-              <form action={logoutAdmin} className="w-full sm:w-auto">
-                <button
-                  type="submit"
-                  className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
-                >
-                  Sair
-                </button>
-              </form>
-            </div>
+          <div className="space-y-3">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+              Dashboard administrativa
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Operação financeira e saldo por condomínio.
+            </h1>
+            <p className="max-w-3xl text-base leading-8 text-slate-600">
+              Priorize compras avulsas e mantenha planos mensais/anuais ativos
+              quando o condomínio tiver base de bolinhas configurada.
+            </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">

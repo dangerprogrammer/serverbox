@@ -7,7 +7,6 @@ import {
 } from "@/app/_components/floating-field";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
-import { logoutAdmin } from "@/app/login/actions";
 import {
   createCondominiumAction,
   createPlanAction,
@@ -37,36 +36,17 @@ export default async function GerenciarCondominiosPage() {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
       <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-              Gestão administrativa
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              Cada condomínio concentra seus próprios planos.
-            </h1>
-            <p className="max-w-3xl text-base leading-8 text-slate-600">
-              O cadastro reflete a regra do negócio: plano e dado interno do
-              condomínio, não um cadastro separado.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 sm:w-auto"
-            >
-              Abrir dashboard
-            </Link>
-            <form action={logoutAdmin} className="w-full sm:w-auto">
-              <button
-                type="submit"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
-              >
-                Sair
-              </button>
-            </form>
-          </div>
+        <div className="space-y-3">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+            Gestão administrativa
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            Cada condomínio concentra seus próprios planos.
+          </h1>
+          <p className="max-w-3xl text-base leading-8 text-slate-600">
+            O cadastro reflete a regra do negócio: plano e dado interno do
+            condomínio, não um cadastro separado.
+          </p>
         </div>
       </section>
 
