@@ -127,7 +127,7 @@ export function AppSidebar({ logoutAction, condominiums }: AppSidebarProps) {
 
   return (
     <>
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-72 lg:flex-col lg:gap-6 lg:border-r lg:border-border lg:bg-white lg:px-5 lg:py-6 lg:overflow-y-auto">
+      <aside className="hidden lg:fixed lg:top-4 lg:bottom-4 lg:left-4 lg:z-30 lg:flex lg:w-[18.5rem] lg:flex-col lg:gap-6 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur">
         <div>
           <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
             ServerBox

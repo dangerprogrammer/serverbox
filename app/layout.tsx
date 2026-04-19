@@ -28,9 +28,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const loadSidebarCondominiums = async () => {
-    const admin = await getAuthenticatedAdmin();
+  const admin = await getAuthenticatedAdmin();
+  const isAuthenticated = admin !== null;
 
+  const loadSidebarCondominiums = async () => {
     if (!admin) {
       return [] as Array<{ id: string; name: string }>;
     }
@@ -53,7 +54,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppShell logoutAction={logoutAdmin} condominiums={condominiums}>
+        <AppShell logoutAction={logoutAdmin} condominiums={condominiums} isAuthenticated={isAuthenticated}>
           {children}
         </AppShell>
       </body>

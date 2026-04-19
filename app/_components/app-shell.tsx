@@ -11,6 +11,7 @@ type AppShellProps = {
     id: string;
     name: string;
   }>;
+  isAuthenticated: boolean;
 };
 
 const hiddenSidebarPaths = ["/login"];
@@ -21,17 +22,17 @@ function shouldHideSidebar(pathname: string) {
   );
 }
 
-export function AppShell({ children, logoutAction, condominiums }: AppShellProps) {
+export function AppShell({ children, logoutAction, condominiums, isAuthenticated }: AppShellProps) {
   const pathname = usePathname();
 
-  if (shouldHideSidebar(pathname)) {
+  if (!isAuthenticated || shouldHideSidebar(pathname)) {
     return <>{children}</>;
   }
 
   return (
     <div className="min-h-screen">
       <AppSidebar logoutAction={logoutAction} condominiums={condominiums} />
-      <div className="min-w-0 lg:pl-72">{children}</div>
+      <div className="min-w-0 lg:pl-[21rem]">{children}</div>
     </div>
   );
 }
