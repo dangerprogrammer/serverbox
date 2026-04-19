@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { connection } from "next/server";
 
 import { CurrencyInput } from "@/app/_components/currency-input";
@@ -47,11 +47,11 @@ export default async function DashboardPage() {
               Dashboard administrativa
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              Operação financeira e saldo por condomínio.
+              OperaÃ§Ã£o financeira e saldo por condomÃ­nio.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
               Priorize compras avulsas e mantenha planos mensais/anuais ativos
-              quando o condomínio tiver base de bolinhas configurada.
+              quando o condomÃ­nio tiver base de tubos configurada.
             </p>
           </div>
 
@@ -69,20 +69,20 @@ export default async function DashboardPage() {
                     )}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-                    vendas já pagas
+                    vendas jÃ¡ pagas
                   </p>
                 </div>
                 <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Condomínio líder</p>
+                  <p className="text-sm text-slate-500">CondomÃ­nio lÃ­der</p>
                   <p className="mt-2 text-2xl font-semibold text-slate-900">
-                    {dashboard.summary.topCondominiumBySales?.name ?? "—"}
+                    {dashboard.summary.topCondominiumBySales?.name ?? "â€”"}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-                    mais bolinhas vendidas
+                    mais tubos vendidas
                   </p>
                 </div>
                 <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Bolinhas vendidas</p>
+                  <p className="text-sm text-slate-500">Tubos vendidas</p>
                   <p className="mt-2 text-3xl font-semibold text-slate-900">
                     {dashboard.summary.confirmedBalls}
                   </p>
@@ -95,33 +95,33 @@ export default async function DashboardPage() {
 
             <div className="rounded-[1.25rem] border border-border bg-surface-strong p-5">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Preparação da operação
+                PreparaÃ§Ã£o da operaÃ§Ã£o
               </p>
               <div className="mt-4 space-y-3 text-sm text-slate-600">
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-3">
-                  <span>Condomínios cadastrados</span>
+                  <span>CondomÃ­nios cadastrados</span>
                   <strong className="text-base text-slate-900">
                     {dashboard.condominiums.length}
                   </strong>
                 </div>
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-3">
-                  <span>Planos disponíveis</span>
+                  <span>Planos disponÃ­veis</span>
                   <strong className="text-base text-slate-900">
                     {dashboard.plans.length}
                   </strong>
                 </div>
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-3">
-                  <span>Condomínios habilitados</span>
+                  <span>CondomÃ­nios habilitados</span>
                   <strong className="text-base text-slate-900">
                     {eligibleCondominiums.length}
                   </strong>
                 </div>
                 <div className="rounded-xl border border-dashed border-border bg-white px-4 py-4 leading-7">
                   {!hasEligibleCondominiums
-                    ? "Defina a quantidade de bolinhas dos condomínios para liberar compras avulsas e planos."
+                    ? "Defina a quantidade de tubos dos condomÃ­nios para liberar compras avulsas e planos."
                     : canCreatePayment
                       ? "Compras avulsas liberadas e planos mensais/anuais prontos para operar."
-                      : "Compras avulsas já liberadas. Cadastre planos para ativar cobrança mensal/anual."}
+                      : "Compras avulsas jÃ¡ liberadas. Cadastre planos para ativar cobranÃ§a mensal/anual."}
                 </div>
               </div>
             </div>
@@ -136,8 +136,8 @@ export default async function DashboardPage() {
               Novo plano mensal/anual
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Escolha um plano já vinculado a um condomínio. O crédito de
-              bolinhas só entra no saldo depois da confirmação do pagamento.
+              Escolha um plano jÃ¡ vinculado a um condomÃ­nio. O crÃ©dito de
+              tubos sÃ³ entra no saldo depois da confirmaÃ§Ã£o do pagamento.
             </p>
 
             <form action={createPaymentAction} className="mt-6 space-y-4">
@@ -153,20 +153,20 @@ export default async function DashboardPage() {
                     eligiblePlans.map((plan) => (
                       <option key={plan.id} value={plan.id}>
                         {plan.condominiumName} - {plan.name} -{" "}
-                        {plan.monthlyBallAllowance} bolinhas -{" "}
+                        {plan.monthlyBallAllowance} tubos -{" "}
                         {currencyFormatter.format(plan.monthlyPriceInCents / 100)}
                       </option>
                     ))
                   ) : (
-                    <option value="">Sem planos habilitados para cobrança</option>
+                    <option value="">Sem planos habilitados para cobranÃ§a</option>
                   )}
                 </select>
               </label>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreatePayment
-                  ? "O checkout abre em seguida para copiar o código PIX ou acompanhar o QR Code."
-                  : "Defina quantidade de bolinhas e cadastre ao menos um plano para liberar cobrança mensal/anual."}
+                  ? "O checkout abre em seguida para copiar o cÃ³digo PIX ou acompanhar o QR Code."
+                  : "Defina quantidade de tubos e cadastre ao menos um plano para liberar cobranÃ§a mensal/anual."}
               </div>
 
               <SubmitButton
@@ -179,23 +179,23 @@ export default async function DashboardPage() {
 
             {!canCreatePayment ? (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Sem base de bolinhas e plano vinculado não existe cobrança mensal/anual para emitir.
+                Sem base de tubos e plano vinculado nÃ£o existe cobranÃ§a mensal/anual para emitir.
               </div>
             ) : null}
           </section>
 
           <section className="order-1 rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Compra avulsa de bolinhas
+              Compra avulsa de tubos
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Use esta cobrança quando o condomínio precisar comprar bolinhas
-              fora de um plano já cadastrado.
+              Use esta cobranÃ§a quando o condomÃ­nio precisar comprar tubos
+              fora de um plano jÃ¡ cadastrado.
             </p>
 
             <form action={createStandalonePaymentAction} className="mt-6 space-y-4">
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Condomínio</span>
+                <span className="text-sm font-medium text-slate-700">CondomÃ­nio</span>
                 <select
                   name="condominiumId"
                   disabled={!canCreateStandalonePayment}
@@ -209,19 +209,19 @@ export default async function DashboardPage() {
                       </option>
                     ))
                   ) : (
-                    <option value="">Nenhum condomínio habilitado</option>
+                    <option value="">Nenhum condomÃ­nio habilitado</option>
                   )}
                 </select>
               </label>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FloatingInput
-                  label="Quantidade de bolinhas"
+                  label="Quantidade de tubos"
                   name="ballQuantity"
                   type="number"
                   min={1}
                   defaultValue={100}
-                  placeholder="Quantidade de bolinhas"
+                  placeholder="Quantidade de tubos"
                   className="bg-white"
                 />
                 <CurrencyInput
@@ -234,8 +234,8 @@ export default async function DashboardPage() {
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreateStandalonePayment
-                  ? "A compra avulsa do plano mensal/anual também libera saldo só depois da confirmação do pagamento."
-                  : "Defina quantidade de bolinhas no condomínio para habilitar compra avulsa."}
+                  ? "A compra avulsa do plano mensal/anual tambÃ©m libera saldo sÃ³ depois da confirmaÃ§Ã£o do pagamento."
+                  : "Defina quantidade de tubos no condomÃ­nio para habilitar compra avulsa."}
               </div>
 
               <SubmitButton
@@ -249,15 +249,15 @@ export default async function DashboardPage() {
 
           <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Cobranças em aberto
+              CobranÃ§as em aberto
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Pagamentos pendentes que ainda aguardam confirmação do PIX.
+              Pagamentos pendentes que ainda aguardam confirmaÃ§Ã£o do PIX.
             </p>
             <div className="mt-5 space-y-4">
               {dashboard.pendingPayments.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
-                  Nenhuma cobrança pendente no momento.
+                  Nenhuma cobranÃ§a pendente no momento.
                 </div>
               ) : (
                 dashboard.pendingPayments.map((payment) => (
@@ -277,7 +277,7 @@ export default async function DashboardPage() {
                           </p>
                           <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">
                             {payment.provider === "abacatepay"
-                              ? `AbacatePay ID: ${payment.providerPaymentId ?? "aguardando geração"}`
+                              ? `AbacatePay ID: ${payment.providerPaymentId ?? "aguardando geraÃ§Ã£o"}`
                               : `Referencia: ${payment.reference}`}
                           </p>
                         </div>
@@ -288,7 +288,7 @@ export default async function DashboardPage() {
 
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm text-slate-600">
-                          +{payment.ballQuantity} bolinhas
+                          +{payment.ballQuantity} tubos
                         </div>
                         <Link
                           href={`/pagamentos/${payment.id}`}
@@ -309,10 +309,10 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold text-slate-900">
-                Operação por condomínio
+                OperaÃ§Ã£o por condomÃ­nio
               </h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Visão consolidada do saldo, pagamentos e planos ativos de cada
+                VisÃ£o consolidada do saldo, pagamentos e planos ativos de cada
                 cliente cadastrado.
               </p>
             </div>
@@ -339,23 +339,23 @@ export default async function DashboardPage() {
                       </p>
                       <p className="mt-3 text-sm leading-7 text-slate-600">
                         {condominium.plans.length > 0
-                          ? `Planos disponíveis: ${condominium.plans.map((plan) => plan.name).join(", ")}`
-                          : "Nenhum plano vinculado a este condomínio ainda."}
+                          ? `Planos disponÃ­veis: ${condominium.plans.map((plan) => plan.name).join(", ")}`
+                          : "Nenhum plano vinculado a este condomÃ­nio ainda."}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Base configurada: {condominium.ballQuantity} bolinhas
+                        Base configurada: {condominium.ballQuantity} tubos
                       </p>
                       <Link
                         href={`/dashboard/${condominium.id}`}
                         className="mt-3 inline-flex h-10 items-center justify-center rounded-full border border-slate-300 px-4 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
                       >
-                        Ver detalhes do condomínio
+                        Ver detalhes do condomÃ­nio
                       </Link>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Bolinhas restantes
+                          Tubos restantes
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
                           {condominium.availableBalls}
@@ -363,7 +363,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Bolinhas confirmadas
+                          Tubos confirmadas
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
                           {condominium.paidBalls}
@@ -371,7 +371,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Bolinhas pendentes
+                          Tubos pendentes
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
                           {condominium.pendingBalls}
@@ -383,7 +383,7 @@ export default async function DashboardPage() {
                   <div className="mt-5 grid gap-3 md:grid-cols-3">
                     {condominium.recentPayments.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-7 text-slate-500 md:col-span-3">
-                        Ainda não há pagamentos registrados para este condomínio.
+                        Ainda nÃ£o hÃ¡ pagamentos registrados para este condomÃ­nio.
                       </div>
                     ) : (
                       condominium.recentPayments.map((payment) => (
@@ -399,7 +399,7 @@ export default async function DashboardPage() {
                           </p>
                           <p className="mt-3 text-sm text-slate-600">
                             {currencyFormatter.format(payment.amountInCents / 100)} -{" "}
-                            {payment.ballQuantity} bolinhas
+                            {payment.ballQuantity} tubos
                           </p>
                           <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-700">
                             {payment.status}
@@ -413,18 +413,18 @@ export default async function DashboardPage() {
             ) : (
               <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 px-5 py-8">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Nenhum condomínio cadastrado ainda
+                  Nenhum condomÃ­nio cadastrado ainda
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-                  Quando os primeiros condomínios entrarem na base, esta área vai
-                  mostrar saldo, histórico recente e situação de cobranças por
+                  Quando os primeiros condomÃ­nios entrarem na base, esta Ã¡rea vai
+                  mostrar saldo, histÃ³rico recente e situaÃ§Ã£o de cobranÃ§as por
                   cliente.
                 </p>
                 <Link
                   href="/gerenciar-condominios"
                   className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 sm:w-auto"
                 >
-                  Cadastrar primeiro condomínio
+                  Cadastrar primeiro condomÃ­nio
                 </Link>
               </div>
             )}
@@ -434,3 +434,4 @@ export default async function DashboardPage() {
     </main>
   );
 }
+

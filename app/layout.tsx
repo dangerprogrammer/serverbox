@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -18,9 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ServerBox | Bolinhas de tênis para condomínios",
+  title: "ServerBox | Tubos de tÃªnis para condomÃ­nios",
   description:
-    "Gestão de planos de bolinhas de tênis para condomínios com Next.js e TypeORM.",
+    "GestÃ£o de planos de tubos de tÃªnis para condomÃ­nios com Next.js e TypeORM.",
 };
 
 export default async function RootLayout({
@@ -61,3 +61,4 @@ export default async function RootLayout({
     </html>
   );
 }
+

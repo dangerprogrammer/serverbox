@@ -299,7 +299,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
     <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-semibold text-slate-900">Painel analitico de vendas</h2>
       <p className="mt-2 text-sm leading-7 text-slate-600">
-        Evolucao mensal de receita e bolinhas, com distribuicao dos status das cobrancas.
+        Evolucao mensal de receita e tubos, com distribuicao dos status das cobrancas.
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -400,7 +400,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-900">Bolinhas por mes</p>
+          <p className="text-sm font-semibold text-slate-900">Tubos por mes</p>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
             Entrada confirmada x aguardando pagamento
           </p>
@@ -412,7 +412,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                 <YAxis tick={{ fill: "#64748b", fontSize: 12 }} width={46} />
                 <Tooltip
                   formatter={(value, name) => [
-                    `${Number(value ?? 0)} bolinhas`,
+                    `${Number(value ?? 0)} tubos`,
                     name === "confirmedBalls" ? "Confirmadas" : "Pendentes",
                   ]}
                   labelFormatter={(label) => `Mes: ${label}`}

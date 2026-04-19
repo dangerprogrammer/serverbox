@@ -1,6 +1,6 @@
-## ServerBox
+﻿## ServerBox
 
-Base inicial em Next.js 16 para vender bolinhas de tenis para condominios.
+Base inicial em Next.js 16 para vender tubos de tenis para condominios.
 O projeto usa TypeORM no servidor com banco SQLite local para desenvolvimento.
 
 ## Stack
@@ -38,7 +38,7 @@ Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 - `Plan`: plano comercial pertencente a um condominio
 - `Condominium`: dados do condominio cliente
 - `CondominiumPayment`: pagamento de um plano para um condominio
-- `BallInventoryMovement`: livro-caixa de credito e consumo de bolinhas
+- `BallInventoryMovement`: livro-caixa de credito e consumo de tubos
 
 ## Endpoints iniciais
 
@@ -55,7 +55,7 @@ Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 
 ## Dashboard
 
-- `GET /dashboard`: tela administrativa com saldo de bolinhas e cobrancas PIX em aberto
+- `GET /dashboard`: tela administrativa com saldo de tubos e cobrancas PIX em aberto
 
 ## Checkout PIX
 
@@ -67,7 +67,7 @@ Fluxo atual:
 2. Abre a cobranca PIX com QR Code e copia e cola
 3. O backend so libera o credito quando a AbacatePay confirma o pagamento
 4. O sistema gera um credito em `BallInventoryMovement`
-5. O saldo de bolinhas fica visivel na dashboard
+5. O saldo de tubos fica visivel na dashboard
 
 ## Sessao administrativa
 
@@ -128,3 +128,4 @@ com `503`.
 
 Como o dominio atual ainda nao cadastra telefone e documento por condominio, a
 criacao da cobranca usa um contato padrao da AbacatePay vindo do ambiente.
+

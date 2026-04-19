@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { FloatingInput } from '@/app/_components/floating-field';
@@ -79,13 +79,13 @@ export function UpdateCondominiumForm({
         />
       </div>
       <FloatingInput
-        label="Quantidade de bolinhas"
+        label="Quantidade de tubos"
         name="ballQuantity"
         type="number"
         min={0}
         value={ballQuantity}
         onChange={(e) => setBallQuantity(e.target.value)}
-        placeholder="Quantidade de bolinhas"
+        placeholder="Quantidade de tubos"
         className="bg-white"
       />
 
@@ -101,3 +101,4 @@ export function UpdateCondominiumForm({
     </form>
   );
 }
+

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { connection } from "next/server";
 
 import { getAuthenticatedAdmin } from "@/lib/auth/session";
@@ -31,7 +31,7 @@ async function getPublicPageData() {
       dashboard,
     };
   } catch (error) {
-    console.error("Falha ao carregar dados públicos da página Sobre nós.", error);
+    console.error("Falha ao carregar dados pÃºblicos da pÃ¡gina Sobre nÃ³s.", error);
 
     return {
       administrator: null,
@@ -50,22 +50,22 @@ export default async function SobreNosPage() {
         <div className="grid gap-10 lg:grid-cols-[1.35fr_0.95fr]">
           <div className="space-y-8">
             <div className="inline-flex rounded-full border border-border bg-surface-strong px-4 py-2 text-sm font-medium text-slate-700">
-              Sobre nós
+              Sobre nÃ³s
             </div>
             <div className="max-w-3xl space-y-5">
               <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Venda recorrente de bolinhas de tênis para condomínios.
+                Venda recorrente de tubos de tÃªnis para condomÃ­nios.
               </h1>
               <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                Uma base administrativa simples para organizar condomínios,
-                planos próprios por cliente e planos mensais/anuais sem planilhas ou
+                Uma base administrativa simples para organizar condomÃ­nios,
+                planos prÃ³prios por cliente e planos mensais/anuais sem planilhas ou
                 controles paralelos.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                <p className="text-sm text-slate-500">Condomínios ativos</p>
+                <p className="text-sm text-slate-500">CondomÃ­nios ativos</p>
                 <p className="mt-2 text-3xl font-semibold text-slate-900">
                   {dashboard.summary.activeCondominiums}
                 </p>
@@ -82,7 +82,7 @@ export default async function SobreNosPage() {
                   {dashboard.summary.availableBalls}
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-                  bolinhas disponíveis
+                  tubos disponÃ­veis
                 </p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default async function SobreNosPage() {
                   href="/gerenciar-condominios"
                   className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
                 >
-                  Gerenciar condomínios
+                  Gerenciar condomÃ­nios
                 </Link>
               ) : null}
             </div>
@@ -107,12 +107,12 @@ export default async function SobreNosPage() {
 
           <div className="rounded-[1.5rem] border border-border bg-surface-strong p-6">
             <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
-              Operação
+              OperaÃ§Ã£o
             </p>
             <div className="mt-6 space-y-4">
               {dashboard.condominiums.length === 0 ? (
                 <div className="rounded-[1.25rem] border border-border bg-white p-4 text-sm text-slate-600">
-                  Nenhum condomínio cadastrado ainda.
+                  Nenhum condomÃ­nio cadastrado ainda.
                 </div>
               ) : (
                 dashboard.condominiums.map((condominium) => (
@@ -136,7 +136,7 @@ export default async function SobreNosPage() {
                     </div>
                     <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-end sm:justify-between">
                       <span>
-                        {condominium.availableBalls} bolinhas -{" "}
+                        {condominium.availableBalls} tubos -{" "}
                         {condominium.paidPayments} pagamentos pagos
                       </span>
                       <strong className="text-base text-slate-900">
@@ -157,17 +157,17 @@ export default async function SobreNosPage() {
             Estrutura
           </p>
           <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
-            Cada condomínio concentra seus próprios planos.
+            Cada condomÃ­nio concentra seus prÃ³prios planos.
           </h2>
           <div className="mt-6 space-y-4 text-base leading-8 text-slate-700">
             <p>
-              O modelo atual remove a ideia de catálogo global. Cada plano
-              pertence a um condomínio específico e acompanha a realidade da
-              operação daquele cliente.
+              O modelo atual remove a ideia de catÃ¡logo global. Cada plano
+              pertence a um condomÃ­nio especÃ­fico e acompanha a realidade da
+              operaÃ§Ã£o daquele cliente.
             </p>
             <p>
-              O pagamento gera um checkout PIX e o saldo de bolinhas só muda
-              depois da confirmação real do gateway.
+              O pagamento gera um checkout PIX e o saldo de tubos sÃ³ muda
+              depois da confirmaÃ§Ã£o real do gateway.
             </p>
           </div>
         </div>
@@ -193,11 +193,11 @@ export default async function SobreNosPage() {
               <p className="mt-6 text-3xl font-semibold tracking-tight text-slate-900">
                 {currencyFormatter.format(plan.monthlyPriceInCents / 100)}
               </p>
-              <p className="mt-1 text-sm text-slate-500">por mês</p>
+              <p className="mt-1 text-sm text-slate-500">por mÃªs</p>
               <dl className="mt-6 space-y-3 text-sm text-slate-700">
                 <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-                  <dt>Bolinhas inclusas</dt>
-                  <dd className="font-semibold">{plan.monthlyBallAllowance}/mês</dd>
+                  <dt>Tubos inclusas</dt>
+                  <dd className="font-semibold">{plan.monthlyBallAllowance}/mÃªs</dd>
                 </div>
               </dl>
             </article>
@@ -207,3 +207,4 @@ export default async function SobreNosPage() {
     </main>
   );
 }
+

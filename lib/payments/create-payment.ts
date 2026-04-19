@@ -1,4 +1,4 @@
-import { getDataSource } from "@/lib/db/data-source";
+﻿import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import {
   CondominiumPaymentEntity,
@@ -53,19 +53,19 @@ async function buildChargeForCondominium({
   metadata: Record<string, string | number>;
 }) {
   if (!isAbacatePayConfigured()) {
-    throw new Error("ABACATEPAY_API_KEY não configurada.");
+    throw new Error("ABACATEPAY_API_KEY nÃ£o configurada.");
   }
 
   const defaultCustomerCellphone = getDefaultAbacatePayCustomerCellphone();
 
   if (!defaultCustomerCellphone) {
-    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.");
+    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nÃ£o configurado.");
   }
 
   const defaultCustomerTaxId = getDefaultAbacatePayCustomerTaxId();
 
   if (!defaultCustomerTaxId) {
-    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.");
+    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nÃ£o configurado.");
   }
 
   const reference = buildPaymentReference();
@@ -113,16 +113,16 @@ export async function createCondominiumPayment({
     );
 
     if (!hasPlan) {
-      throw new Error("Plano não encontrado.");
+      throw new Error("Plano nÃ£o encontrado.");
     }
 
-    throw new Error("Plano não pertence ao condomínio informado.");
+    throw new Error("Plano nÃ£o pertence ao condomÃ­nio informado.");
   }
 
   const plan = condominium.plans.find((entry) => entry.id === planId);
 
   if (!plan) {
-    throw new Error("Plano não encontrado.");
+    throw new Error("Plano nÃ£o encontrado.");
   }
 
   const { charge, reference } = await buildChargeForCondominium({
@@ -167,15 +167,15 @@ export async function createStandaloneBallPayment({
   amountInCents,
 }: CreateStandaloneBallPaymentInput) {
   if (!condominiumId) {
-    throw new Error("Condomínio é obrigatório para compra avulsa.");
+    throw new Error("CondomÃ­nio Ã© obrigatÃ³rio para compra avulsa.");
   }
 
   if (!Number.isFinite(ballQuantity) || ballQuantity <= 0) {
-    throw new Error("Quantidade de bolinhas inválida.");
+    throw new Error("Quantidade de tubos invÃ¡lida.");
   }
 
   if (!Number.isFinite(amountInCents) || amountInCents <= 0) {
-    throw new Error("Valor em centavos inválido.");
+    throw new Error("Valor em centavos invÃ¡lido.");
   }
 
   const dataSource = await getDataSource();
@@ -190,7 +190,7 @@ export async function createStandaloneBallPayment({
   });
 
   if (!condominium) {
-    throw new Error("Condomínio não encontrado.");
+    throw new Error("CondomÃ­nio nÃ£o encontrado.");
   }
 
   const { charge, reference } = await buildChargeForCondominium({
@@ -208,7 +208,7 @@ export async function createStandaloneBallPayment({
   return paymentRepository.save({
     condominium,
     planId: `standalone-${reference}`,
-    planName: "Compra avulsa de bolinhas",
+    planName: "Compra avulsa de tubos",
     reference,
     method: charge.method,
     status: PaymentStatus.PENDING,
@@ -228,3 +228,4 @@ export async function createStandaloneBallPayment({
     verificationSource: null,
   });
 }
+

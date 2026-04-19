@@ -56,13 +56,13 @@ export default async function CondominiumDashboardPage({
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[1.25rem] border border-border bg-white p-5">
-            <p className="text-sm text-slate-500">Bolinhas restantes</p>
+            <p className="text-sm text-slate-500">Tubos restantes</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {condominium.availableBalls}
             </p>
           </div>
           <div className="rounded-[1.25rem] border border-border bg-white p-5">
-            <p className="text-sm text-slate-500">Bolinhas confirmadas</p>
+            <p className="text-sm text-slate-500">Tubos confirmados</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {condominium.paidBalls}
             </p>
@@ -100,7 +100,7 @@ export default async function CondominiumDashboardPage({
                 >
                   <p className="text-base font-semibold text-slate-900">{plan.name}</p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {plan.monthlyBallAllowance} bolinhas/mês - {currencyFormatter.format(
+                    {plan.monthlyBallAllowance} tubos/mês - {currencyFormatter.format(
                       plan.monthlyPriceInCents / 100,
                     )}
                   </p>
@@ -113,7 +113,7 @@ export default async function CondominiumDashboardPage({
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">Histórico de vendas</h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Últimas transações do condomínio, com status e quantidade de bolinhas.
+            Últimas transações do condomínio, com status e quantidade de tubos.
           </p>
 
           <div className="mt-5 space-y-3">
@@ -132,7 +132,7 @@ export default async function CondominiumDashboardPage({
                       <p className="text-sm font-semibold text-slate-900">{payment.reference}</p>
                       <p className="mt-1 text-sm text-slate-600">{payment.planName}</p>
                       <p className="mt-2 text-sm text-slate-600">
-                        {currencyFormatter.format(payment.amountInCents / 100)} - {payment.ballQuantity} bolinhas
+                        {currencyFormatter.format(payment.amountInCents / 100)} - {payment.ballQuantity} tubos
                       </p>
                     </div>
                     <div className="text-right text-xs uppercase tracking-[0.18em] text-slate-500">

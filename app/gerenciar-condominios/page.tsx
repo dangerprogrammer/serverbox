@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { CurrencyInput } from "@/app/_components/currency-input";
 import {
@@ -23,8 +23,8 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 const tierLabels: Record<string, string> = {
-  [PlanTier.BASIC]: "Basico",
-  [PlanTier.INTERMEDIATE]: "Intermediario",
+  [PlanTier.BASIC]: "Básico",
+  [PlanTier.INTERMEDIATE]: "Intermediário",
   [PlanTier.PREMIUM]: "Premium",
   [PlanTier.CUSTOM]: "Customizado",
 };
@@ -92,12 +92,12 @@ export default async function GerenciarCondominiosPage() {
               />
             </div>
             <FloatingInput
-              label="Quantidade de bolinhas"
+              label="Quantidade de tubos"
               name="ballQuantity"
               type="number"
               min={0}
               defaultValue={0}
-              placeholder="Quantidade de bolinhas"
+              placeholder="Quantidade de tubos"
               className="bg-white"
             />
 
@@ -136,7 +136,7 @@ export default async function GerenciarCondominiosPage() {
                         </span>
                       </div>
                       <p className="text-sm text-slate-500">
-                        {condominium.courts} quadras - {condominium.ballQuantity} bolinhas
+                        {condominium.courts} quadras - {condominium.ballQuantity} tubos
                       </p>
                     </div>
 
@@ -146,7 +146,7 @@ export default async function GerenciarCondominiosPage() {
                           {condominium.courts} quadras
                         </span>
                         <span className="rounded-xl bg-white px-3 py-2 text-center">
-                          {condominium.ballQuantity} bolinhas
+                          {condominium.ballQuantity} tubos
                         </span>
                       </div>
                       <span className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition group-open:rotate-180">
@@ -216,11 +216,11 @@ export default async function GerenciarCondominiosPage() {
                             ))}
                           </select>
                           <FloatingInput
-                            label="Bolinhas por mês"
+                            label="Tubos por mês"
                             name="monthlyBallAllowance"
                             type="number"
                             min={0}
-                            placeholder="Bolinhas por mês"
+                            placeholder="Tubos por mês"
                             className="bg-white"
                           />
                           <CurrencyInput
@@ -306,3 +306,4 @@ export default async function GerenciarCondominiosPage() {
     </main>
   );
 }
+
