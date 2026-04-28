@@ -181,7 +181,7 @@ export function PaymentStatusPanel({
       <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Código copia e cola</p>
+            <p className="text-sm text-slate-500">Código cópia e cola</p>
             <p className="mt-2 break-all font-mono text-sm text-slate-900">
               {payment.pixCopyPasteCode ?? "Código PIX indisponível"}
             </p>

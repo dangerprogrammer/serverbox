@@ -31,11 +31,11 @@ export default async function LoginPage() {
                 Ambiente inicial
               </p>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Use o administrador seeded no banco. A senha padrao vem de{" "}
+                Use o administrador seeded no banco. A senha padrão vem de{" "}
                 <code className="rounded bg-white px-1.5 py-0.5 text-xs">
                   ADMIN_DEFAULT_PASSWORD
                 </code>{" "}
-                e a sessao usa{" "}
+                e a sessão usa{" "}
                 <code className="rounded bg-white px-1.5 py-0.5 text-xs">
                   SESSION_SECRET
                 </code>

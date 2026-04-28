@@ -117,10 +117,6 @@ export async function syncAbacatePixPayment({
 }
 
 export async function simulateAbacatePixPayment(paymentId: string) {
-  if (!isAbacatePayConfigured()) {
-    throw new Error("ABACATEPAY_API_KEY não configurada.");
-  }
-
   const dataSource = await getDataSource();
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const payment = await paymentRepository.findOne({
@@ -136,6 +132,33 @@ export async function simulateAbacatePixPayment(paymentId: string) {
 
   if (payment.provider !== getAbacatePayProviderName() || !payment.providerPaymentId) {
     throw new Error("Pagamento não está vinculado a AbacatePay.");
+  }
+
+  if (process.env.NODE_ENV === "development" && payment.providerDevMode) {
+    const snapshot: AbacatePayChargeSnapshot = {
+      provider: getAbacatePayProviderName(),
+      providerPaymentId: payment.providerPaymentId,
+      providerRawStatus: "PAID",
+      providerReceiptUrl: payment.providerReceiptUrl,
+      providerDevMode: true,
+      method: payment.method,
+      status: PaymentStatus.PAID,
+      amountInCents: payment.amountInCents,
+      pixTransactionId: payment.pixTransactionId,
+      pixQrCode: payment.pixQrCode,
+      pixCopyPasteCode: payment.pixCopyPasteCode,
+      pixExpiresAt: payment.pixExpiresAt,
+    };
+
+    return applyProviderPaymentSnapshot({
+      payment,
+      snapshot,
+      verificationSource: PaymentVerificationSource.MANUAL_REVIEW,
+    });
+  }
+
+  if (!isAbacatePayConfigured()) {
+    throw new Error("ABACATEPAY_API_KEY não configurada.");
   }
 
   const snapshot = await simulateAbacatePixCharge(payment.providerPaymentId);

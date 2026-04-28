@@ -244,9 +244,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
   if (payments.length === 0) {
     return (
       <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-semibold text-slate-900">Painel analitico de vendas</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Painel analítico de vendas</h2>
         <div className="mt-5 rounded-xl border border-dashed border-border bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
-          Ainda nao ha dados suficientes para exibir graficos de vendas.
+          Ainda não há dados suficientes para exibir gráficos de vendas.
         </div>
       </section>
     );
@@ -255,7 +255,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
   if (filteredPayments.length === 0) {
     return (
       <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-semibold text-slate-900">Painel analitico de vendas</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Painel analítico de vendas</h2>
         <div className="mt-5 flex flex-wrap gap-2">
           {periodOptions.map((option) => {
             const isActive = period === option.value;
@@ -289,7 +289,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
           </select>
         </div>
         <div className="mt-4 rounded-xl border border-dashed border-border bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
-          Nao ha vendas para os filtros selecionados. Ajuste o periodo ou selecione outro plano.
+          Não há vendas para os filtros selecionados. Ajuste o período ou selecione outro plano.
         </div>
       </section>
     );
@@ -297,9 +297,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
 
   return (
     <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-      <h2 className="text-2xl font-semibold text-slate-900">Painel analitico de vendas</h2>
+      <h2 className="text-2xl font-semibold text-slate-900">Painel analítico de vendas</h2>
       <p className="mt-2 text-sm leading-7 text-slate-600">
-        Evolucao mensal de receita e tubos, com distribuicao dos status das cobrancas.
+        Evolução mensal de receita e tubos, com distribuição dos status das cobranças.
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -344,7 +344,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Cobrancas pendentes (filtro)</p>
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Cobranças pendentes (filtro)</p>
           <p className="mt-1 text-xl font-semibold text-slate-900">{totalPendingPayments}</p>
         </div>
       </div>
@@ -376,7 +376,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                     currencyFormatter.format(Number(value ?? 0)),
                     name === "confirmedRevenue" ? "Confirmada" : "Pendente",
                   ]}
-                  labelFormatter={(label) => `Mes: ${label}`}
+                  labelFormatter={(label) => `Mês: ${label}`}
                 />
                 <Area
                   type="monotone"
@@ -400,7 +400,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-900">Tubos por mes</p>
+          <p className="text-sm font-semibold text-slate-900">Tubos por mês</p>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
             Entrada confirmada x aguardando pagamento
           </p>
@@ -415,7 +415,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                     `${Number(value ?? 0)} tubos`,
                     name === "confirmedBalls" ? "Confirmadas" : "Pendentes",
                   ]}
-                  labelFormatter={(label) => `Mes: ${label}`}
+                  labelFormatter={(label) => `Mês: ${label}`}
                 />
                 <Bar dataKey="confirmedBalls" name="confirmedBalls" fill="#059669" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="pendingBalls" name="pendingBalls" fill="#d97706" radius={[6, 6, 0, 0]} />
@@ -446,9 +446,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4 xl:col-span-2">
-          <p className="text-sm font-semibold text-slate-900">Distribuicao de status</p>
+          <p className="text-sm font-semibold text-slate-900">Distribuição de status</p>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
-            Situacao atual das cobrancas emitidas
+            Situação atual das cobranças emitidas
           </p>
           <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             <div className="h-64">
@@ -466,7 +466,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                       <Cell key={status.status} fill={status.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `${Number(value ?? 0)} cobranca(s)`} />
+                  <Tooltip formatter={(value) => `${Number(value ?? 0)} cobrança(s)`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
   if (existingAdministrator) {
     return Response.json(
-      { error: "Ja existe um administrador com esse email." },
+      { error: "Já existe um administrador com esse email." },
       { status: 409 },
     );
   }

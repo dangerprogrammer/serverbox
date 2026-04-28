@@ -50,7 +50,7 @@ export default async function CondominiumDashboardPage({
             {condominium.name}
           </h1>
           <p className="text-sm leading-7 text-slate-600">
-            {condominium.city}, {condominium.state} - Operação {condominium.administratorName}
+            {condominium.city}, {condominium.state}
           </p>
         </div>
 

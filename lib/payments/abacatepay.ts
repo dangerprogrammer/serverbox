@@ -106,6 +106,40 @@ function getAbacatePayPublicWebhookKey() {
   return process.env.ABACATEPAY_PUBLIC_WEBHOOK_KEY?.trim() || null;
 }
 
+function isDevelopmentRuntime() {
+  return process.env.NODE_ENV === "development";
+}
+
+function isAuthOrKeyError(errorMessage: string) {
+  const normalizedMessage = errorMessage.toLowerCase();
+
+  return (
+    normalizedMessage.includes("invalid or inactive api key") ||
+    normalizedMessage.includes("unauthorized") ||
+    normalizedMessage.includes("api key") ||
+    normalizedMessage.includes("chave")
+  );
+}
+
+function buildDevelopmentTransparentCharge(
+  input: CreateAbacatePixChargeInput,
+): AbacatePayChargeSnapshot {
+  return {
+    provider: ABACATEPAY_PROVIDER,
+    providerPaymentId: `dev-${input.reference}`,
+    providerRawStatus: "PENDING",
+    providerReceiptUrl: null,
+    providerDevMode: true,
+    method: PaymentMethod.PIX,
+    status: PaymentStatus.PENDING,
+    amountInCents: input.amountInCents,
+    pixTransactionId: `dev-${input.reference}-pix`,
+    pixQrCode: null,
+    pixCopyPasteCode: `DEV-SERVERBOX-PIX:${input.reference}:${input.amountInCents}`,
+    pixExpiresAt: new Date(Date.now() + ABACATEPAY_DEFAULT_PIX_EXPIRATION_IN_SECONDS * 1000),
+  };
+}
+
 function getAbacatePayApiBaseUrl() {
   const baseUrl = ABACATEPAY_API_BASE_URL;
 
@@ -262,6 +296,23 @@ export async function createAbacatePixCharge({
     method: "POST",
     path: version === "v1" ? "pixQrCode/create" : "transparents/create",
     body,
+  }).catch((error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (isDevelopmentRuntime() && isAuthOrKeyError(errorMessage)) {
+      console.warn(
+        "[abacatepay] falling back to development PIX charge because the API key is invalid, inactive, or unavailable",
+      );
+
+      return buildDevelopmentTransparentCharge({
+        amountInCents,
+        reference,
+        customer,
+        metadata: metadata ?? {},
+      });
+    }
+
+    throw error;
   });
 
   console.log("[abacatepay] create charge response", transparent);

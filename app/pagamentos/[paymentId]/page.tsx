@@ -35,7 +35,7 @@ export default async function PaymentPage({
               Checkout PIX AbacatePay
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              QR Code e copia e cola com liberação automática.
+              QR Code e cópia e cola com liberação automática.
             </h1>
             <p className="mt-4 text-base leading-8 text-slate-600">
               Esta cobrança fica em acompanhamento automático. O saldo só deve
