@@ -356,7 +356,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
             Confirmada x pendente
           </p>
           <div className="mt-4 h-72">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <AreaChart data={monthlySalesData} margin={{ top: 8, right: 12, left: 6, bottom: 0 }}>
                 <defs>
                   <linearGradient id="confirmedGradient" x1="0" y1="0" x2="0" y2="1">
@@ -405,7 +405,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
             Entrada confirmada x aguardando pagamento
           </p>
           <div className="mt-4 h-72">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <BarChart data={monthlySalesData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 12 }} />
@@ -430,7 +430,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
             Drill-down dos planos com maior faturamento
           </p>
           <div className="mt-4 h-72">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <BarChart data={planPerformanceData} margin={{ top: 8, right: 12, left: 12, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="planName" tick={{ fill: "#64748b", fontSize: 12 }} interval={0} />
@@ -452,7 +452,7 @@ export function SalesCharts({ payments }: SalesChartsProps) {
           </p>
           <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                 <PieChart>
                   <Pie
                     data={statusDistributionData}
