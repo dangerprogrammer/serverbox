@@ -1,7 +1,6 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { cache } from "react";
+import { randomUUID } from "node:crypto";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -11,6 +10,7 @@ import {
   AdministratorEntity,
   type Administrator,
 } from "@/lib/db/entities/administrator.entity";
+import { AdminSessionEntity, type AdminSession } from "@/lib/db/entities/admin-session.entity";
 
 const SESSION_COOKIE_NAME = "serverbox_admin_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7;
@@ -20,20 +20,6 @@ type SessionPayload = {
   role: "admin";
   expiresAt: number;
 };
-
-function getSessionSecret() {
-  return process.env.SESSION_SECRET?.trim() || null;
-}
-
-function requireSessionSecret() {
-  const secret = getSessionSecret();
-
-  if (!secret) {
-    throw new Error("SESSION_SECRET não configurado.");
-  }
-
-  return secret;
-}
 
 function getSessionCookieDomain() {
   const domain = process.env.SESSION_COOKIE_DOMAIN?.trim();
@@ -59,45 +45,38 @@ function getSessionCookieOptions(expiresAt: number) {
   };
 }
 
-function encodePayload(payload: SessionPayload) {
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
-}
-
-function signPayload(encodedPayload: string) {
-  return createHmac("sha256", requireSessionSecret())
-    .update(encodedPayload)
-    .digest("base64url");
-}
-
-function decodePayload(encodedPayload: string) {
-  try {
-    return JSON.parse(
-      Buffer.from(encodedPayload, "base64url").toString("utf8"),
-    ) as SessionPayload;
-  } catch {
-    return null;
-  }
-}
-
 export async function createAdminSession(adminId: string) {
   const expiresAt = Date.now() + SESSION_DURATION_MS;
-  const payload = encodePayload({
+  const sessionId = randomUUID();
+
+  const dataSource = await getDataSource();
+  const sessionRepo = dataSource.getRepository(AdminSessionEntity);
+
+  await sessionRepo.save({
+    id: sessionId,
     adminId,
-    role: "admin",
-    expiresAt,
-  });
-  const signature = signPayload(payload);
+    expiresAt: new Date(expiresAt),
+  } as AdminSession);
+
   const cookieStore = await cookies();
 
-  cookieStore.set(
-    SESSION_COOKIE_NAME,
-    `${payload}.${signature}`,
-    getSessionCookieOptions(expiresAt),
-  );
+  cookieStore.set(SESSION_COOKIE_NAME, sessionId, getSessionCookieOptions(expiresAt));
 }
 
 export async function deleteAdminSession() {
   const cookieStore = await cookies();
+  const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (sessionId) {
+    try {
+      const dataSource = await getDataSource();
+      const sessionRepo = dataSource.getRepository(AdminSessionEntity);
+
+      await sessionRepo.delete({ id: sessionId });
+    } catch {
+      // ignore DB errors during cleanup
+    }
+  }
 
   cookieStore.set(SESSION_COOKIE_NAME, "", {
     ...getSessionCookieOptions(Date.now() - 1000),
@@ -107,56 +86,37 @@ export async function deleteAdminSession() {
 
 export async function readAdminSession() {
   const cookieStore = await cookies();
-  const rawSession = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  return getAdminSessionFromRaw(rawSession);
-}
-
-export function getAdminSessionFromRaw(rawSession: string | undefined) {
-  if (!rawSession) {
-    return null;
-  }
-
-  const secret = getSessionSecret();
-
-  if (!secret) {
-    return null;
-  }
-
-  const [encodedPayload, signature] = rawSession.split(".");
-
-  if (!encodedPayload || !signature) {
+  if (!sessionId) {
     return null;
   }
 
   try {
-    const expectedSignature = createHmac("sha256", secret)
-      .update(encodedPayload)
-      .digest("base64url");
-    const provided = Buffer.from(signature);
-    const expected = Buffer.from(expectedSignature);
+    const dataSource = await getDataSource();
+    const sessionRepo = dataSource.getRepository(AdminSessionEntity);
 
-    if (provided.length !== expected.length) {
+    const entry = await sessionRepo.findOneBy({ id: sessionId });
+
+    if (!entry) return null;
+
+    if (entry.expiresAt.getTime() <= Date.now()) {
+      // expired
+      await sessionRepo.delete({ id: sessionId });
       return null;
     }
 
-    if (!timingSafeEqual(provided, expected)) {
-      return null;
-    }
+    return {
+      adminId: entry.adminId,
+      role: "admin",
+      expiresAt: entry.expiresAt.getTime(),
+    } as SessionPayload;
   } catch {
     return null;
   }
-
-  const payload = decodePayload(encodedPayload);
-
-  if (!payload || payload.role !== "admin" || payload.expiresAt <= Date.now()) {
-    return null;
-  }
-
-  return payload;
 }
 
-export const getAuthenticatedAdmin = cache(async (): Promise<Administrator | null> => {
+export async function getAuthenticatedAdmin(): Promise<Administrator | null> {
   const session = await readAdminSession();
 
   if (!session?.adminId) {
@@ -167,7 +127,7 @@ export const getAuthenticatedAdmin = cache(async (): Promise<Administrator | nul
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
 
   return administratorRepository.findOneBy({ id: session.adminId });
-});
+}
 
 export async function requireAuthenticatedAdmin() {
   const administrator = await getAuthenticatedAdmin();

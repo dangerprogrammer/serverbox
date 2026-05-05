@@ -10,6 +10,7 @@ import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
 import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
+import { AdminSessionEntity } from "@/lib/db/entities/admin-session.entity";
 import { seedDatabase } from "@/lib/db/seed";
 import { DataSource, type DataSourceOptions } from "typeorm";
 
@@ -29,6 +30,7 @@ const entities = [
   CondominiumEntity,
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
+  AdminSessionEntity,
 ];
 
 type OrmConfig = {
