@@ -61,7 +61,14 @@ function getOrmConfig() {
 const ormConfig = getOrmConfig();
 
 function getDatabaseUrl() {
-  return process.env.DATABASE_URL?.trim() || ormConfig.url?.trim();
+  return (
+    process.env.DATABASE_URL?.trim() ||
+    process.env.POSTGRES_URL_NON_POOLING?.trim() ||
+    process.env.POSTGRES_URL?.trim() ||
+    process.env.SUPABASE_DB_URL?.trim() ||
+    process.env.SUPABASE_DATABASE_URL?.trim() ||
+    ormConfig.url?.trim()
+  );
 }
 
 function isVercelRuntime() {
@@ -204,6 +211,12 @@ async function createDataSource() {
   const databaseUrl = getDatabaseUrl();
 
   if (!databaseUrl) {
+    if (isVercelRuntime()) {
+      throw new Error(
+        "DATABASE_URL nao configurada para o ambiente de producao. Configure a URL do Supabase para que o schema seja criado no banco correto.",
+      );
+    }
+
     const databasePath = getDatabasePath();
     await mkdir(path.dirname(databasePath), { recursive: true });
     await resetLegacyDatabaseIfNeeded(databasePath);
