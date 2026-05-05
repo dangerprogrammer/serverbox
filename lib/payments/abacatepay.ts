@@ -10,6 +10,8 @@ const ABACATEPAY_API_BASE_URL =
 const ABACATEPAY_PROVIDER = "abacatepay";
 const ABACATEPAY_DEFAULT_PIX_EXPIRATION_IN_SECONDS = 60 * 60;
 
+export type AbacatePayProviderName = typeof ABACATEPAY_PROVIDER;
+
 type AbacatePayRequestOptions = {
   method?: "GET" | "POST";
   path: string;
@@ -123,20 +125,23 @@ function isAuthOrKeyError(errorMessage: string) {
 
 function buildDevelopmentTransparentCharge(
   input: CreateAbacatePixChargeInput,
-): AbacatePayChargeSnapshot {
+): AbacatePayTransparent {
   return {
-    provider: ABACATEPAY_PROVIDER,
-    providerPaymentId: `dev-${input.reference}`,
-    providerRawStatus: "PENDING",
-    providerReceiptUrl: null,
-    providerDevMode: true,
-    method: PaymentMethod.PIX,
-    status: PaymentStatus.PENDING,
-    amountInCents: input.amountInCents,
-    pixTransactionId: `dev-${input.reference}-pix`,
-    pixQrCode: null,
-    pixCopyPasteCode: `DEV-SERVERBOX-PIX:${input.reference}:${input.amountInCents}`,
-    pixExpiresAt: new Date(Date.now() + ABACATEPAY_DEFAULT_PIX_EXPIRATION_IN_SECONDS * 1000),
+    id: `dev-${input.reference}`,
+    amount: input.amountInCents,
+    status: "PENDING",
+    devMode: true,
+    brCode: `DEV-SERVERBOX-PIX:${input.reference}:${input.amountInCents}`,
+    brCodeBase64: null,
+    expiresAt: new Date(
+      Date.now() + ABACATEPAY_DEFAULT_PIX_EXPIRATION_IN_SECONDS * 1000,
+    ).toISOString(),
+    receiptUrl: null,
+    metadata: {
+      reference: input.reference,
+      ...input.metadata,
+    },
+    externalId: input.reference,
   };
 }
 
@@ -248,7 +253,7 @@ export function isAbacatePayConfigured() {
   return Boolean(getAbacatePayApiKey());
 }
 
-export function getAbacatePayProviderName() {
+export function getAbacatePayProviderName(): AbacatePayProviderName {
   return ABACATEPAY_PROVIDER;
 }
 
