@@ -42,8 +42,8 @@ export type CondominiumPayment = {
   createdAt: Date;
   updatedAt: Date;
   condominium: Condominium;
-  planId: string;
-  planName: string;
+  planId: string | null;
+  planName: string | null;
 };
 
 export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
@@ -73,9 +73,11 @@ export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
     },
     planId: {
       type: String,
+      nullable: true,
     },
     planName: {
       type: String,
+      nullable: true,
     },
     provider: {
       type: String,

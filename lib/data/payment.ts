@@ -68,6 +68,6 @@ export async function getPaymentDetails(paymentId: string) {
     paidAt: freshPayment.paidAt,
     verifiedAt: freshPayment.verifiedAt,
     condominiumName: freshPayment.condominium.name,
-    planName: freshPayment.planName,
+    planName: freshPayment.planName || "Plano antigo",
   };
 }
