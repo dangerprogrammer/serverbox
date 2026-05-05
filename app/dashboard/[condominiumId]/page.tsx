@@ -13,6 +13,8 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short",
 });
 
+export const dynamic = "force-dynamic";
+
 export default async function CondominiumDashboardPage({
   params,
 }: {

@@ -29,6 +29,8 @@ const tierLabels: Record<string, string> = {
   [PlanTier.CUSTOM]: "Customizado",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function GerenciarCondominiosPage() {
   const { condominiums } = await getCondominiumManagementData();
 

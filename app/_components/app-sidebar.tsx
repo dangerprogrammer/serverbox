@@ -1,8 +1,8 @@
 'use client';
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 import { LogoutButton } from "@/app/_components/logout-button";
 
@@ -23,9 +23,7 @@ function DashboardIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path
-        d="M4.5 4.5h6v6h-6v-6Zm9 0h6v10h-6v-10Zm-9 9h6v6h-6v-6Zm9 4h6v2h-6v-2Z"
-      />
+      <path d="M4.5 4.5h6v6h-6v-6Zm9 0h6v10h-6v-10Zm-9 9h6v6h-6v-6Zm9 4h6v2h-6v-2Z" />
     </svg>
   );
 }
@@ -42,9 +40,7 @@ function BuildingsIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path
-        d="M4.5 20.5V6.5l7-2v16m0 0h-7m7 0h8m-2-10v10m-7-10h7m-5 3h1m-1 3h1m-4-3h1m-1 3h1"
-      />
+      <path d="M4.5 20.5V6.5l7-2v16m0 0h-7m7 0h8m-2-10v10m-7-10h7m-5 3h1m-1 3h1m-4-3h1m-1 3h1" />
     </svg>
   );
 }
@@ -61,9 +57,7 @@ function InfoIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path
-        d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-10.5v5m0-9v.01"
-      />
+      <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-10.5v5m0-9v.01" />
     </svg>
   );
 }
@@ -104,6 +98,24 @@ function ChevronDownIcon({ className }: { className?: string }) {
   );
 }
 
+function RefreshIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-3.25-6.92" />
+      <path d="M21 3v6h-6" />
+    </svg>
+  );
+}
+
 type AppSidebarProps = {
   condominiums: Array<{
     id: string;
@@ -113,6 +125,8 @@ type AppSidebarProps = {
 
 export function AppSidebar({ condominiums }: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isRefreshing, startRefreshing] = useTransition();
   const [isCondominiumOpenOverride, setIsCondominiumOpenOverride] = useState<
     boolean | null
   >(null);
@@ -126,6 +140,12 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
     setIsCondominiumOpenOverride(!isCondominiumOpen);
   };
 
+  const refreshData = () => {
+    startRefreshing(() => {
+      router.refresh();
+    });
+  };
+
   return (
     <>
       <aside className="hidden lg:fixed lg:top-4 lg:bottom-4 lg:left-4 lg:z-30 lg:flex lg:w-[18.5rem] lg:flex-col lg:gap-6 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur">
@@ -137,6 +157,16 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
             Navegação
           </h2>
         </div>
+
+        <button
+          type="button"
+          onClick={refreshData}
+          disabled={isRefreshing}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshIcon className="size-4 shrink-0" />
+          {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+        </button>
 
         <nav className="flex flex-col gap-2">
           {navigationItems.map((item) => {
@@ -179,7 +209,10 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
             </button>
 
             {isCondominiumOpen ? (
-              <div id="sidebar-condominiums-list" className="mt-1 space-y-1 px-1 pb-1">
+              <div
+                id="sidebar-condominiums-list"
+                className="mt-1 space-y-1 px-1 pb-1"
+              >
                 <Link
                   href="/gerenciar-condominios"
                   className={`block rounded-lg px-3 py-2 text-sm transition ${
@@ -223,7 +256,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
         <LogoutButton className="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800" />
       </aside>
 
-      <div className="lg:hidden sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto flex w-full max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-10">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
@@ -307,6 +340,16 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
               </div>
             ) : null}
           </div>
+
+          <button
+            type="button"
+            onClick={refreshData}
+            disabled={isRefreshing}
+            className="inline-flex h-[2.625rem] items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshIcon className="size-4 shrink-0" />
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
+          </button>
 
           <LogoutButton className="inline-flex h-[2.625rem] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
             <LogoutIcon className="size-4 shrink-0" />

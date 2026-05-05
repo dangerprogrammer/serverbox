@@ -8,6 +8,8 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+export const dynamic = "force-dynamic";
+
 const fallbackDashboard = {
   summary: {
     activeCondominiums: 0,

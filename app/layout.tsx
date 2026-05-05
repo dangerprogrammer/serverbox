@@ -21,6 +21,8 @@ export const metadata: Metadata = {
     "Gestão de planos de tubos de tênis para condomínios com Next.js e TypeORM.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{

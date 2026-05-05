@@ -19,6 +19,8 @@ const paymentMethodLabels: Record<string, string> = {
   pix: "PIX",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const dashboard = await getAdminDashboardData();
   const eligibleCondominiums = dashboard.condominiums.filter(
