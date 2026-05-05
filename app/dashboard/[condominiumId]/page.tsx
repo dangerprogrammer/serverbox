@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 
 import { SalesCharts } from "@/app/dashboard/[condominiumId]/_components/sales-charts";
-import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getAdminCondominiumDetails } from "@/lib/data/admin-dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -20,9 +18,6 @@ export default async function CondominiumDashboardPage({
 }: {
   params: Promise<{ condominiumId: string }>;
 }) {
-  await requireAuthenticatedAdmin();
-  await connection();
-
   const { condominiumId } = await params;
   const condominium = await getAdminCondominiumDetails(condominiumId);
 

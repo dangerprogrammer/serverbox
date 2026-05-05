@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { requireAuthenticatedAdmin } from "@/lib/auth/session";
+import { requireAuthenticatedAdminFromFormData } from "@/lib/auth/session";
 import {
   createCondominiumPayment,
   createStandaloneBallPayment,
@@ -35,7 +35,7 @@ function parseCurrencyToCents(value: FormDataEntryValue | null, fieldLabel: stri
 }
 
 export async function createPaymentAction(formData: FormData) {
-  await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdminFromFormData(formData);
 
   const planId = String(formData.get("planId") ?? "");
 
@@ -77,7 +77,7 @@ export async function createPaymentAction(formData: FormData) {
 }
 
 export async function createStandalonePaymentAction(formData: FormData) {
-  await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdminFromFormData(formData);
 
   const condominiumId = String(formData.get("condominiumId") ?? "");
 

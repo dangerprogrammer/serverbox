@@ -1,17 +1,52 @@
 'use client';
 
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { FloatingInput } from "@/app/_components/floating-field";
-import { loginAdmin } from "@/app/login/actions";
-
-const initialState = undefined;
+import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
 
 export function LoginForm() {
-  const [state, formAction, pending] = useActionState(loginAdmin, initialState);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleSubmit = async (formData: FormData) => {
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "").trim();
+
+    setError(null);
+
+    setIsPending(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const payload = (await response.json()) as {
+        sessionToken?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.sessionToken) {
+        setError(payload.error ?? "Credenciais inválidas.");
+        return;
+      }
+
+      localStorage.setItem(ADMIN_SESSION_STORAGE_KEY, payload.sessionToken);
+      router.replace("/dashboard");
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4">
       <FloatingInput
         label="Email"
         name="email"
@@ -28,18 +63,18 @@ export function LoginForm() {
         placeholder="Sua senha de admin"
       />
 
-      {state?.error ? (
+      {error ? (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {state.error}
+          {error}
         </p>
       ) : null}
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={isPending}
         className="inline-flex h-12 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Entrando..." : "Entrar como admin"}
+        {isPending ? "Entrando..." : "Entrar como admin"}
       </button>
     </form>
   );

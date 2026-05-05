@@ -3,8 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { AppShell } from "@/app/_components/app-shell";
-import { logoutAdmin } from "@/app/login/actions";
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
 import { getCondominiumManagementData } from "@/lib/data/admin-management";
 
 const geistSans = Geist({
@@ -28,25 +26,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const admin = await getAuthenticatedAdmin();
-  const isAuthenticated = admin !== null;
-
-  const loadSidebarCondominiums = async () => {
-    if (!admin) {
-      return [] as Array<{ id: string; name: string }>;
-    }
-
-    const managementData = await getCondominiumManagementData();
-
-    return managementData.condominiums
-      .map((condominium) => ({
-        id: condominium.id,
-        name: condominium.name,
-      }))
-      .sort((left, right) => left.name.localeCompare(right.name, "pt-BR"));
-  };
-
-  const condominiums = await loadSidebarCondominiums();
+  const managementData = await getCondominiumManagementData();
+  const condominiums = managementData.condominiums
+    .map((condominium) => ({
+      id: condominium.id,
+      name: condominium.name,
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name, "pt-BR"));
 
   return (
     <html
@@ -55,7 +41,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppShell logoutAction={logoutAdmin} condominiums={condominiums} isAuthenticated={isAuthenticated}>
+        <AppShell condominiums={condominiums}>
           {children}
         </AppShell>
       </body>

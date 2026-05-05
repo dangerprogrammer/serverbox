@@ -1,16 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/app/login/_components/login-form";
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
 
 export default async function LoginPage() {
-  const administrator = await getAuthenticatedAdmin();
-
-  if (administrator) {
-    redirect("/dashboard");
-  }
-
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-8 sm:px-10 lg:px-12">
       <section className="grid w-full gap-8 rounded-[1.5rem] border border-border bg-surface shadow-sm lg:grid-cols-[1.2fr_0.85fr]">

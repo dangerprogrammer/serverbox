@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { LogoutButton } from "@/app/_components/logout-button";
+
 const navigationItems = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { href: "/sobre-nos", label: "Sobre nós", icon: InfoIcon },
@@ -103,14 +105,13 @@ function ChevronDownIcon({ className }: { className?: string }) {
 }
 
 type AppSidebarProps = {
-  logoutAction: () => Promise<void>;
   condominiums: Array<{
     id: string;
     name: string;
   }>;
 };
 
-export function AppSidebar({ logoutAction, condominiums }: AppSidebarProps) {
+export function AppSidebar({ condominiums }: AppSidebarProps) {
   const pathname = usePathname();
   const [isCondominiumOpenOverride, setIsCondominiumOpenOverride] = useState<
     boolean | null
@@ -219,15 +220,7 @@ export function AppSidebar({ logoutAction, condominiums }: AppSidebarProps) {
           </div>
         </nav>
 
-        <form action={logoutAction} className="mt-auto">
-          <button
-            type="submit"
-            className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            <LogoutIcon className="size-4 shrink-0" />
-            Sair
-          </button>
-        </form>
+        <LogoutButton className="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800" />
       </aside>
 
       <div className="lg:hidden sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
@@ -315,15 +308,10 @@ export function AppSidebar({ logoutAction, condominiums }: AppSidebarProps) {
             ) : null}
           </div>
 
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="inline-flex h-[2.625rem] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              <LogoutIcon className="size-4 shrink-0" />
-              Sair
-            </button>
-          </form>
+          <LogoutButton className="inline-flex h-[2.625rem] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+            <LogoutIcon className="size-4 shrink-0" />
+            Sair
+          </LogoutButton>
         </div>
       </div>
     </>

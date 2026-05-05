@@ -1,17 +1,17 @@
 'use client';
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { AppSidebar } from "@/app/_components/app-sidebar";
+import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
 
 type AppShellProps = {
   children: React.ReactNode;
-  logoutAction: () => Promise<void>;
   condominiums: Array<{
     id: string;
     name: string;
   }>;
-  isAuthenticated: boolean;
 };
 
 const hiddenSidebarPaths = ["/login"];
@@ -22,16 +22,43 @@ function shouldHideSidebar(pathname: string) {
   );
 }
 
-export function AppShell({ children, logoutAction, condominiums, isAuthenticated }: AppShellProps) {
+export function AppShell({ children, condominiums }: AppShellProps) {
   const pathname = usePathname();
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  if (!isAuthenticated || shouldHideSidebar(pathname)) {
+  useEffect(() => {
+    const sessionToken = localStorage.getItem(ADMIN_SESSION_STORAGE_KEY);
+    const authenticated = Boolean(sessionToken);
+
+    setIsAuthenticated(authenticated);
+    setSessionChecked(true);
+
+    if (!authenticated && pathname !== "/login") {
+      window.location.replace("/login");
+      return;
+    }
+
+    if (authenticated && pathname === "/login") {
+      window.location.replace("/dashboard");
+    }
+  }, [pathname]);
+
+  if (!sessionChecked) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return pathname === "/login" ? <>{children}</> : null;
+  }
+
+  if (shouldHideSidebar(pathname)) {
     return <>{children}</>;
   }
 
   return (
     <div className="min-h-screen">
-      <AppSidebar logoutAction={logoutAction} condominiums={condominiums} />
+      <AppSidebar condominiums={condominiums} />
       <div className="min-w-0 lg:pl-[21rem]">{children}</div>
     </div>
   );

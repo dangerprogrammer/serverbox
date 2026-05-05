@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FloatingInput } from '@/app/_components/floating-field';
+import { SessionTokenInput } from '@/app/_components/session-token-input';
 import { updateCondominiumAction } from '@/app/gerenciar-condominios/actions';
 
 type UpdateCondominiumFormProps = {
@@ -41,6 +42,7 @@ export function UpdateCondominiumForm({
   return (
     <form action={handleSubmit} className="space-y-4">
       <input type="hidden" name="condominiumId" value={condominiumId} />
+      <SessionTokenInput />
       <div className="grid gap-4 md:grid-cols-2">
         <FloatingInput
           label="Nome do condomínio"

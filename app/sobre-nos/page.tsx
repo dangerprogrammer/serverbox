@@ -1,7 +1,6 @@
 ﻿import Link from "next/link";
 import { connection } from "next/server";
 
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/data/dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -21,13 +20,10 @@ const fallbackDashboard = {
 
 async function getPublicPageData() {
   try {
-    const [administrator, dashboard] = await Promise.all([
-      getAuthenticatedAdmin(),
-      getDashboardData(),
-    ]);
+    const dashboard = await getDashboardData();
 
     return {
-      administrator,
+      administrator: null,
       dashboard,
     };
   } catch (error) {

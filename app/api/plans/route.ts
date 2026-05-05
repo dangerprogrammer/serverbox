@@ -1,5 +1,7 @@
+import crypto from "node:crypto";
+
+import { getAuthenticatedAdminFromToken, getSessionTokenFromRequest } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
-import { requireAdminApiSession } from "@/lib/auth/session";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { PlanTier } from "@/lib/domain/condominium-plan";
 
@@ -23,11 +25,13 @@ function normalizeSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function GET() {
-  const administrator = await requireAdminApiSession();
+export async function GET(request: Request) {
+  const administrator = await getAuthenticatedAdminFromToken(
+    getSessionTokenFromRequest(request),
+  );
 
-  if (administrator instanceof Response) {
-    return administrator;
+  if (!administrator) {
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const dataSource = await getDataSource();
@@ -69,10 +73,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const authenticatedAdministrator = await requireAdminApiSession();
+  const authenticatedAdministrator = await getAuthenticatedAdminFromToken(
+    getSessionTokenFromRequest(request),
+  );
 
-  if (authenticatedAdministrator instanceof Response) {
-    return authenticatedAdministrator;
+  if (!authenticatedAdministrator) {
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const payload = (await request.json()) as CreatePlanPayload;

@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 
 import { CurrencyInput } from "@/app/_components/currency-input";
+import { SessionTokenInput } from "@/app/_components/session-token-input";
 import {
   FloatingInput,
   FloatingTextarea,
@@ -13,7 +14,6 @@ import {
   deleteCondominiumAction,
   deletePlanAction,
 } from "@/app/gerenciar-condominios/actions";
-import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getCondominiumManagementData } from "@/lib/data/admin-management";
 import { PlanTier } from "@/lib/domain/condominium-plan";
 
@@ -30,7 +30,6 @@ const tierLabels: Record<string, string> = {
 };
 
 export default async function GerenciarCondominiosPage() {
-  await requireAuthenticatedAdmin();
   const { condominiums } = await getCondominiumManagementData();
 
   return (
@@ -61,6 +60,7 @@ export default async function GerenciarCondominiosPage() {
           </p>
 
           <form action={createCondominiumAction} className="mt-6 space-y-4">
+            <SessionTokenInput />
             <div className="grid gap-4 md:grid-cols-2">
               <FloatingInput
                 label="Nome do condomínio"
@@ -193,6 +193,7 @@ export default async function GerenciarCondominiosPage() {
                         className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-white p-4"
                       >
                         <input type="hidden" name="condominiumId" value={condominium.id} />
+                        <SessionTokenInput />
                         <p className="text-sm font-medium text-slate-900">
                           Novo plano deste condomínio
                         </p>
@@ -274,6 +275,7 @@ export default async function GerenciarCondominiosPage() {
 
                               <form action={deletePlanAction} className="mt-3">
                                 <input type="hidden" name="planId" value={plan.id} />
+                                <SessionTokenInput />
                                 <button
                                   type="submit"
                                   className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
@@ -289,6 +291,7 @@ export default async function GerenciarCondominiosPage() {
 
                     <form action={deleteCondominiumAction} className="mt-4">
                       <input type="hidden" name="condominiumId" value={condominium.id} />
+                      <SessionTokenInput />
                       <button
                         type="submit"
                         className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"

@@ -1,6 +1,6 @@
+import { getAuthenticatedAdminFromToken, getSessionTokenFromRequest } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
-import { requireAdminApiSession } from "@/lib/auth/session";
 import {
   CondominiumEntity,
   type Condominium,
@@ -17,11 +17,13 @@ type CreateCondominiumPayload = {
   adminName?: string;
 };
 
-export async function GET() {
-  const administrator = await requireAdminApiSession();
+export async function GET(request: Request) {
+  const administrator = await getAuthenticatedAdminFromToken(
+    getSessionTokenFromRequest(request),
+  );
 
-  if (administrator instanceof Response) {
-    return administrator;
+  if (!administrator) {
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const dataSource = await getDataSource();
@@ -61,10 +63,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const administrator = await requireAdminApiSession();
+  const administrator = await getAuthenticatedAdminFromToken(
+    getSessionTokenFromRequest(request),
+  );
 
-  if (administrator instanceof Response) {
-    return administrator;
+  if (!administrator) {
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const payload = (await request.json()) as CreateCondominiumPayload;
@@ -114,7 +118,7 @@ export async function POST(request: Request) {
           : 0
         : payload.activeResidents && payload.activeResidents >= 0
           ? payload.activeResidents
-        : 0,
+          : 0,
     primaryAdmin: assignedAdministrator,
   });
 

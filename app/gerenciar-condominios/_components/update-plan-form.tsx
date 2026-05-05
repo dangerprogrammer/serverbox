@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CurrencyInput } from '@/app/_components/currency-input';
+import { SessionTokenInput } from '@/app/_components/session-token-input';
 import { PlanTier } from '@/lib/domain/condominium-plan';
 import { updatePlanAction } from '@/app/gerenciar-condominios/actions';
 
@@ -54,6 +55,7 @@ export function UpdatePlanForm({
   return (
     <form action={handleSubmit} className="space-y-4">
       <input type="hidden" name="planId" value={planId} />
+      <SessionTokenInput />
       <div className="grid gap-3 md:grid-cols-2">
         <input
           name="name"

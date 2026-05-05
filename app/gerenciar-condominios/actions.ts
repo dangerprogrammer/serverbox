@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
 
-import { requireAuthenticatedAdmin } from "@/lib/auth/session";
+import { requireAuthenticatedAdminFromFormData } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
@@ -57,7 +57,7 @@ function getPlansWithFallback(plans: CondominiumPlan[] | null | undefined) {
 }
 
 export async function createCondominiumAction(formData: FormData) {
-  const administrator = await requireAuthenticatedAdmin();
+  const administrator = await requireAuthenticatedAdminFromFormData(formData);
 
   const name = String(formData.get("name") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
@@ -87,7 +87,7 @@ export async function createCondominiumAction(formData: FormData) {
 }
 
 export async function updateCondominiumAction(formData: FormData) {
-  await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdminFromFormData(formData);
 
   const condominiumId = String(formData.get("condominiumId") ?? "");
 
@@ -120,7 +120,7 @@ export async function updateCondominiumAction(formData: FormData) {
 }
 
 export async function deleteCondominiumAction(formData: FormData) {
-  await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdminFromFormData(formData);
 
   const condominiumId = String(formData.get("condominiumId") ?? "");
 
@@ -136,7 +136,7 @@ export async function deleteCondominiumAction(formData: FormData) {
 }
 
 export async function createPlanAction(formData: FormData) {
-  const administrator = await requireAuthenticatedAdmin();
+  const administrator = await requireAuthenticatedAdminFromFormData(formData);
   const condominiumId = String(formData.get("condominiumId") ?? "").trim();
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
@@ -195,7 +195,7 @@ export async function createPlanAction(formData: FormData) {
 }
 
 export async function updatePlanAction(formData: FormData) {
-  await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdminFromFormData(formData);
 
   const planId = String(formData.get("planId") ?? "");
 
@@ -263,7 +263,7 @@ export async function updatePlanAction(formData: FormData) {
 }
 
 export async function deletePlanAction(formData: FormData) {
-  await requireAuthenticatedAdmin();
+  await requireAuthenticatedAdminFromFormData(formData);
 
   const planId = String(formData.get("planId") ?? "");
 

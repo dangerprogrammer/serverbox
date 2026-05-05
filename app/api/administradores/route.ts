@@ -1,6 +1,9 @@
-import { getDataSource } from "@/lib/db/data-source";
-import { requireAdminApiSession } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
+import {
+  getAuthenticatedAdminFromToken,
+  getSessionTokenFromRequest,
+} from "@/lib/auth/session";
+import { getDataSource } from "@/lib/db/data-source";
 import {
   AdministratorEntity,
   type Administrator,
@@ -12,11 +15,13 @@ type CreateAdministratorPayload = {
   password?: string;
 };
 
-export async function GET() {
-  const administrator = await requireAdminApiSession();
+export async function GET(request: Request) {
+  const administrator = await getAuthenticatedAdminFromToken(
+    getSessionTokenFromRequest(request),
+  );
 
-  if (administrator instanceof Response) {
-    return administrator;
+  if (!administrator) {
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const dataSource = await getDataSource();
@@ -32,12 +37,12 @@ export async function GET() {
   });
 
   return Response.json(
-    administrators.map((administrator: Administrator) => ({
-      id: administrator.id,
-      name: administrator.name,
-      email: administrator.email,
-      condominiumCount: administrator.condominiums.length,
-      createdPlanCount: administrator.condominiums.reduce(
+    administrators.map((entry: Administrator) => ({
+      id: entry.id,
+      name: entry.name,
+      email: entry.email,
+      condominiumCount: entry.condominiums.length,
+      createdPlanCount: entry.condominiums.reduce(
         (total, condominium) => total + condominium.plans.length,
         0,
       ),
@@ -46,10 +51,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const authenticatedAdministrator = await requireAdminApiSession();
+  const authenticatedAdministrator = await getAuthenticatedAdminFromToken(
+    getSessionTokenFromRequest(request),
+  );
 
-  if (authenticatedAdministrator instanceof Response) {
-    return authenticatedAdministrator;
+  if (!authenticatedAdministrator) {
+    return Response.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const payload = (await request.json()) as CreateAdministratorPayload;

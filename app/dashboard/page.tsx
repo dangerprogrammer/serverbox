@@ -1,14 +1,13 @@
 ﻿import Link from "next/link";
-import { connection } from "next/server";
 
 import { CurrencyInput } from "@/app/_components/currency-input";
 import { SubmitButton } from "@/app/dashboard/_components/submit-button";
 import { FloatingInput } from "@/app/_components/floating-field";
+import { SessionTokenInput } from "@/app/_components/session-token-input";
 import {
   createPaymentAction,
   createStandalonePaymentAction,
 } from "@/app/dashboard/actions";
-import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 import { getAdminDashboardData } from "@/lib/data/admin-dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -21,8 +20,6 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
-  await requireAuthenticatedAdmin();
-  await connection();
   const dashboard = await getAdminDashboardData();
   const eligibleCondominiums = dashboard.condominiums.filter(
     (condominium) => condominium.ballQuantity > 0,
@@ -141,6 +138,7 @@ export default async function DashboardPage() {
             </p>
 
             <form action={createPaymentAction} className="mt-6 space-y-4">
+              <SessionTokenInput />
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-slate-700">Plano</span>
                 <select
@@ -194,6 +192,7 @@ export default async function DashboardPage() {
             </p>
 
             <form action={createStandalonePaymentAction} className="mt-6 space-y-4">
+              <SessionTokenInput />
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-slate-700">Condomínio</span>
                 <select
