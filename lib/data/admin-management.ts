@@ -1,7 +1,5 @@
 import "server-only";
 
-import { cache } from "react";
-
 import { getDataSource } from "@/lib/db/data-source";
 import {
   CondominiumEntity,
@@ -9,7 +7,7 @@ import {
 } from "@/lib/db/entities/condominium.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
 
-export const getCondominiumManagementData = cache(async () => {
+export async function getCondominiumManagementData() {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
 
@@ -47,4 +45,4 @@ export const getCondominiumManagementData = cache(async () => {
       })),
     })),
   };
-});
+}

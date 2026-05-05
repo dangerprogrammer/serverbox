@@ -1,7 +1,5 @@
 import "server-only";
 
-import { cache } from "react";
-
 import { getDataSource } from "@/lib/db/data-source";
 import {
   AdministratorEntity,
@@ -36,7 +34,7 @@ function computeAvailableBalls(movements: BallInventoryMovement[]) {
   }, 0);
 }
 
-export const getDashboardData = cache(async () => {
+export async function getDashboardData() {
   const dataSource = await getDataSource();
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
@@ -114,4 +112,4 @@ export const getDashboardData = cache(async () => {
       ),
     })),
   };
-});
+}

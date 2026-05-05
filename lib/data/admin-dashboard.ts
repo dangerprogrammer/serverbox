@@ -1,7 +1,5 @@
 import "server-only";
 
-import { cache } from "react";
-
 import { getDataSource } from "@/lib/db/data-source";
 import {
   BallInventoryMovementEntity,
@@ -45,7 +43,7 @@ function sumAmountByStatus(
     .reduce((total, payment) => total + payment.amountInCents, 0);
 }
 
-export const getAdminDashboardData = cache(async () => {
+export async function getAdminDashboardData() {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
@@ -191,9 +189,9 @@ export const getAdminDashboardData = cache(async () => {
         providerDevMode: payment.providerDevMode,
       })),
   };
-});
+}
 
-export const getAdminCondominiumDetails = cache(async (condominiumId: string) => {
+export async function getAdminCondominiumDetails(condominiumId: string) {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
 
@@ -246,4 +244,4 @@ export const getAdminCondominiumDetails = cache(async (condominiumId: string) =>
       createdAt: payment.createdAt,
     })),
   };
-});
+}
