@@ -75,6 +75,10 @@ function isVercelRuntime() {
   return process.env.VERCEL === "1";
 }
 
+function isProductionBuild() {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
 function getDatabasePath() {
   const baseDirectory = isVercelRuntime()
     ? path.join("/tmp", "serverbox")
@@ -211,7 +215,7 @@ async function createDataSource() {
   const databaseUrl = getDatabaseUrl();
 
   if (!databaseUrl) {
-    if (isVercelRuntime()) {
+    if (isVercelRuntime() && !isProductionBuild()) {
       throw new Error(
         "DATABASE_URL nao configurada para o ambiente de producao. Configure a URL do Supabase para que o schema seja criado no banco correto.",
       );
