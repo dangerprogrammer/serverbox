@@ -93,16 +93,35 @@ export async function createStandalonePaymentAction(formData: FormData) {
     formData.get("amountInCents"),
     "Valor",
   );
+  const chargesQuantity = parsePositiveInteger(
+    formData.get("chargesQuantity"),
+    "Quantidade de cobranças",
+  );
+
+  if (chargesQuantity > 100) {
+    throw new Error("Quantidade de cobranças deve ser de no máximo 100 por envio.");
+  }
 
   try {
-    const payment = await createStandaloneBallPayment({
-      condominiumId,
-      ballQuantity,
-      amountInCents,
-    });
+    const createdPayments = [];
+
+    for (let index = 0; index < chargesQuantity; index += 1) {
+      const payment = await createStandaloneBallPayment({
+        condominiumId,
+        ballQuantity,
+        amountInCents,
+      });
+
+      createdPayments.push(payment);
+    }
 
     revalidatePath("/dashboard");
-    redirect(`/pagamentos/${payment.id}`);
+
+    if (createdPayments.length === 1) {
+      redirect(`/pagamentos/${createdPayments[0].id}`);
+    }
+
+    redirect("/dashboard");
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
