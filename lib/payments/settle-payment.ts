@@ -50,9 +50,9 @@ export async function applyProviderPaymentSnapshot({
   payment.providerRawStatus = snapshot.providerRawStatus;
   payment.providerReceiptUrl = snapshot.providerReceiptUrl;
   payment.providerDevMode = snapshot.providerDevMode;
-  payment.pixQrCode = snapshot.pixQrCode;
-  payment.pixCopyPasteCode = snapshot.pixCopyPasteCode;
-  payment.pixExpiresAt = snapshot.pixExpiresAt;
+  payment.pixQrCode = snapshot.pixQrCode ?? payment.pixQrCode;
+  payment.pixCopyPasteCode = snapshot.pixCopyPasteCode ?? payment.pixCopyPasteCode;
+  payment.pixExpiresAt = snapshot.pixExpiresAt ?? payment.pixExpiresAt;
 
   if (isAmountMismatch(payment, snapshot)) {
     console.warn(
