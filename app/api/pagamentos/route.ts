@@ -101,6 +101,21 @@ export async function POST(request: Request) {
       return Response.json({ error: message }, { status: 404 });
     }
 
+    if (message === "Pagamento avulso em aberto não encontrado.") {
+      return Response.json({ error: message }, { status: 404 });
+    }
+
+    if (
+      message.startsWith("Estoque insuficiente") ||
+      message === "Estoque insuficiente para reutilizar o QR Code avulso aberto deste condomínio."
+    ) {
+      return Response.json({ error: message }, { status: 409 });
+    }
+
+    if (message === "Plano precisa ter uma quantidade de tubos maior que zero.") {
+      return Response.json({ error: message }, { status: 400 });
+    }
+
     if (message === "ABACATEPAY_API_KEY não configurada.") {
       return Response.json(
         { error: "Configure ABACATEPAY_API_KEY para criar planos mensais/anuais." },

@@ -53,13 +53,13 @@ export default async function CondominiumDashboardPage({
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[1.25rem] border border-border bg-white p-5">
-            <p className="text-sm text-slate-500">Tubos restantes</p>
+            <p className="text-sm text-slate-500">Estoque livre</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {condominium.availableBalls}
             </p>
           </div>
           <div className="rounded-[1.25rem] border border-border bg-white p-5">
-            <p className="text-sm text-slate-500">Tubos confirmados</p>
+            <p className="text-sm text-slate-500">Tubos vendidos</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {condominium.paidBalls}
             </p>
@@ -71,7 +71,7 @@ export default async function CondominiumDashboardPage({
             </p>
           </div>
           <div className="rounded-[1.25rem] border border-border bg-white p-5">
-            <p className="text-sm text-slate-500">Base configurada</p>
+            <p className="text-sm text-slate-500">Estoque real</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {condominium.ballQuantity}
             </p>

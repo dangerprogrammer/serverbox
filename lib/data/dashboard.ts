@@ -6,10 +6,6 @@ import {
   type Administrator,
 } from "@/lib/db/entities/administrator.entity";
 import {
-  BallMovementKind,
-  type BallInventoryMovement,
-} from "@/lib/db/entities/ball-inventory-movement.entity";
-import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
@@ -18,6 +14,7 @@ import {
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
+import { calculateRemainingBallStock } from "@/lib/payments/stock";
 
 const tierLabels: Record<PlanTier, string> = {
   [PlanTier.BASIC]: "Basico",
@@ -25,14 +22,6 @@ const tierLabels: Record<PlanTier, string> = {
   [PlanTier.PREMIUM]: "Premium",
   [PlanTier.CUSTOM]: "Personalizado",
 };
-
-function computeAvailableBalls(movements: BallInventoryMovement[]) {
-  return movements.reduce((total, movement) => {
-    return movement.kind === BallMovementKind.CREDIT
-      ? total + movement.quantity
-      : total - movement.quantity;
-  }, 0);
-}
 
 export async function getDashboardData() {
   const dataSource = await getDataSource();
@@ -52,7 +41,6 @@ export async function getDashboardData() {
     relations: {
       primaryAdmin: true,
       payments: true,
-      ballMovements: true,
     },
     order: {
       createdAt: "ASC",
@@ -81,7 +69,11 @@ export async function getDashboardData() {
       totalPlans: plans.length,
       availableBalls: condominiums.reduce(
         (total, condominium) =>
-          total + computeAvailableBalls(condominium.ballMovements),
+          total +
+          calculateRemainingBallStock({
+            stockQuantity: condominium.ballQuantity,
+            payments: condominium.payments,
+          }),
         0,
       ),
     },
@@ -95,7 +87,10 @@ export async function getDashboardData() {
       ballQuantity: condominium.ballQuantity,
       administratorName: condominium.primaryAdmin.name,
       availablePlanCount: condominium.plans.length,
-      availableBalls: computeAvailableBalls(condominium.ballMovements),
+      availableBalls: calculateRemainingBallStock({
+        stockQuantity: condominium.ballQuantity,
+        payments: condominium.payments,
+      }),
       paidPayments: condominium.payments.filter(
         (payment: CondominiumPayment) => payment.status === PaymentStatus.PAID,
       ).length,

@@ -81,13 +81,13 @@ export function UpdateCondominiumForm({
         />
       </div>
       <FloatingInput
-        label="Quantidade de tubos"
+        label="Estoque real de tubos"
         name="ballQuantity"
         type="number"
         min={0}
         value={ballQuantity}
         onChange={(e) => setBallQuantity(e.target.value)}
-        placeholder="Quantidade de tubos"
+        placeholder="Estoque real de tubos"
         className="bg-white"
       />
 

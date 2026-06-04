@@ -23,19 +23,29 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const dashboard = await getAdminDashboardData();
-  const eligibleCondominiums = dashboard.condominiums.filter(
-    (condominium) => condominium.ballQuantity > 0,
+  const stockReadyCondominiums = dashboard.condominiums.filter(
+    (condominium) => condominium.remainingBallStock > 0,
   );
-  const eligibleCondominiumIds = new Set(
-    eligibleCondominiums.map((condominium) => condominium.id),
+  const eligibleStandaloneCondominiums = dashboard.condominiums.filter(
+    (condominium) =>
+      condominium.remainingBallStock > 0 ||
+      (condominium.standalonePayment?.availablePaymentCount ?? 0) > 0,
   );
-  const eligiblePlans = dashboard.plans.filter((plan) =>
-    eligibleCondominiumIds.has(plan.condominiumId),
+  const eligiblePlans = dashboard.plans.filter(
+    (plan) =>
+      plan.monthlyBallAllowance > 0 &&
+      plan.monthlyBallAllowance <= plan.remainingBallStock,
   );
   const hasCondominiums = dashboard.condominiums.length > 0;
-  const hasEligibleCondominiums = eligibleCondominiums.length > 0;
-  const canCreateStandalonePayment = hasEligibleCondominiums;
+  const hasStockReadyCondominiums = stockReadyCondominiums.length > 0;
+  const canCreateStandalonePayment = eligibleStandaloneCondominiums.length > 0;
   const canCreatePayment = eligiblePlans.length > 0;
+  const defaultStandaloneCondominium = eligibleStandaloneCondominiums[0];
+  const defaultStandaloneBallQuantity =
+    defaultStandaloneCondominium?.standalonePayment?.ballQuantity ??
+    Math.max(1, Math.min(100, defaultStandaloneCondominium?.remainingBallStock ?? 1));
+  const defaultStandaloneAmountInCents =
+    defaultStandaloneCondominium?.standalonePayment?.amountInCents ?? 10000;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -50,7 +60,7 @@ export default async function DashboardPage() {
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
               Priorize compras avulsas e mantenha planos mensais/anuais ativos
-              quando o condomínio tiver base de tubos configurada.
+              quando o condomínio tiver estoque real configurado.
             </p>
           </div>
 
@@ -77,11 +87,11 @@ export default async function DashboardPage() {
                     {dashboard.summary.topCondominiumBySales?.name ?? "—"}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-                    mais tubos vendidas
+                    mais tubos vendidos
                   </p>
                 </div>
                 <div className="rounded-[1.25rem] border border-border bg-white p-5">
-                  <p className="text-sm text-slate-500">Tubos vendidas</p>
+                  <p className="text-sm text-slate-500">Tubos vendidos</p>
                   <p className="mt-2 text-3xl font-semibold text-slate-900">
                     {dashboard.summary.confirmedBalls}
                   </p>
@@ -112,15 +122,15 @@ export default async function DashboardPage() {
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-3">
                   <span>Condomínios habilitados</span>
                   <strong className="text-base text-slate-900">
-                    {eligibleCondominiums.length}
+                    {stockReadyCondominiums.length}
                   </strong>
                 </div>
                 <div className="rounded-xl border border-dashed border-border bg-white px-4 py-4 leading-7">
-                  {!hasEligibleCondominiums
-                    ? "Defina a quantidade de tubos dos condomínios para liberar compras avulsas e planos."
+                  {!hasStockReadyCondominiums
+                    ? "Atualize o estoque real dos condomínios para liberar novas cobranças."
                     : canCreatePayment
-                      ? "Compras avulsas liberadas e planos mensais/anuais prontos para operar."
-                      : "Compras avulsas já liberadas. Cadastre planos para ativar cobrança mensal/anual."}
+                      ? "Compras avulsas e planos mensais/anuais prontos para operar dentro do estoque."
+                      : "Compras avulsas liberadas. Ajuste estoque ou planos para ativar cobrança mensal/anual."}
                 </div>
               </div>
             </div>
@@ -154,7 +164,8 @@ export default async function DashboardPage() {
                       <option key={plan.id} value={plan.id}>
                         {plan.condominiumName} - {plan.name} -{" "}
                         {plan.monthlyBallAllowance} tubos -{" "}
-                        {currencyFormatter.format(plan.monthlyPriceInCents / 100)}
+                        {currencyFormatter.format(plan.monthlyPriceInCents / 100)} -{" "}
+                        {plan.availablePaymentCount} cobrança(s) cabem no estoque
                       </option>
                     ))
                   ) : (
@@ -165,8 +176,8 @@ export default async function DashboardPage() {
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreatePayment
-                  ? "O checkout abre em seguida para copiar o código PIX ou acompanhar o QR Code."
-                  : "Defina quantidade de tubos e cadastre ao menos um plano para liberar cobrança mensal/anual."}
+                  ? "O checkout abre em seguida se o plano ainda couber no estoque real do condomínio."
+                  : "Ajuste estoque ou cadastre um plano com tubos dentro do saldo livre."}
               </div>
 
               <SubmitButton
@@ -179,7 +190,7 @@ export default async function DashboardPage() {
 
             {!canCreatePayment ? (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Sem base de tubos e plano vinculado não existe cobrança mensal/anual para emitir.
+                Sem estoque livre suficiente para um plano não existe cobrança mensal/anual para emitir.
               </div>
             ) : null}
           </section>
@@ -189,8 +200,9 @@ export default async function DashboardPage() {
               Compra avulsa de tubos
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Use esta cobrança quando o condomínio precisar comprar tubos
-              fora de um plano já cadastrado.
+              Use esta cobrança quando o condomínio precisar comprar tubos fora
+              de um plano já cadastrado. Se já houver QR avulso aberto, ele é
+              reaproveitado.
             </p>
 
             <form action={createStandalonePaymentAction} className="mt-6 space-y-4">
@@ -201,12 +213,16 @@ export default async function DashboardPage() {
                   name="condominiumId"
                   disabled={!canCreateStandalonePayment}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                  defaultValue={eligibleCondominiums[0]?.id ?? ""}
+                  defaultValue={defaultStandaloneCondominium?.id ?? ""}
                 >
                   {canCreateStandalonePayment ? (
-                    eligibleCondominiums.map((condominium) => (
+                    eligibleStandaloneCondominiums.map((condominium) => (
                       <option key={condominium.id} value={condominium.id}>
-                        {condominium.name} - {condominium.city}/{condominium.state}
+                        {condominium.name} - {condominium.city}/{condominium.state} -{" "}
+                        {condominium.remainingBallStock} tubos livres
+                        {condominium.standalonePayment
+                          ? ` - QR aberto: ${condominium.standalonePayment.availablePaymentCount}x de ${condominium.standalonePayment.ballQuantity} tubos`
+                          : ""}
                       </option>
                     ))
                   ) : (
@@ -221,22 +237,23 @@ export default async function DashboardPage() {
                   name="ballQuantity"
                   type="number"
                   min={1}
-                  defaultValue={100}
+                  max={defaultStandaloneCondominium?.remainingBallStock || undefined}
+                  defaultValue={defaultStandaloneBallQuantity}
                   placeholder="Quantidade de tubos"
                   className="bg-white"
                 />
                 <CurrencyInput
                   label="Valor"
                   name="amountInCents"
-                  defaultValueInCents={10000}
+                  defaultValueInCents={defaultStandaloneAmountInCents}
                   className="bg-white"
                 />
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreateStandalonePayment
-                  ? "A compra avulsa pode ser emitida sem limite de vezes. O saldo só é liberado após confirmação do pagamento."
-                  : "Defina quantidade de tubos no condomínio para habilitar compra avulsa."}
+                  ? "O sistema mantém um único QR avulso aberto por condomínio e reserva os tubos dele no estoque."
+                  : "Atualize o estoque real do condomínio para habilitar compra avulsa."}
               </div>
 
               <SubmitButton
@@ -344,7 +361,7 @@ export default async function DashboardPage() {
                           : "Nenhum plano vinculado a este condomínio ainda."}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Base configurada: {condominium.ballQuantity} tubos
+                        Estoque real informado: {condominium.ballQuantity} tubos
                       </p>
                       <Link
                         href={`/condominio/${condominium.id}`}
@@ -356,7 +373,7 @@ export default async function DashboardPage() {
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Tubos restantes
+                          Estoque livre
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
                           {condominium.availableBalls}
@@ -364,7 +381,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="rounded-xl bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                          Tubos confirmadas
+                          Tubos vendidos
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-slate-900">
                           {condominium.paidBalls}

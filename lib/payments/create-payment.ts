@@ -1,13 +1,22 @@
 ﻿import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
+import type { Repository } from "typeorm";
 import {
   CondominiumPaymentEntity,
   PaymentStatus,
+  type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import {
   createAbacatePixCharge,
   isAbacatePayConfigured,
 } from "@/lib/payments/abacatepay";
+import {
+  STANDALONE_BALL_PURCHASE_PLAN_NAME,
+  calculateRemainingBallStock,
+  calculateStandalonePaymentCapacity,
+  findOpenStandaloneBallPayment,
+  hasPendingPaymentExpired,
+} from "@/lib/payments/stock";
 
 type CreateCondominiumPaymentInput = {
   planId: string;
@@ -37,6 +46,39 @@ function buildPaymentReference() {
   ).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
 
   return `pay-${serial}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+async function expirePendingPaymentsIfNeeded(
+  paymentRepository: Repository<CondominiumPayment>,
+  payments: CondominiumPayment[],
+) {
+  const expiredPayments = payments.filter(hasPendingPaymentExpired);
+
+  if (expiredPayments.length === 0) {
+    return payments;
+  }
+
+  for (const payment of expiredPayments) {
+    payment.status = PaymentStatus.EXPIRED;
+  }
+
+  await paymentRepository.save(expiredPayments);
+
+  return payments;
+}
+
+function assertBallStockAvailable({
+  requestedBallQuantity,
+  remainingBallStock,
+}: {
+  requestedBallQuantity: number;
+  remainingBallStock: number;
+}) {
+  if (requestedBallQuantity > remainingBallStock) {
+    throw new Error(
+      `Estoque insuficiente. Restam ${remainingBallStock} tubos disponíveis para este condomínio.`,
+    );
+  }
 }
 
 async function buildChargeForCondominium({
@@ -99,6 +141,7 @@ export async function createCondominiumPayment({
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
+      payments: true,
     },
   });
   const condominium = condominiums.find(
@@ -124,6 +167,21 @@ export async function createCondominiumPayment({
   if (!plan) {
     throw new Error("Plano nÃ£o encontrado.");
   }
+
+  if (!Number.isFinite(plan.monthlyBallAllowance) || plan.monthlyBallAllowance <= 0) {
+    throw new Error("Plano precisa ter uma quantidade de tubos maior que zero.");
+  }
+
+  await expirePendingPaymentsIfNeeded(paymentRepository, condominium.payments);
+  const remainingBallStock = calculateRemainingBallStock({
+    stockQuantity: condominium.ballQuantity,
+    payments: condominium.payments,
+  });
+
+  assertBallStockAvailable({
+    requestedBallQuantity: plan.monthlyBallAllowance,
+    remainingBallStock,
+  });
 
   const { charge, reference } = await buildChargeForCondominium({
     condominiumName: condominium.name,
@@ -186,12 +244,53 @@ export async function createStandaloneBallPayment({
     where: { id: condominiumId },
     relations: {
       primaryAdmin: true,
+      payments: true,
     },
   });
 
   if (!condominium) {
     throw new Error("CondomÃ­nio nÃ£o encontrado.");
   }
+
+  await expirePendingPaymentsIfNeeded(paymentRepository, condominium.payments);
+  const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments);
+
+  if (openStandalonePayment) {
+    const availablePaymentCount = calculateStandalonePaymentCapacity({
+      stockQuantity: condominium.ballQuantity,
+      payments: condominium.payments,
+      payment: openStandalonePayment,
+    });
+
+    if (availablePaymentCount <= 0) {
+      throw new Error(
+        "Estoque insuficiente para reutilizar o QR Code avulso aberto deste condomínio.",
+      );
+    }
+
+    const reusablePayment = await paymentRepository.findOne({
+      where: { id: openStandalonePayment.id },
+      relations: {
+        condominium: true,
+      },
+    });
+
+    if (!reusablePayment) {
+      throw new Error("Pagamento avulso em aberto não encontrado.");
+    }
+
+    return reusablePayment;
+  }
+
+  const remainingBallStock = calculateRemainingBallStock({
+    stockQuantity: condominium.ballQuantity,
+    payments: condominium.payments,
+  });
+
+  assertBallStockAvailable({
+    requestedBallQuantity: ballQuantity,
+    remainingBallStock,
+  });
 
   const { charge, reference } = await buildChargeForCondominium({
     condominiumName: condominium.name,
@@ -208,7 +307,7 @@ export async function createStandaloneBallPayment({
   return paymentRepository.save({
     condominium,
     planId: `standalone-${reference}`,
-    planName: "Compra avulsa de tubos",
+    planName: STANDALONE_BALL_PURCHASE_PLAN_NAME,
     reference,
     method: charge.method,
     status: PaymentStatus.PENDING,

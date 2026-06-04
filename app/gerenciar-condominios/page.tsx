@@ -1,5 +1,3 @@
-﻿import Link from "next/link";
-
 import { CurrencyInput } from "@/app/_components/currency-input";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
 import {
@@ -94,12 +92,12 @@ export default async function GerenciarCondominiosPage() {
               />
             </div>
             <FloatingInput
-              label="Quantidade de tubos"
+              label="Estoque real de tubos"
               name="ballQuantity"
               type="number"
               min={0}
               defaultValue={0}
-              placeholder="Quantidade de tubos"
+              placeholder="Estoque real de tubos"
               className="bg-white"
             />
 
@@ -138,7 +136,8 @@ export default async function GerenciarCondominiosPage() {
                         </span>
                       </div>
                       <p className="text-sm text-slate-500">
-                        {condominium.courts} quadras - {condominium.ballQuantity} tubos
+                        {condominium.courts} quadras - estoque real de{" "}
+                        {condominium.ballQuantity} tubos
                       </p>
                     </div>
 
@@ -148,7 +147,7 @@ export default async function GerenciarCondominiosPage() {
                           {condominium.courts} quadras
                         </span>
                         <span className="rounded-xl bg-white px-3 py-2 text-center">
-                          {condominium.ballQuantity} tubos
+                          {condominium.ballQuantity} em estoque
                         </span>
                       </div>
                       <span className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition group-open:rotate-180">

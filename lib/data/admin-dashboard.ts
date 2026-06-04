@@ -4,7 +4,6 @@ import { getDataSource } from "@/lib/db/data-source";
 import {
   BallInventoryMovementEntity,
   BallMovementKind,
-  type BallInventoryMovement,
 } from "@/lib/db/entities/ball-inventory-movement.entity";
 import {
   CondominiumEntity,
@@ -16,14 +15,14 @@ import {
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
-
-function computeAvailableBalls(movements: BallInventoryMovement[]) {
-  return movements.reduce((total, movement) => {
-    return movement.kind === BallMovementKind.CREDIT
-      ? total + movement.quantity
-      : total - movement.quantity;
-  }, 0);
-}
+import {
+  calculateRemainingBallStock,
+  calculateStandalonePaymentCapacity,
+  findOpenStandaloneBallPayment,
+  isOpenPendingPayment,
+  sumOpenPendingBallQuantity,
+  sumPaidBallQuantity,
+} from "@/lib/payments/stock";
 
 function sumBallsByStatus(
   payments: CondominiumPayment[],
@@ -41,6 +40,28 @@ function sumAmountByStatus(
   return payments
     .filter((payment) => payment.status === status)
     .reduce((total, payment) => total + payment.amountInCents, 0);
+}
+
+function buildCondominiumStockSummary(condominium: Condominium) {
+  const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments);
+
+  return {
+    stockLimit: condominium.ballQuantity,
+    paidBalls: sumPaidBallQuantity(condominium.payments),
+    pendingBalls: sumOpenPendingBallQuantity(condominium.payments),
+    remainingBalls: calculateRemainingBallStock({
+      stockQuantity: condominium.ballQuantity,
+      payments: condominium.payments,
+    }),
+    openStandalonePayment,
+    openStandalonePaymentCapacity: openStandalonePayment
+      ? calculateStandalonePaymentCapacity({
+          stockQuantity: condominium.ballQuantity,
+          payments: condominium.payments,
+          payment: openStandalonePayment,
+        })
+      : 0,
+  };
 }
 
 export async function getAdminDashboardData() {
@@ -79,16 +100,31 @@ export async function getAdminDashboardData() {
     },
   });
 
-  const allPlans = condominiums.flatMap((condominium) =>
-    condominium.plans.map((plan: CondominiumPlan) => ({
+  const stockByCondominiumId = new Map(
+    condominiums.map((condominium) => [
+      condominium.id,
+      buildCondominiumStockSummary(condominium),
+    ]),
+  );
+
+  const allPlans = condominiums.flatMap((condominium) => {
+    const stockSummary = stockByCondominiumId.get(condominium.id);
+    const remainingBallStock = stockSummary?.remainingBalls ?? 0;
+
+    return condominium.plans.map((plan: CondominiumPlan) => ({
       id: plan.id,
       name: plan.name,
       condominiumId: condominium.id,
       condominiumName: condominium.name,
       monthlyBallAllowance: plan.monthlyBallAllowance,
       monthlyPriceInCents: plan.monthlyPriceInCents,
-    })),
-  );
+      remainingBallStock,
+      availablePaymentCount:
+        plan.monthlyBallAllowance > 0
+          ? Math.floor(remainingBallStock / plan.monthlyBallAllowance)
+          : 0,
+    }));
+  });
 
   const condominiumPerformance = condominiums.map((condominium) => ({
     id: condominium.id,
@@ -128,15 +164,19 @@ export async function getAdminDashboardData() {
     summary: {
       totalAvailableBalls: condominiums.reduce(
         (total, condominium) =>
-          total + computeAvailableBalls(condominium.ballMovements),
+          total + (stockByCondominiumId.get(condominium.id)?.remainingBalls ?? 0),
         0,
       ),
-      confirmedBalls: payments
-        .filter((payment) => payment.status === PaymentStatus.PAID)
-        .reduce((total, payment) => total + payment.ballQuantity, 0),
-      pendingBalls: payments
-        .filter((payment) => payment.status === PaymentStatus.PENDING)
-        .reduce((total, payment) => total + payment.ballQuantity, 0),
+      confirmedBalls: condominiums.reduce(
+        (total, condominium) =>
+          total + (stockByCondominiumId.get(condominium.id)?.paidBalls ?? 0),
+        0,
+      ),
+      pendingBalls: condominiums.reduce(
+        (total, condominium) =>
+          total + (stockByCondominiumId.get(condominium.id)?.pendingBalls ?? 0),
+        0,
+      ),
       creditedBalls: movements
         .filter((movement) => movement.kind === BallMovementKind.CREDIT)
         .reduce((total, movement) => total + movement.quantity, 0),
@@ -146,34 +186,49 @@ export async function getAdminDashboardData() {
       topCondominiumBySales,
     },
     plans: allPlans,
-    condominiums: condominiums.map((condominium: Condominium) => ({
-      id: condominium.id,
-      name: condominium.name,
-      city: condominium.city,
-      state: condominium.state,
-      ballQuantity: condominium.ballQuantity,
-      administratorName: condominium.primaryAdmin.name,
-      availableBalls: computeAvailableBalls(condominium.ballMovements),
-      pendingBalls: sumBallsByStatus(
-        condominium.payments,
-        PaymentStatus.PENDING,
-      ),
-      paidBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PAID),
-      plans: condominium.plans.map((plan: CondominiumPlan) => ({
-        id: plan.id,
-        name: plan.name,
-      })),
-      recentPayments: condominium.payments.slice(0, 3).map((payment) => ({
-        id: payment.id,
-        reference: payment.reference,
-        status: payment.status,
-        planName: payment.planName || "Plano antigo",
-        ballQuantity: payment.ballQuantity,
-        amountInCents: payment.amountInCents,
-      })),
-    })),
+    condominiums: condominiums.map((condominium: Condominium) => {
+      const stockSummary = stockByCondominiumId.get(condominium.id);
+      const recentPayments = [...condominium.payments]
+        .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
+        .slice(0, 3);
+
+      return {
+        id: condominium.id,
+        name: condominium.name,
+        city: condominium.city,
+        state: condominium.state,
+        ballQuantity: condominium.ballQuantity,
+        administratorName: condominium.primaryAdmin.name,
+        availableBalls: stockSummary?.remainingBalls ?? 0,
+        remainingBallStock: stockSummary?.remainingBalls ?? 0,
+        committedBalls:
+          (stockSummary?.paidBalls ?? 0) + (stockSummary?.pendingBalls ?? 0),
+        pendingBalls: stockSummary?.pendingBalls ?? 0,
+        paidBalls: stockSummary?.paidBalls ?? 0,
+        plans: condominium.plans.map((plan: CondominiumPlan) => ({
+          id: plan.id,
+          name: plan.name,
+        })),
+        standalonePayment: stockSummary?.openStandalonePayment
+          ? {
+              id: stockSummary.openStandalonePayment.id,
+              amountInCents: stockSummary.openStandalonePayment.amountInCents,
+              ballQuantity: stockSummary.openStandalonePayment.ballQuantity,
+              availablePaymentCount: stockSummary.openStandalonePaymentCapacity,
+            }
+          : null,
+        recentPayments: recentPayments.map((payment) => ({
+          id: payment.id,
+          reference: payment.reference,
+          status: payment.status,
+          planName: payment.planName || "Plano antigo",
+          ballQuantity: payment.ballQuantity,
+          amountInCents: payment.amountInCents,
+        })),
+      };
+    }),
     pendingPayments: payments
-      .filter((payment: CondominiumPayment) => payment.status === PaymentStatus.PENDING)
+      .filter(isOpenPendingPayment)
       .map((payment: CondominiumPayment) => ({
         id: payment.id,
         reference: payment.reference,
@@ -211,6 +266,7 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
   const sortedPayments = [...condominium.payments].sort(
     (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
   );
+  const stockSummary = buildCondominiumStockSummary(condominium);
 
   return {
     id: condominium.id,
@@ -220,9 +276,11 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
     courts: condominium.courts,
     ballQuantity: condominium.ballQuantity,
     administratorName: condominium.primaryAdmin.name,
-    availableBalls: computeAvailableBalls(condominium.ballMovements),
-    paidBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PAID),
-    pendingBalls: sumBallsByStatus(condominium.payments, PaymentStatus.PENDING),
+    availableBalls: stockSummary.remainingBalls,
+    remainingBallStock: stockSummary.remainingBalls,
+    committedBalls: stockSummary.paidBalls + stockSummary.pendingBalls,
+    paidBalls: stockSummary.paidBalls,
+    pendingBalls: stockSummary.pendingBalls,
     paidRevenueInCents: sumAmountByStatus(condominium.payments, PaymentStatus.PAID),
     pendingRevenueInCents: sumAmountByStatus(
       condominium.payments,
