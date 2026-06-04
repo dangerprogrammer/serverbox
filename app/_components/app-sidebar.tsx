@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { LogoutButton } from "@/app/_components/logout-button";
 
 const navigationItems = [
-  { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
+  { href: "/dashboard", label: "Visão geral", icon: DashboardIcon },
   { href: "/sobre-nos", label: "Sobre nós", icon: InfoIcon },
 ];
 
