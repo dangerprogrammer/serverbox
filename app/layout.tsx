@@ -23,6 +23,23 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const themeScript = `
+(() => {
+  try {
+    const key = "serverbox-theme";
+    const stored = window.localStorage.getItem(key);
+    const mode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    const theme = mode === "system" ? systemTheme : mode;
+    document.documentElement.dataset.themeMode = mode;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.themeMode = "system";
+  }
+})();
+`;
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -40,9 +57,11 @@ export default async function RootLayout({
     <html
       lang="pt-BR"
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <AppShell condominiums={condominiums}>
           {children}
         </AppShell>

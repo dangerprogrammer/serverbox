@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { LogoutButton } from "@/app/_components/logout-button";
+import { ThemeSwitcher } from "@/app/_components/theme-switcher";
 
 const navigationItems = [
   { href: "/dashboard", label: "Visão geral", icon: DashboardIcon },
@@ -148,7 +149,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
 
   return (
     <>
-      <aside className="hidden lg:fixed lg:top-4 lg:bottom-4 lg:left-4 lg:z-30 lg:flex lg:w-[18.5rem] lg:flex-col lg:gap-6 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur">
+      <aside className="app-sidebar hidden lg:fixed lg:top-4 lg:bottom-4 lg:left-4 lg:z-30 lg:flex lg:w-[18.5rem] lg:flex-col lg:gap-6 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur">
         <div>
           <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
             ServerBox
@@ -157,6 +158,8 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
             Navegação
           </h2>
         </div>
+
+        <ThemeSwitcher />
 
         <button
           type="button"
@@ -258,6 +261,8 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
 
       <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto flex w-full max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-10">
+          <ThemeSwitcher compact />
+
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
