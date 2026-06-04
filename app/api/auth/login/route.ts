@@ -4,6 +4,7 @@ import { verifyPassword } from "@/lib/auth/password";
 import { createAdminSession } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
+import { seedDatabase } from "@/lib/db/seed";
 
 export async function POST(request: Request) {
   try {
@@ -23,6 +24,10 @@ export async function POST(request: Request) {
     }
 
     const dataSource = await getDataSource();
+    if (process.env.NODE_ENV === "production") {
+      await seedDatabase(dataSource);
+    }
+
     const administratorRepository = dataSource.getRepository(AdministratorEntity);
     const administrator = await administratorRepository.findOneBy({ email });
 
