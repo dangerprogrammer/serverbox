@@ -17,6 +17,17 @@ import {
   simulateAbacatePixCharge,
 } from "@/lib/payments/abacatepay";
 
+function isAbacatePayAuthOrKeyError(errorMessage: string) {
+  const normalizedMessage = errorMessage.toLowerCase();
+
+  return (
+    normalizedMessage.includes("invalid or inactive api key") ||
+    normalizedMessage.includes("api key") ||
+    normalizedMessage.includes("unauthorized") ||
+    normalizedMessage.includes("forbidden")
+  );
+}
+
 export async function applyProviderPaymentSnapshot({
   payment,
   snapshot,
@@ -107,13 +118,27 @@ export async function syncAbacatePixPayment({
     return payment;
   }
 
-  const snapshot = await checkAbacatePixCharge(payment.providerPaymentId);
+  try {
+    const snapshot = await checkAbacatePixCharge(payment.providerPaymentId);
 
-  return applyProviderPaymentSnapshot({
-    payment,
-    snapshot,
-    verificationSource,
-  });
+    return applyProviderPaymentSnapshot({
+      payment,
+      snapshot,
+      verificationSource,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (isAbacatePayAuthOrKeyError(errorMessage)) {
+      console.warn(
+        "[abacatepay] skipping payment sync because the API key is invalid, inactive, or unavailable",
+      );
+
+      return payment;
+    }
+
+    throw error;
+  }
 }
 
 export async function simulateAbacatePixPayment(paymentId: string) {
