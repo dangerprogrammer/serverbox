@@ -329,7 +329,7 @@ export default async function DashboardPage() {
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <Link
-                        href={`/dashboard/${condominium.id}`}
+                        href={`/condominio/${condominium.id}`}
                         className="text-xl font-semibold text-slate-900 transition hover:text-slate-700"
                       >
                         {condominium.name}
@@ -347,7 +347,7 @@ export default async function DashboardPage() {
                         Base configurada: {condominium.ballQuantity} tubos
                       </p>
                       <Link
-                        href={`/dashboard/${condominium.id}`}
+                        href={`/condominio/${condominium.id}`}
                         className="mt-3 inline-flex h-10 items-center justify-center rounded-full border border-slate-300 px-4 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
                       >
                         Ver detalhes do condomínio

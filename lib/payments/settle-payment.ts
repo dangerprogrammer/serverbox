@@ -28,6 +28,10 @@ function isAbacatePayAuthOrKeyError(errorMessage: string) {
   );
 }
 
+function isAmountMismatch(payment: CondominiumPayment, snapshot: AbacatePayChargeSnapshot) {
+  return snapshot.amountInCents !== payment.amountInCents;
+}
+
 export async function applyProviderPaymentSnapshot({
   payment,
   snapshot,
@@ -50,8 +54,16 @@ export async function applyProviderPaymentSnapshot({
   payment.pixCopyPasteCode = snapshot.pixCopyPasteCode;
   payment.pixExpiresAt = snapshot.pixExpiresAt;
 
-  if (snapshot.amountInCents !== payment.amountInCents) {
-    throw new Error("O valor recebido difere do valor esperado da cobrança.");
+  if (isAmountMismatch(payment, snapshot)) {
+    console.warn(
+      "[abacatepay] amount mismatch while syncing payment snapshot",
+      {
+        paymentId: payment.id,
+        reference: payment.reference,
+        localAmountInCents: payment.amountInCents,
+        providerAmountInCents: snapshot.amountInCents,
+      },
+    );
   }
 
   const existingCredit = await movementRepository.findOne({

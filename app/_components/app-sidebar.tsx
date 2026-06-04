@@ -132,7 +132,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
   >(null);
 
   const isCondominiumSectionActive =
-    pathname.startsWith("/dashboard/") || pathname === "/gerenciar-condominios";
+    pathname.startsWith("/condominio/") || pathname === "/gerenciar-condominios";
   const isCondominiumOpen =
     isCondominiumOpenOverride ?? isCondominiumSectionActive;
 
@@ -230,7 +230,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
                   </p>
                 ) : (
                   condominiums.map((condominium) => {
-                    const condominiumHref = `/dashboard/${condominium.id}`;
+                    const condominiumHref = `/condominio/${condominium.id}`;
                     const isCondominiumActive = pathname === condominiumHref;
 
                     return (
@@ -319,7 +319,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
                   </p>
                 ) : (
                   condominiums.map((condominium) => {
-                    const condominiumHref = `/dashboard/${condominium.id}`;
+                    const condominiumHref = `/condominio/${condominium.id}`;
                     const isCondominiumActive = pathname === condominiumHref;
 
                     return (
