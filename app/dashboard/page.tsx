@@ -215,7 +215,7 @@ export default async function DashboardPage() {
                 </select>
               </label>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FloatingInput
                   label="Quantidade de tubos"
                   name="ballQuantity"
@@ -231,21 +231,11 @@ export default async function DashboardPage() {
                   defaultValueInCents={10000}
                   className="bg-white"
                 />
-                <FloatingInput
-                  label="Quantidade de cobranças"
-                  name="chargesQuantity"
-                  type="number"
-                  min={1}
-                  max={100}
-                  defaultValue={1}
-                  placeholder="Quantidade de cobranças"
-                  className="bg-white"
-                />
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {canCreateStandalonePayment
-                  ? "Você pode gerar várias cobranças avulsas iguais em um único envio. O saldo só é liberado após confirmação do pagamento."
+                  ? "A compra avulsa pode ser emitida sem limite de vezes. O saldo só é liberado após confirmação do pagamento."
                   : "Defina quantidade de tubos no condomínio para habilitar compra avulsa."}
               </div>
 
