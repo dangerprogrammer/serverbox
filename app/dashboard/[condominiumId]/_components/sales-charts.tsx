@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -29,6 +29,11 @@ type SalesChartsProps = {
   payments: SalesChartPayment[];
 };
 
+type ChartFrameProps = {
+  className: string;
+  children: (size: { width: number; height: number }) => React.ReactNode;
+};
+
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -55,6 +60,41 @@ const statusPalette: Record<string, { label: string; color: string }> = {
   failed: { label: "Falhou", color: "#e11d48" },
   refunded: { label: "Estornado", color: "#0284c7" },
 };
+
+function ChartFrame({ className, children }: ChartFrameProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const updateSize = () => {
+      const nextWidth = container.clientWidth;
+      const nextHeight = container.clientHeight;
+
+      if (nextWidth > 0 && nextHeight > 0) {
+        setSize({ width: nextWidth, height: nextHeight });
+      }
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className={className}>
+      {size.width > 0 && size.height > 0 ? children(size) : null}
+    </div>
+  );
+}
 
 function getCutoffDate(period: SalesPeriod) {
   const now = new Date();
@@ -355,8 +395,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
             Confirmada x pendente
           </p>
-          <div className="mt-4 h-72">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+          <ChartFrame className="mt-4 h-72">
+            {({ width, height }) => (
+              <ResponsiveContainer width={width} height={height}>
               <AreaChart data={monthlySalesData} margin={{ top: 8, right: 12, left: 6, bottom: 0 }}>
                 <defs>
                   <linearGradient id="confirmedGradient" x1="0" y1="0" x2="0" y2="1">
@@ -396,7 +437,8 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+            )}
+          </ChartFrame>
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -404,8 +446,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
             Entrada confirmada x aguardando pagamento
           </p>
-          <div className="mt-4 h-72">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+          <ChartFrame className="mt-4 h-72">
+            {({ width, height }) => (
+              <ResponsiveContainer width={width} height={height}>
               <BarChart data={monthlySalesData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 12 }} />
@@ -421,7 +464,8 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                 <Bar dataKey="pendingBalls" name="pendingBalls" fill="#d97706" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+            )}
+          </ChartFrame>
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -429,8 +473,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
             Drill-down dos planos com maior faturamento
           </p>
-          <div className="mt-4 h-72">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+          <ChartFrame className="mt-4 h-72">
+            {({ width, height }) => (
+              <ResponsiveContainer width={width} height={height}>
               <BarChart data={planPerformanceData} margin={{ top: 8, right: 12, left: 12, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="planName" tick={{ fill: "#64748b", fontSize: 12 }} interval={0} />
@@ -442,7 +487,8 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                 <Bar dataKey="confirmedRevenue" fill="#0f766e" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+            )}
+          </ChartFrame>
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4 xl:col-span-2">
@@ -451,8 +497,9 @@ export function SalesCharts({ payments }: SalesChartsProps) {
             Situação atual das cobranças emitidas
           </p>
           <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+            <ChartFrame className="h-64">
+              {({ width, height }) => (
+                <ResponsiveContainer width={width} height={height}>
                 <PieChart>
                   <Pie
                     data={statusDistributionData}
@@ -469,7 +516,8 @@ export function SalesCharts({ payments }: SalesChartsProps) {
                   <Tooltip formatter={(value) => `${Number(value ?? 0)} cobrança(s)`} />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+              )}
+            </ChartFrame>
 
             <div className="grid content-start gap-2">
               {statusDistributionData.map((status) => (

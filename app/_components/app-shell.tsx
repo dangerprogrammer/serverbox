@@ -16,10 +16,16 @@ type AppShellProps = {
 
 const hiddenSidebarPaths = ["/login"];
 
+const publicPaths = ["/", "/login", "/sobre-nos"];
+
 function shouldHideSidebar(pathname: string) {
   return (
     hiddenSidebarPaths.includes(pathname) || pathname.startsWith("/pagamentos")
   );
+}
+
+function isPublicPath(pathname: string) {
+  return publicPaths.includes(pathname) || pathname.startsWith("/pagamentos");
 }
 
 export function AppShell({ children, condominiums }: AppShellProps) {
@@ -34,7 +40,7 @@ export function AppShell({ children, condominiums }: AppShellProps) {
     setIsAuthenticated(authenticated);
     setSessionChecked(true);
 
-    if (!authenticated && pathname !== "/login") {
+    if (!authenticated && !isPublicPath(pathname)) {
       window.location.replace("/login");
       return;
     }
@@ -49,7 +55,7 @@ export function AppShell({ children, condominiums }: AppShellProps) {
   }
 
   if (!isAuthenticated) {
-    return pathname === "/login" ? <>{children}</> : null;
+    return isPublicPath(pathname) ? <>{children}</> : null;
   }
 
   if (shouldHideSidebar(pathname)) {
