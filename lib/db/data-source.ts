@@ -71,6 +71,23 @@ function getDatabaseUrl() {
   );
 }
 
+// Prefer sqlite during local development unless explicitly forced to use
+// Postgres. This avoids accidentally using a production Postgres URL placed
+// in `.env.local` and triggering concurrent Postgres queries during dev.
+function resolveDatabaseUrlForEnvironment() {
+  const url = getDatabaseUrl();
+
+  if (!url) return undefined;
+
+  const isDev = process.env.NODE_ENV !== "production" && !isVercelRuntime();
+
+  if (isDev && process.env.FORCE_POSTGRES !== "true") {
+    return undefined;
+  }
+
+  return url;
+}
+
 function isVercelRuntime() {
   return process.env.VERCEL === "1";
 }
@@ -188,9 +205,15 @@ async function resetLegacyDatabaseIfNeeded(databasePath: string) {
 }
 
 function createDataSourceOptions(): DataSourceOptions {
-  const databaseUrl = getDatabaseUrl();
+  const databaseUrl = resolveDatabaseUrlForEnvironment();
 
   if (databaseUrl) {
+    // For safety, only enable TypeORM `synchronize` for Postgres when an
+    // explicit environment flag is set. This avoids TypeORM running
+    // parallel schema-sync queries during app startup which can trigger
+    // pg's deprecation warning when the DB client is reused concurrently.
+    const allowSynchronize = process.env.TYPEORM_ALLOW_SYNCHRONIZE === "true";
+
     return {
       type: "postgres",
       url: databaseUrl,
@@ -198,7 +221,7 @@ function createDataSourceOptions(): DataSourceOptions {
         rejectUnauthorized: false,
       },
       uuidExtension: "pgcrypto",
-      synchronize: ormConfig.synchronize ?? true,
+      synchronize: allowSynchronize && Boolean(ormConfig.synchronize),
       entities,
     };
   }
@@ -212,7 +235,7 @@ function createDataSourceOptions(): DataSourceOptions {
 }
 
 async function createDataSource() {
-  const databaseUrl = getDatabaseUrl();
+  const databaseUrl = resolveDatabaseUrlForEnvironment();
 
   if (!databaseUrl) {
     if (isVercelRuntime() && !isProductionBuild()) {

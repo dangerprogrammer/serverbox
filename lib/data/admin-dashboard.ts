@@ -49,35 +49,35 @@ export async function getAdminDashboardData() {
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const movementRepository = dataSource.getRepository(BallInventoryMovementEntity);
 
-  const [condominiums, payments, movements] = await Promise.all([
-    condominiumRepository.find({
-      relations: {
-        primaryAdmin: true,
-        payments: true,
-        ballMovements: { payment: true },
-      },
-      order: {
-        createdAt: "ASC",
-      },
-    }),
-    paymentRepository.find({
-      relations: {
-        condominium: true,
-      },
-      order: {
-        createdAt: "DESC",
-      },
-    }),
-    movementRepository.find({
-      relations: {
-        condominium: true,
-        payment: true,
-      },
-      order: {
-        createdAt: "DESC",
-      },
-    }),
-  ]);
+  const condominiums = await condominiumRepository.find({
+    relations: {
+      primaryAdmin: true,
+      payments: true,
+      ballMovements: { payment: true },
+    },
+    order: {
+      createdAt: "ASC",
+    },
+  });
+
+  const payments = await paymentRepository.find({
+    relations: {
+      condominium: true,
+    },
+    order: {
+      createdAt: "DESC",
+    },
+  });
+
+  const movements = await movementRepository.find({
+    relations: {
+      condominium: true,
+      payment: true,
+    },
+    order: {
+      createdAt: "DESC",
+    },
+  });
 
   const allPlans = condominiums.flatMap((condominium) =>
     condominium.plans.map((plan: CondominiumPlan) => ({

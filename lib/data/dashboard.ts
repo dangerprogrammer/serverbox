@@ -39,26 +39,25 @@ export async function getDashboardData() {
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
 
-  const [administrators, condominiums] = await Promise.all([
-    administratorRepository.find({
-      relations: {
-        condominiums: true,
-      },
-      order: {
-        createdAt: "ASC",
-      },
-    }),
-    condominiumRepository.find({
-      relations: {
-        primaryAdmin: true,
-        payments: true,
-        ballMovements: true,
-      },
-      order: {
-        createdAt: "ASC",
-      },
-    }),
-  ]);
+  const administrators = await administratorRepository.find({
+    relations: {
+      condominiums: true,
+    },
+    order: {
+      createdAt: "ASC",
+    },
+  });
+
+  const condominiums = await condominiumRepository.find({
+    relations: {
+      primaryAdmin: true,
+      payments: true,
+      ballMovements: true,
+    },
+    order: {
+      createdAt: "ASC",
+    },
+  });
 
   const plans = condominiums.flatMap((condominium) =>
     condominium.plans.map((plan: CondominiumPlan) => ({

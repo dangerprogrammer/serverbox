@@ -131,7 +131,10 @@ export async function syncAbacatePixPayment({
   }
 
   try {
-    const snapshot = await checkAbacatePixCharge(payment.providerPaymentId);
+    const snapshot = await checkAbacatePixCharge(
+      payment.providerPaymentId,
+      payment.amountInCents,
+    );
 
     return applyProviderPaymentSnapshot({
       payment,

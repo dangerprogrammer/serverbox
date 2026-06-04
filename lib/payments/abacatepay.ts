@@ -28,7 +28,8 @@ type AbacatePayTransparentStatus =
 
 type AbacatePayTransparent = {
   id: string;
-  amount: number;
+  amount?: number;
+  amountInCents?: number;
   status: AbacatePayTransparentStatus;
   devMode?: boolean;
   brCode?: string | null;
@@ -77,6 +78,7 @@ export type AbacatePayWebhookPayload = {
     transparent?: AbacatePayTransparent;
     id?: string;
     amount?: number;
+    amountInCents?: number;
     status?: AbacatePayTransparentStatus;
     devMode?: boolean;
     brCode?: string | null;
@@ -232,7 +234,14 @@ function mapAbacateStatus(status: string): PaymentStatus {
 
 function buildChargeSnapshot(
   transparent: AbacatePayTransparent,
+  fallbackAmountInCents?: number,
 ): AbacatePayChargeSnapshot {
+  const amountInCents = transparent.amountInCents ?? transparent.amount ?? fallbackAmountInCents;
+
+  if (!Number.isFinite(amountInCents)) {
+    throw new Error("AbacatePay retornou um pagamento sem valor.");
+  }
+
   return {
     provider: ABACATEPAY_PROVIDER,
     providerPaymentId: transparent.id,
@@ -241,7 +250,7 @@ function buildChargeSnapshot(
     providerDevMode: Boolean(transparent.devMode),
     method: PaymentMethod.PIX,
     status: mapAbacateStatus(transparent.status),
-    amountInCents: transparent.amount,
+    amountInCents,
     pixTransactionId: null,
     pixQrCode: transparent.brCodeBase64 ?? null,
     pixCopyPasteCode: transparent.brCode ?? null,
@@ -325,7 +334,10 @@ export async function createAbacatePixCharge({
   return buildChargeSnapshot(transparent);
 }
 
-export async function checkAbacatePixCharge(providerPaymentId: string) {
+export async function checkAbacatePixCharge(
+  providerPaymentId: string,
+  fallbackAmountInCents?: number,
+) {
   const version = getAbacatePayApiVersion();
 
   const transparent = await requestAbacatePay<AbacatePayTransparent>({
@@ -335,7 +347,7 @@ export async function checkAbacatePixCharge(providerPaymentId: string) {
     },
   });
 
-  return buildChargeSnapshot(transparent);
+  return buildChargeSnapshot(transparent, fallbackAmountInCents);
 }
 
 export async function simulateAbacatePixCharge(providerPaymentId: string) {
@@ -395,13 +407,17 @@ function getWebhookTransparent(payload: AbacatePayWebhookPayload) {
     return payload.data.transparent;
   }
 
-  if (!payload.data?.id || !payload.data.status || !payload.data.amount) {
+  if (
+    !payload.data?.id ||
+    !payload.data.status ||
+    (payload.data.amount === undefined && payload.data.amountInCents === undefined)
+  ) {
     return null;
   }
 
   return {
     id: payload.data.id,
-    amount: payload.data.amount,
+    amount: payload.data.amount ?? payload.data.amountInCents,
     status: payload.data.status,
     devMode: payload.data.devMode ?? payload.devMode,
     brCode: payload.data.brCode ?? null,
