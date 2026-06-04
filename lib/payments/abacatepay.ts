@@ -236,11 +236,13 @@ function buildChargeSnapshot(
   transparent: AbacatePayTransparent,
   fallbackAmountInCents?: number,
 ): AbacatePayChargeSnapshot {
-  const amountInCents = transparent.amountInCents ?? transparent.amount ?? fallbackAmountInCents;
+  const maybeAmount = transparent.amountInCents ?? transparent.amount ?? fallbackAmountInCents;
 
-  if (!Number.isFinite(amountInCents)) {
+  if (typeof maybeAmount !== "number" || !Number.isFinite(maybeAmount)) {
     throw new Error("AbacatePay retornou um pagamento sem valor.");
   }
+
+  const amountInCents = maybeAmount;
 
   return {
     provider: ABACATEPAY_PROVIDER,
