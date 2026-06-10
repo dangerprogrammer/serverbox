@@ -1,11 +1,12 @@
 'use client';
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import {
   clearStoredAdminSessionToken,
   clearStoredAdminSessionTokenIfCurrent,
+  useClientHydrated,
   useStoredAdminSessionToken,
 } from "@/app/_components/admin-session-storage";
 import { AppSidebar } from "@/app/_components/app-sidebar";
@@ -36,6 +37,8 @@ function isPublicPath(pathname: string) {
 
 export function AppShell({ children, condominiums }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const isClientHydrated = useClientHydrated();
   const sessionToken = useStoredAdminSessionToken();
   const [sessionState, setSessionState] = useState<SessionState>("checking");
 
@@ -67,7 +70,7 @@ export function AppShell({ children, condominiums }: AppShellProps) {
 
       if (!cancelled) {
         window.alert(message);
-        window.location.replace("/login");
+        router.replace("/login");
       }
     }
 
@@ -81,6 +84,11 @@ export function AppShell({ children, condominiums }: AppShellProps) {
     }
 
     async function validateSession() {
+      if (!isClientHydrated) {
+        setSessionState("checking");
+        return;
+      }
+
       if (!sessionToken) {
         if (publicPath) {
           setSessionState("public");
@@ -119,7 +127,7 @@ export function AppShell({ children, condominiums }: AppShellProps) {
       }
 
       if (pathname === "/login") {
-        window.location.replace("/dashboard");
+        router.replace("/dashboard");
         return;
       }
 
@@ -131,7 +139,7 @@ export function AppShell({ children, condominiums }: AppShellProps) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, sessionToken]);
+  }, [isClientHydrated, pathname, router, sessionToken]);
 
   if (sessionState === "checking") {
     return null;

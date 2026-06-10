@@ -32,6 +32,12 @@ function subscribe(callback: () => void) {
   };
 }
 
+function subscribeToHydration(callback: () => void) {
+  queueMicrotask(callback);
+
+  return () => undefined;
+}
+
 export function getStoredAdminSessionToken() {
   return getSnapshot();
 }
@@ -57,4 +63,12 @@ export function clearStoredAdminSessionTokenIfCurrent(sessionToken: string) {
 
 export function useStoredAdminSessionToken() {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+export function useClientHydrated() {
+  return useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
 }
