@@ -1,8 +1,7 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { Client } = require('pg');
-const { scryptSync, randomUUID } = require('node:crypto');
-const fs = require('node:fs');
-const path = require('node:path');
+const { randomBytes, randomUUID, scryptSync } = require('node:crypto');
 
 async function main() {
   const confirm = process.env.CONFIRM_RESEED === 'true';
@@ -53,7 +52,7 @@ async function main() {
     }
 
     // Hash password using scrypt (same algorithm as the app)
-    const salt = require('crypto').randomBytes(16).toString('hex');
+    const salt = randomBytes(16).toString('hex');
     const KEY_LENGTH = 64;
     const hash = scryptSync(adminPassword, salt, KEY_LENGTH).toString('hex');
     const passwordHash = `${salt}:${hash}`;

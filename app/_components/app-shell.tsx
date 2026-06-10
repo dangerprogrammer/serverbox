@@ -3,8 +3,12 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import {
+  clearStoredAdminSessionToken,
+  getStoredAdminSessionToken,
+  useStoredAdminSessionToken,
+} from "@/app/_components/admin-session-storage";
 import { AppSidebar } from "@/app/_components/app-sidebar";
-import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -18,6 +22,8 @@ const hiddenSidebarPaths = ["/login"];
 
 const publicPaths = ["/", "/login", "/sobre-nos"];
 
+type SessionState = "checking" | "authenticated" | "public";
+
 function shouldHideSidebar(pathname: string) {
   return (
     hiddenSidebarPaths.includes(pathname) || pathname.startsWith("/pagamentos")
@@ -30,32 +36,93 @@ function isPublicPath(pathname: string) {
 
 export function AppShell({ children, condominiums }: AppShellProps) {
   const pathname = usePathname();
-  const [sessionChecked, setSessionChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const sessionToken = useStoredAdminSessionToken();
+  const [sessionState, setSessionState] = useState<SessionState>("checking");
 
   useEffect(() => {
-    const sessionToken = localStorage.getItem(ADMIN_SESSION_STORAGE_KEY);
-    const authenticated = Boolean(sessionToken);
+    let cancelled = false;
 
-    setIsAuthenticated(authenticated);
-    setSessionChecked(true);
+    async function clearSessionAndRedirect(message: string) {
+      const currentSessionToken = getStoredAdminSessionToken();
 
-    if (!authenticated && !isPublicPath(pathname)) {
+      if (currentSessionToken) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sessionToken: currentSessionToken }),
+        }).catch(() => undefined);
+      }
+
+      clearStoredAdminSessionToken();
+
+      if (!cancelled) {
+        window.alert(message);
+      }
+
       window.location.replace("/login");
-      return;
     }
 
-    if (authenticated && pathname === "/login") {
-      window.location.replace("/dashboard");
-    }
-  }, [pathname]);
+    async function validateSession() {
+      if (isPublicPath(pathname) && pathname !== "/login") {
+        setSessionState("public");
+        return;
+      }
 
-  if (!sessionChecked) {
+      if (!sessionToken) {
+        if (pathname === "/login") {
+          setSessionState("public");
+          return;
+        }
+
+        await clearSessionAndRedirect(
+          "Sua sessao administrativa nao foi encontrada. Faca login novamente.",
+        );
+        return;
+      }
+
+      setSessionState("checking");
+
+      const response = await fetch("/api/auth/session", {
+        cache: "no-store",
+        headers: {
+          "x-serverbox-session-token": sessionToken,
+        },
+      }).catch(() => null);
+
+      if (!response?.ok) {
+        await clearSessionAndRedirect(
+          "Sua sessao administrativa expirou ou nao e mais valida. Faca login novamente.",
+        );
+        return;
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      if (pathname === "/login") {
+        window.location.replace("/dashboard");
+        return;
+      }
+
+      setSessionState("authenticated");
+    }
+
+    validateSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, sessionToken]);
+
+  if (sessionState === "checking") {
     return null;
   }
 
-  if (!isAuthenticated) {
-    return isPublicPath(pathname) ? <>{children}</> : null;
+  if (sessionState === "public") {
+    return <>{children}</>;
   }
 
   if (shouldHideSidebar(pathname)) {

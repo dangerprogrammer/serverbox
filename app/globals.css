@@ -431,3 +431,69 @@ textarea,
 input {
   color-scheme: inherit;
 }
+
+.payment-print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .payment-print-area,
+  .payment-print-area * {
+    visibility: visible !important;
+  }
+
+  .payment-print-area {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+  }
+
+  .payment-print-area > div:first-child {
+    display: block !important;
+    text-align: center !important;
+  }
+
+  .payment-print-area > div:nth-child(2) {
+    margin: 24px auto 0 !important;
+    max-width: 360px !important;
+    border: 1px solid #d1d5db !important;
+    background: #ffffff !important;
+    padding: 24px !important;
+  }
+
+  .payment-print-area svg,
+  .payment-print-area img {
+    display: block !important;
+    width: 280px !important;
+    height: 280px !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .payment-print-only {
+    display: block !important;
+  }
+
+  .payment-screen-only {
+    display: none !important;
+  }
+}

@@ -1,9 +1,6 @@
 import "reflect-metadata";
 
-import path from "node:path";
-import fs from "node:fs";
-
-import { DataSource } from "typeorm";
+import { DataSource, type DataSourceOptions } from "typeorm";
 
 import { AdministratorEntity } from "../lib/db/entities/administrator.entity";
 import { CondominiumEntity } from "../lib/db/entities/condominium.entity";
@@ -36,7 +33,7 @@ async function main() {
 
   const isSqlite = databaseUrl.endsWith(".sqlite") || databaseUrl.endsWith(".db") || databaseUrl.includes(".sqlite");
 
-  const dataSourceOptions: any = isSqlite
+  const dataSourceOptions: DataSourceOptions = isSqlite
     ? {
         type: "better-sqlite3",
         database: databaseUrl,

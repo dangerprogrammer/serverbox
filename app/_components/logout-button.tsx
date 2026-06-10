@@ -3,11 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
-
-function getSessionToken() {
-  return localStorage.getItem(ADMIN_SESSION_STORAGE_KEY) ?? "";
-}
+import {
+  clearStoredAdminSessionToken,
+  getStoredAdminSessionToken,
+} from "@/app/_components/admin-session-storage";
 
 export function LogoutButton({
   className,
@@ -20,7 +19,7 @@ export function LogoutButton({
   const [pending, setPending] = useState(false);
 
   const handleLogout = async () => {
-    const sessionToken = getSessionToken();
+    const sessionToken = getStoredAdminSessionToken();
 
     setPending(true);
 
@@ -35,7 +34,7 @@ export function LogoutButton({
         });
       }
     } finally {
-      localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+      clearStoredAdminSessionToken();
       setPending(false);
       router.replace("/login");
     }

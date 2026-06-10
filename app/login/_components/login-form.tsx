@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { setStoredAdminSessionToken } from "@/app/_components/admin-session-storage";
 import { FloatingInput } from "@/app/_components/floating-field";
-import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
 
 export function LoginForm() {
   const router = useRouter();
@@ -38,7 +38,7 @@ export function LoginForm() {
         return;
       }
 
-      localStorage.setItem(ADMIN_SESSION_STORAGE_KEY, payload.sessionToken);
+      setStoredAdminSessionToken(payload.sessionToken);
       router.replace("/dashboard");
     } finally {
       setIsPending(false);

@@ -1,15 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
+import { useStoredAdminSessionToken } from "@/app/_components/admin-session-storage";
 
 export function SessionTokenInput() {
-  const [sessionToken, setSessionToken] = useState("");
-
-  useEffect(() => {
-    setSessionToken(localStorage.getItem(ADMIN_SESSION_STORAGE_KEY) ?? "");
-  }, []);
+  const sessionToken = useStoredAdminSessionToken();
 
   if (!sessionToken) {
     return null;

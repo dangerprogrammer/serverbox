@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
 import { PaymentStatusPanel } from "@/app/pagamentos/[paymentId]/_components/payment-status-panel";
+import { PrintQrCodeButton } from "@/app/pagamentos/[paymentId]/_components/print-qr-code-button";
 import { getPaymentDetails } from "@/lib/data/payment";
 import { buildPixQrCodeSvg } from "@/lib/payments/pix-qr";
 
@@ -53,10 +54,20 @@ export default async function PaymentPage({
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-          <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
-            Pague com PIX
-          </p>
+        <section className="payment-print-area rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
+                Pague com PIX
+              </p>
+              <h2 className="payment-print-only mt-2 text-2xl font-semibold text-slate-900">
+                Pagamento ServerBox
+              </h2>
+            </div>
+            {qrCodeSvg || payment.pixQrCode?.startsWith("data:image/") ? (
+              <PrintQrCodeButton />
+            ) : null}
+          </div>
           <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
             {payment.pixQrCode?.startsWith("data:image/") ? (
               <Image
@@ -82,6 +93,19 @@ export default async function PaymentPage({
             Escaneie o QR Code ou copie o código PIX. Assim que a AbacatePay
             confirmar a cobrança, o status muda automaticamente.
           </p>
+          <div className="payment-print-only mt-6 space-y-3 text-sm text-slate-700">
+            <p>
+              <span className="font-semibold text-slate-900">Condominio:</span>{" "}
+              {payment.condominiumName}
+            </p>
+            <p>
+              <span className="font-semibold text-slate-900">Item:</span>{" "}
+              {payment.planName}
+            </p>
+            <p className="break-all font-mono text-xs">
+              {payment.pixCopyPasteCode ?? "Codigo PIX indisponivel"}
+            </p>
+          </div>
         </section>
 
         <PaymentStatusPanel
