@@ -41,8 +41,9 @@ export function AppShell({ children, condominiums }: AppShellProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const publicPath = isPublicPath(pathname);
 
-    async function clearSessionAndRedirect(message: string) {
+    async function clearServerSession() {
       const currentSessionToken = getStoredAdminSessionToken();
 
       if (currentSessionToken) {
@@ -54,7 +55,10 @@ export function AppShell({ children, condominiums }: AppShellProps) {
           body: JSON.stringify({ sessionToken: currentSessionToken }),
         }).catch(() => undefined);
       }
+    }
 
+    async function clearSessionAndRedirect(message: string) {
+      await clearServerSession();
       clearStoredAdminSessionToken();
 
       if (!cancelled) {
@@ -64,14 +68,18 @@ export function AppShell({ children, condominiums }: AppShellProps) {
       window.location.replace("/login");
     }
 
-    async function validateSession() {
-      if (isPublicPath(pathname) && pathname !== "/login") {
-        setSessionState("public");
-        return;
-      }
+    async function clearSessionAndShowPublicPage() {
+      await clearServerSession();
+      clearStoredAdminSessionToken();
 
+      if (!cancelled) {
+        setSessionState("public");
+      }
+    }
+
+    async function validateSession() {
       if (!sessionToken) {
-        if (pathname === "/login") {
+        if (publicPath) {
           setSessionState("public");
           return;
         }
@@ -92,6 +100,11 @@ export function AppShell({ children, condominiums }: AppShellProps) {
       }).catch(() => null);
 
       if (!response?.ok) {
+        if (publicPath) {
+          await clearSessionAndShowPublicPage();
+          return;
+        }
+
         await clearSessionAndRedirect(
           "Sua sessao administrativa expirou ou nao e mais valida. Faca login novamente.",
         );
