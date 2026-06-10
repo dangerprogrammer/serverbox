@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { FloatingInput } from "@/app/_components/floating-field";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
+import { CondominiumBrandStockFieldset } from "@/app/gerenciar-condominios/_components/condominium-brand-stock-fieldset";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { updateCondominiumAction } from "@/app/gerenciar-condominios/actions";
 
@@ -15,7 +16,13 @@ type TubeBrandOption = {
 type CourtValue = {
   id: string;
   name: string;
+  tubeBrandId?: string;
+  tubeBrandIds?: string[];
+};
+
+type TubeStockValue = {
   tubeBrandId: string;
+  quantity: number;
 };
 
 type UpdateCondominiumFormProps = {
@@ -25,7 +32,7 @@ type UpdateCondominiumFormProps = {
   state: string;
   courtDetails: CourtValue[];
   tubeBrands: TubeBrandOption[];
-  ballQuantity: number;
+  tubeStockByBrand: TubeStockValue[];
 };
 
 export function UpdateCondominiumForm({
@@ -35,12 +42,11 @@ export function UpdateCondominiumForm({
   state: initialState,
   courtDetails,
   tubeBrands,
-  ballQuantity: initialBallQuantity,
+  tubeStockByBrand,
 }: UpdateCondominiumFormProps) {
   const [name, setName] = useState(initialName);
   const [city, setCity] = useState(initialCity);
   const [state, setState] = useState(initialState);
-  const [ballQuantity, setBallQuantity] = useState(String(initialBallQuantity));
 
   const handleSubmit = async (formData: FormData) => {
     await updateCondominiumAction(formData);
@@ -76,21 +82,15 @@ export function UpdateCondominiumForm({
           placeholder="UF"
           className="bg-white uppercase"
         />
-        <FloatingInput
-          label="Estoque real de tubos"
-          name="ballQuantity"
-          type="number"
-          min={0}
-          value={ballQuantity}
-          onChange={(event) => setBallQuantity(event.target.value)}
-          placeholder="Estoque real de tubos"
-          className="bg-white"
-        />
       </div>
 
       <CondominiumCourtsFieldset
         tubeBrands={tubeBrands}
         initialCourts={courtDetails}
+      />
+      <CondominiumBrandStockFieldset
+        tubeBrands={tubeBrands}
+        initialStock={tubeStockByBrand}
       />
 
       <div className="flex flex-wrap gap-3">

@@ -14,6 +14,7 @@ import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.
 import { AdminSessionEntity } from "@/lib/db/entities/admin-session.entity";
 import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { seedDatabase } from "@/lib/db/seed";
+import { getTubeStockEntries } from "@/lib/domain/tube-stock";
 import { DataSource, type DataSourceOptions } from "typeorm";
 
 declare global {
@@ -25,7 +26,7 @@ declare global {
     | undefined;
 }
 
-const DATA_SOURCE_SCHEMA_VERSION = "2026-06-10-condominium-courts-and-brands";
+const DATA_SOURCE_SCHEMA_VERSION = "2026-06-10-brand-stock";
 
 const entities = [
   AdministratorEntity,
@@ -253,6 +254,10 @@ async function ensurePostgresRuntimeSchema(dataSource: DataSource) {
     )
   `);
   await dataSource.query(`
+    ALTER TABLE condominiums
+    ADD COLUMN IF NOT EXISTS "tubeStockByBrand" text NOT NULL DEFAULT '[]'
+  `);
+  await dataSource.query(`
     CREATE TABLE IF NOT EXISTS condominium_courts (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       name character varying NOT NULL,
@@ -279,6 +284,103 @@ async function ensurePostgresRuntimeSchema(dataSource: DataSource) {
     CREATE INDEX IF NOT EXISTS "IDX_condominium_courts_tube_brand"
       ON condominium_courts ("tubeBrandId")
   `);
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS condominium_court_tube_brands (
+      "courtId" uuid NOT NULL,
+      "tubeBrandId" uuid NOT NULL,
+      CONSTRAINT "PK_condominium_court_tube_brands"
+        PRIMARY KEY ("courtId", "tubeBrandId"),
+      CONSTRAINT "FK_condominium_court_tube_brands_court"
+        FOREIGN KEY ("courtId")
+        REFERENCES condominium_courts(id)
+        ON DELETE CASCADE,
+      CONSTRAINT "FK_condominium_court_tube_brands_tube_brand"
+        FOREIGN KEY ("tubeBrandId")
+        REFERENCES tube_brands(id)
+        ON DELETE RESTRICT
+    )
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_court_tube_brands_court"
+      ON condominium_court_tube_brands ("courtId")
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_court_tube_brands_tube_brand"
+      ON condominium_court_tube_brands ("tubeBrandId")
+  `);
+  await dataSource.query(`
+    INSERT INTO condominium_court_tube_brands ("courtId", "tubeBrandId")
+    SELECT id, "tubeBrandId"
+    FROM condominium_courts
+    WHERE "tubeBrandId" IS NOT NULL
+    ON CONFLICT DO NOTHING
+  `);
+}
+
+async function backfillCourtTubeBrands(dataSource: DataSource) {
+  if (dataSource.options.type === "postgres") {
+    await dataSource.query(`
+      INSERT INTO condominium_court_tube_brands ("courtId", "tubeBrandId")
+      SELECT id, "tubeBrandId"
+      FROM condominium_courts
+      WHERE "tubeBrandId" IS NOT NULL
+      ON CONFLICT DO NOTHING
+    `);
+    return;
+  }
+
+  await dataSource.query(`
+    INSERT OR IGNORE INTO condominium_court_tube_brands ("courtId", "tubeBrandId")
+    SELECT id, "tubeBrandId"
+    FROM condominium_courts
+    WHERE "tubeBrandId" IS NOT NULL
+  `);
+}
+
+async function backfillCondominiumTubeStock(dataSource: DataSource) {
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
+  const condominiums = await condominiumRepository.find({
+    relations: {
+      courtDetails: {
+        tubeBrand: true,
+      },
+    },
+  });
+  const defaultBrand = await brandRepository.findOne({
+    where: {},
+    order: {
+      name: "ASC",
+    },
+  });
+
+  for (const condominium of condominiums) {
+    if (
+      getTubeStockEntries(condominium.tubeStockByBrand).length > 0 ||
+      !Number.isFinite(condominium.ballQuantity) ||
+      condominium.ballQuantity <= 0
+    ) {
+      continue;
+    }
+
+    const sortedCourts = [...(condominium.courtDetails ?? [])].sort(
+      (left, right) => left.sortOrder - right.sortOrder,
+    );
+    const tubeBrand = sortedCourts[0]?.tubeBrand ?? defaultBrand;
+
+    if (!tubeBrand) {
+      continue;
+    }
+
+    condominium.tubeStockByBrand = [
+      {
+        tubeBrandId: tubeBrand.id,
+        quantity: condominium.ballQuantity,
+      },
+    ];
+
+    await condominiumRepository.save(condominium);
+  }
 }
 
 async function createDataSource() {
@@ -301,6 +403,8 @@ async function createDataSource() {
 
     await dataSource.initialize();
     await ensurePostgresRuntimeSchema(dataSource);
+    await backfillCourtTubeBrands(dataSource);
+    await backfillCondominiumTubeStock(dataSource);
     await seedDatabase(dataSource);
 
     return dataSource;

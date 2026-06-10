@@ -5,6 +5,7 @@ import type { BallInventoryMovement } from "@/lib/db/entities/ball-inventory-mov
 import type { CondominiumCourt } from "@/lib/db/entities/condominium-court.entity";
 import type { CondominiumPayment } from "@/lib/db/entities/condominium-payment.entity";
 import type { CondominiumPlan } from "@/lib/domain/condominium-plan";
+import type { TubeStockEntry } from "@/lib/domain/tube-stock";
 
 export type Condominium = {
   id: string;
@@ -13,6 +14,7 @@ export type Condominium = {
   state: string;
   courts: number;
   ballQuantity: number;
+  tubeStockByBrand: TubeStockEntry[];
   createdAt: Date;
   updatedAt: Date;
   primaryAdmin: Administrator;
@@ -49,6 +51,10 @@ export const CondominiumEntity = new EntitySchema<Condominium>({
       name: "activeResidents",
       type: Number,
       default: 0,
+    },
+    tubeStockByBrand: {
+      type: "simple-json",
+      default: "[]",
     },
     plans: {
       type: "simple-json",

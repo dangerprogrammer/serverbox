@@ -14,7 +14,9 @@ import {
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
+import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
+import { getTubeStockEntries, sumTubeStockEntries } from "@/lib/domain/tube-stock";
 import {
   calculateRemainingBallStock,
   calculateStandalonePaymentCapacity,
@@ -44,19 +46,21 @@ function sumAmountByStatus(
 
 function buildCondominiumStockSummary(condominium: Condominium) {
   const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments);
+  const stockQuantity =
+    sumTubeStockEntries(condominium.tubeStockByBrand) || condominium.ballQuantity;
 
   return {
-    stockLimit: condominium.ballQuantity,
+    stockLimit: stockQuantity,
     paidBalls: sumPaidBallQuantity(condominium.payments),
     pendingBalls: sumOpenPendingBallQuantity(condominium.payments),
     remainingBalls: calculateRemainingBallStock({
-      stockQuantity: condominium.ballQuantity,
+      stockQuantity,
       payments: condominium.payments,
     }),
     openStandalonePayment,
     openStandalonePaymentCapacity: openStandalonePayment
       ? calculateStandalonePaymentCapacity({
-          stockQuantity: condominium.ballQuantity,
+          stockQuantity,
           payments: condominium.payments,
           payment: openStandalonePayment,
         })
@@ -69,11 +73,12 @@ export async function getAdminDashboardData() {
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const movementRepository = dataSource.getRepository(BallInventoryMovementEntity);
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
 
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
-      courtDetails: { tubeBrand: true },
+      courtDetails: { tubeBrand: true, tubeBrands: true },
       payments: true,
       ballMovements: { payment: true },
     },
@@ -126,6 +131,11 @@ export async function getAdminDashboardData() {
           : 0,
     }));
   });
+  const tubeBrands = await brandRepository.find({
+    order: {
+      name: "ASC",
+    },
+  });
 
   const condominiumPerformance = condominiums.map((condominium) => ({
     id: condominium.id,
@@ -161,6 +171,8 @@ export async function getAdminDashboardData() {
       | null,
   );
 
+  const brandById = new Map(tubeBrands.map((brand) => [brand.id, brand]));
+
   return {
     summary: {
       totalAvailableBalls: condominiums.reduce(
@@ -192,6 +204,20 @@ export async function getAdminDashboardData() {
       const recentPayments = [...condominium.payments]
         .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
         .slice(0, 3);
+      const tubeStockByBrand = getTubeStockEntries(condominium.tubeStockByBrand)
+        .map((entry) => {
+          const tubeBrand = brandById.get(entry.tubeBrandId);
+
+          return tubeBrand
+            ? {
+                ...entry,
+                tubeBrandName: tubeBrand.name,
+              }
+            : null;
+        })
+        .filter((entry) => entry !== null);
+      const stockQuantity =
+        sumTubeStockEntries(tubeStockByBrand) || condominium.ballQuantity;
 
       return {
         id: condominium.id,
@@ -201,12 +227,21 @@ export async function getAdminDashboardData() {
         courts: condominium.courtDetails?.length || condominium.courts,
         courtDetails: [...(condominium.courtDetails ?? [])]
           .sort((left, right) => left.sortOrder - right.sortOrder)
-          .map((court) => ({
-            id: court.id,
-            name: court.name,
-            tubeBrandName: court.tubeBrand.name,
-          })),
-        ballQuantity: condominium.ballQuantity,
+          .map((court) => {
+            const tubeBrands =
+              court.tubeBrands && court.tubeBrands.length > 0
+                ? court.tubeBrands
+                : [court.tubeBrand];
+
+            return {
+              id: court.id,
+              name: court.name,
+              tubeBrandName: court.tubeBrand.name,
+              tubeBrandNames: tubeBrands.map((brand) => brand.name),
+            };
+          }),
+        ballQuantity: stockQuantity,
+        tubeStockByBrand,
         administratorName: condominium.primaryAdmin.name,
         availableBalls: stockSummary?.remainingBalls ?? 0,
         remainingBallStock: stockSummary?.remainingBalls ?? 0,
@@ -258,12 +293,13 @@ export async function getAdminDashboardData() {
 export async function getAdminCondominiumDetails(condominiumId: string) {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
 
   const condominium = await condominiumRepository.findOne({
     where: { id: condominiumId },
     relations: {
       primaryAdmin: true,
-      courtDetails: { tubeBrand: true },
+      courtDetails: { tubeBrand: true, tubeBrands: true },
       payments: true,
       ballMovements: { payment: true },
     },
@@ -273,10 +309,31 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
     return null;
   }
 
+  const tubeBrands = await brandRepository.find({
+    order: {
+      name: "ASC",
+    },
+  });
+
   const sortedPayments = [...condominium.payments].sort(
     (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
   );
   const stockSummary = buildCondominiumStockSummary(condominium);
+  const brandById = new Map(tubeBrands.map((brand) => [brand.id, brand]));
+  const tubeStockByBrand = getTubeStockEntries(condominium.tubeStockByBrand)
+    .map((entry) => {
+      const tubeBrand = brandById.get(entry.tubeBrandId);
+
+      return tubeBrand
+        ? {
+            ...entry,
+            tubeBrandName: tubeBrand.name,
+          }
+        : null;
+    })
+    .filter((entry) => entry !== null);
+  const stockQuantity =
+    sumTubeStockEntries(tubeStockByBrand) || condominium.ballQuantity;
 
   return {
     id: condominium.id,
@@ -286,12 +343,21 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
     courts: condominium.courtDetails?.length || condominium.courts,
     courtDetails: [...(condominium.courtDetails ?? [])]
       .sort((left, right) => left.sortOrder - right.sortOrder)
-      .map((court) => ({
-        id: court.id,
-        name: court.name,
-        tubeBrandName: court.tubeBrand.name,
-      })),
-    ballQuantity: condominium.ballQuantity,
+      .map((court) => {
+        const tubeBrands =
+          court.tubeBrands && court.tubeBrands.length > 0
+            ? court.tubeBrands
+            : [court.tubeBrand];
+
+        return {
+          id: court.id,
+          name: court.name,
+          tubeBrandName: court.tubeBrand.name,
+          tubeBrandNames: tubeBrands.map((brand) => brand.name),
+        };
+      }),
+    ballQuantity: stockQuantity,
+    tubeStockByBrand,
     administratorName: condominium.primaryAdmin.name,
     availableBalls: stockSummary.remainingBalls,
     remainingBallStock: stockSummary.remainingBalls,
@@ -308,7 +374,19 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
       name: plan.name,
       monthlyBallAllowance: plan.monthlyBallAllowance,
       monthlyPriceInCents: plan.monthlyPriceInCents,
+      availablePaymentCount:
+        plan.monthlyBallAllowance > 0
+          ? Math.floor(stockSummary.remainingBalls / plan.monthlyBallAllowance)
+          : 0,
     })),
+    standalonePayment: stockSummary.openStandalonePayment
+      ? {
+          id: stockSummary.openStandalonePayment.id,
+          amountInCents: stockSummary.openStandalonePayment.amountInCents,
+          ballQuantity: stockSummary.openStandalonePayment.ballQuantity,
+          availablePaymentCount: stockSummary.openStandalonePaymentCapacity,
+        }
+      : null,
     payments: sortedPayments.map((payment) => ({
       id: payment.id,
       reference: payment.reference,

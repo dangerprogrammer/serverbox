@@ -10,6 +10,7 @@ import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.enti
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
+import { sumTubeStockEntries, type TubeStockEntry } from "@/lib/domain/tube-stock";
 import { In, type DataSource } from "typeorm";
 
 function normalizeSlug(value: string) {
@@ -63,44 +64,117 @@ type CourtEntry = {
   name: string;
   sortOrder: number;
   tubeBrand: TubeBrand;
+  tubeBrands: TubeBrand[];
 };
 
-async function parseCourtEntries(dataSource: DataSource, formData: FormData) {
+function parseCourtRequests(formData: FormData) {
+  const courtKeys = formData.getAll("courtKey").map((value) => String(value));
   const courtNames = formData.getAll("courtName");
+
+  if (courtKeys.length > 0) {
+    return courtKeys
+      .map((courtKey, index) => ({
+        name: String(courtNames[index] ?? "").trim() || `Quadra ${index + 1}`,
+        tubeBrandIds: formData
+          .getAll(`tubeBrandIds:${courtKey}`)
+          .map((value) => String(value).trim())
+          .filter(Boolean),
+        sortOrder: index,
+      }))
+      .filter((court) => court.tubeBrandIds.length > 0);
+  }
+
   const tubeBrandIds = formData.getAll("tubeBrandId");
-  const requestedCourts = courtNames
+
+  return courtNames
     .map((courtName, index) => ({
       name: String(courtName ?? "").trim() || `Quadra ${index + 1}`,
-      tubeBrandId: String(tubeBrandIds[index] ?? "").trim(),
+      tubeBrandIds: [String(tubeBrandIds[index] ?? "").trim()].filter(Boolean),
       sortOrder: index,
     }))
-    .filter((court) => court.tubeBrandId);
+    .filter((court) => court.tubeBrandIds.length > 0);
+}
+
+async function parseCourtEntries(dataSource: DataSource, formData: FormData) {
+  const requestedCourts = parseCourtRequests(formData);
 
   if (requestedCourts.length === 0) {
     throw new Error("Adicione ao menos uma quadra com marca de tubos.");
   }
 
+  const requestedBrandIds = Array.from(
+    new Set(requestedCourts.flatMap((court) => court.tubeBrandIds)),
+  );
   const brandRepository = dataSource.getRepository(TubeBrandEntity);
   const brands = await brandRepository.find({
     where: {
-      id: In(Array.from(new Set(requestedCourts.map((court) => court.tubeBrandId)))),
+      id: In(requestedBrandIds),
     },
   });
   const brandById = new Map(brands.map((brand) => [brand.id, brand]));
 
   return requestedCourts.map((court) => {
-    const tubeBrand = brandById.get(court.tubeBrandId);
+    const tubeBrands = court.tubeBrandIds.map((brandId) => brandById.get(brandId));
 
-    if (!tubeBrand) {
+    if (tubeBrands.some((tubeBrand) => !tubeBrand)) {
       throw new Error("Marca de tubos invalida para uma das quadras.");
     }
+
+    const selectedTubeBrands = tubeBrands as TubeBrand[];
 
     return {
       name: court.name,
       sortOrder: court.sortOrder,
-      tubeBrand,
+      tubeBrand: selectedTubeBrands[0],
+      tubeBrands: selectedTubeBrands,
     } satisfies CourtEntry;
   });
+}
+
+async function parseTubeStockEntries(dataSource: DataSource, formData: FormData) {
+  const stockBrandIds = formData
+    .getAll("stockBrandId")
+    .map((value) => String(value ?? "").trim());
+  const stockQuantities = formData.getAll("stockQuantity");
+  const requestedStockByBrandId = new Map<string, number>();
+
+  stockBrandIds.forEach((tubeBrandId, index) => {
+    const quantity = parsePositiveNumber(stockQuantities[index], 0);
+
+    if (!tubeBrandId || quantity <= 0) {
+      return;
+    }
+
+    requestedStockByBrandId.set(
+      tubeBrandId,
+      (requestedStockByBrandId.get(tubeBrandId) ?? 0) + quantity,
+    );
+  });
+
+  if (requestedStockByBrandId.size === 0) {
+    throw new Error("Adicione ao menos uma marca com quantidade de tubos.");
+  }
+
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
+  const requestedBrandIds = Array.from(requestedStockByBrandId.keys());
+  const brands = await brandRepository.find({
+    where: {
+      id: In(requestedBrandIds),
+    },
+  });
+  const validBrandIds = new Set(brands.map((brand) => brand.id));
+
+  if (requestedBrandIds.some((brandId) => !validBrandIds.has(brandId))) {
+    throw new Error("Marca de tubos invalida para o estoque.");
+  }
+
+  return requestedBrandIds.map(
+    (tubeBrandId) =>
+      ({
+        tubeBrandId,
+        quantity: requestedStockByBrandId.get(tubeBrandId) ?? 0,
+      }) satisfies TubeStockEntry,
+  );
 }
 
 async function replaceCondominiumCourts(
@@ -109,6 +183,16 @@ async function replaceCondominiumCourts(
   courts: CourtEntry[],
 ) {
   const courtRepository = dataSource.getRepository(CondominiumCourtEntity);
+
+  await dataSource
+    .createQueryBuilder()
+    .delete()
+    .from("condominium_court_tube_brands")
+    .where(
+      '"courtId" IN (SELECT id FROM condominium_courts WHERE "condominiumId" = :condominiumId)',
+      { condominiumId: condominium.id },
+    )
+    .execute();
 
   await courtRepository
     .createQueryBuilder()
@@ -123,6 +207,7 @@ async function replaceCondominiumCourts(
       sortOrder: court.sortOrder,
       condominium,
       tubeBrand: court.tubeBrand,
+      tubeBrands: court.tubeBrands,
     })),
   );
 }
@@ -169,13 +254,15 @@ export async function createCondominiumAction(formData: FormData) {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const courtEntries = await parseCourtEntries(dataSource, formData);
+  const tubeStockByBrand = await parseTubeStockEntries(dataSource, formData);
 
   const condominium = await condominiumRepository.save({
     name,
     city,
     state,
     courts: courtEntries.length,
-    ballQuantity: parsePositiveNumber(formData.get("ballQuantity"), 0),
+    ballQuantity: sumTubeStockEntries(tubeStockByBrand),
+    tubeStockByBrand,
     plans: [],
     primaryAdmin: administrator,
   });
@@ -196,6 +283,7 @@ export async function updateCondominiumAction(formData: FormData) {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const courtEntries = await parseCourtEntries(dataSource, formData);
+  const tubeStockByBrand = await parseTubeStockEntries(dataSource, formData);
   const existing = await condominiumRepository.findOneBy({ id: condominiumId });
 
   if (!existing) {
@@ -209,10 +297,8 @@ export async function updateCondominiumAction(formData: FormData) {
     .toUpperCase()
     .slice(0, 2);
   existing.courts = courtEntries.length;
-  existing.ballQuantity = parsePositiveNumber(
-    formData.get("ballQuantity"),
-    0,
-  );
+  existing.ballQuantity = sumTubeStockEntries(tubeStockByBrand);
+  existing.tubeStockByBrand = tubeStockByBrand;
 
   const condominium = await condominiumRepository.save(existing);
   await replaceCondominiumCourts(dataSource, condominium, courtEntries);

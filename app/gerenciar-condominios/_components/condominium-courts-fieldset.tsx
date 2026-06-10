@@ -10,7 +10,8 @@ type TubeBrandOption = {
 type CourtValue = {
   id: string;
   name: string;
-  tubeBrandId: string;
+  tubeBrandId?: string;
+  tubeBrandIds?: string[];
 };
 
 type CondominiumCourtsFieldsetProps = {
@@ -22,8 +23,16 @@ function createCourt(index: number, tubeBrandId: string): CourtValue {
   return {
     id: crypto.randomUUID(),
     name: `Quadra ${index + 1}`,
-    tubeBrandId,
+    tubeBrandIds: tubeBrandId ? [tubeBrandId] : [],
   };
+}
+
+function getCourtBrandIds(court: CourtValue) {
+  if (court.tubeBrandIds && court.tubeBrandIds.length > 0) {
+    return court.tubeBrandIds;
+  }
+
+  return court.tubeBrandId ? [court.tubeBrandId] : [];
 }
 
 export function CondominiumCourtsFieldset({
@@ -54,6 +63,27 @@ export function CondominiumCourtsFieldset({
       currentCourts.map((court) =>
         court.id === courtId ? { ...court, ...updates } : court,
       ),
+    );
+  }
+
+  function toggleCourtBrand(courtId: string, tubeBrandId: string) {
+    setCourts((currentCourts) =>
+      currentCourts.map((court) => {
+        if (court.id !== courtId) {
+          return court;
+        }
+
+        const currentBrandIds = getCourtBrandIds(court);
+        const hasBrand = currentBrandIds.includes(tubeBrandId);
+        const nextBrandIds = hasBrand
+          ? currentBrandIds.filter((brandId) => brandId !== tubeBrandId)
+          : [...currentBrandIds, tubeBrandId];
+
+        return {
+          ...court,
+          tubeBrandIds: nextBrandIds.length > 0 ? nextBrandIds : currentBrandIds,
+        };
+      }),
     );
   }
 
@@ -93,8 +123,9 @@ export function CondominiumCourtsFieldset({
           {courts.map((court, index) => (
             <div
               key={court.id}
-              className="grid gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
+              className="grid gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]"
             >
+              <input type="hidden" name="courtKey" value={court.id} />
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">
                   Quadra {index + 1}
@@ -110,25 +141,29 @@ export function CondominiumCourtsFieldset({
                 />
               </label>
 
-              <label className="space-y-2">
+              <div className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">
-                  Marca de tubos
+                  Marcas de tubos
                 </span>
-                <select
-                  name="tubeBrandId"
-                  value={court.tubeBrandId}
-                  onChange={(event) =>
-                    updateCourt(court.id, { tubeBrandId: event.target.value })
-                  }
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-900"
-                >
+                <div className="flex min-h-11 flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
                   {tubeBrands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
+                    <label
+                      key={brand.id}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                    >
+                      <input
+                        type="checkbox"
+                        name={`tubeBrandIds:${court.id}`}
+                        value={brand.id}
+                        checked={getCourtBrandIds(court).includes(brand.id)}
+                        onChange={() => toggleCourtBrand(court.id, brand.id)}
+                        className="size-3.5 accent-emerald-600"
+                      />
                       {brand.name}
-                    </option>
+                    </label>
                   ))}
-                </select>
-              </label>
+                </div>
+              </div>
 
               <button
                 type="button"

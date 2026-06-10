@@ -17,6 +17,7 @@ import {
   findOpenStandaloneBallPayment,
   hasPendingPaymentExpired,
 } from "@/lib/payments/stock";
+import { sumTubeStockEntries, type TubeStockEntry } from "@/lib/domain/tube-stock";
 
 type CreateCondominiumPaymentInput = {
   planId: string;
@@ -79,6 +80,13 @@ function assertBallStockAvailable({
       `Estoque insuficiente. Restam ${remainingBallStock} tubos disponíveis para este condomínio.`,
     );
   }
+}
+
+function getCondominiumStockQuantity(condominium: {
+  ballQuantity: number;
+  tubeStockByBrand?: TubeStockEntry[] | null;
+}) {
+  return sumTubeStockEntries(condominium.tubeStockByBrand) || condominium.ballQuantity;
 }
 
 async function buildChargeForCondominium({
@@ -173,8 +181,9 @@ export async function createCondominiumPayment({
   }
 
   await expirePendingPaymentsIfNeeded(paymentRepository, condominium.payments);
+  const stockQuantity = getCondominiumStockQuantity(condominium);
   const remainingBallStock = calculateRemainingBallStock({
-    stockQuantity: condominium.ballQuantity,
+    stockQuantity,
     payments: condominium.payments,
   });
 
@@ -256,8 +265,9 @@ export async function createStandaloneBallPayment({
   const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments);
 
   if (openStandalonePayment) {
+    const stockQuantity = getCondominiumStockQuantity(condominium);
     const availablePaymentCount = calculateStandalonePaymentCapacity({
-      stockQuantity: condominium.ballQuantity,
+      stockQuantity,
       payments: condominium.payments,
       payment: openStandalonePayment,
     });
@@ -283,7 +293,7 @@ export async function createStandaloneBallPayment({
   }
 
   const remainingBallStock = calculateRemainingBallStock({
-    stockQuantity: condominium.ballQuantity,
+    stockQuantity: getCondominiumStockQuantity(condominium),
     payments: condominium.payments,
   });
 

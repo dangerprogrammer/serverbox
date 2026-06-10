@@ -15,6 +15,7 @@ import {
 } from "@/lib/db/entities/condominium-payment.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import { PlanTier } from "@/lib/domain/condominium-plan";
+import type { TubeStockEntry } from "@/lib/domain/tube-stock";
 import { Like, type DataSource } from "typeorm";
 
 const administratorSeed = {
@@ -313,6 +314,32 @@ async function seedDevelopmentDatabase(
 
   const condominiumByKey = new Map<string, { id: string; plans: Array<{ id: string; name: string }> }>();
 
+  function buildTubeStockByBrand(fixture: (typeof developmentCondominiumSeeds)[number]) {
+    const brandNames = Array.from(new Set(fixture.courtBrandNames));
+
+    if (brandNames.length === 0) {
+      return [] satisfies TubeStockEntry[];
+    }
+
+    const baseQuantity = Math.floor(fixture.ballQuantity / brandNames.length);
+    let remainingQuantity = fixture.ballQuantity % brandNames.length;
+
+    return brandNames
+      .map((brandName) => {
+        const tubeBrand = brandByName.get(brandName);
+        const quantity = baseQuantity + (remainingQuantity > 0 ? 1 : 0);
+        remainingQuantity = Math.max(remainingQuantity - 1, 0);
+
+        return tubeBrand
+          ? {
+              tubeBrandId: tubeBrand.id,
+              quantity,
+            }
+          : null;
+      })
+      .filter((entry) => entry !== null);
+  }
+
   for (const fixture of developmentCondominiumSeeds) {
     const existingCondominium = await condominiumRepository.findOne({
       where: {
@@ -338,11 +365,22 @@ async function seedDevelopmentDatabase(
       state: fixture.state,
       courts: fixture.courts,
       ballQuantity: fixture.ballQuantity,
+      tubeStockByBrand: buildTubeStockByBrand(fixture),
       plans,
       primaryAdmin: {
         id: administratorId,
       },
     });
+
+    await courtRepository
+      .createQueryBuilder()
+      .delete()
+      .from("condominium_court_tube_brands")
+      .where(
+        '"courtId" IN (SELECT id FROM condominium_courts WHERE "condominiumId" = :condominiumId)',
+        { condominiumId: condominium.id },
+      )
+      .execute();
 
     await courtRepository
       .createQueryBuilder()
@@ -364,6 +402,7 @@ async function seedDevelopmentDatabase(
           sortOrder: index,
           condominium,
           tubeBrand,
+          tubeBrands: [tubeBrand],
         };
       }),
     );

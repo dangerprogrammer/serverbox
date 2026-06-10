@@ -1,6 +1,14 @@
 import { notFound } from "next/navigation";
 
+import { CurrencyInput } from "@/app/_components/currency-input";
+import { FloatingInput } from "@/app/_components/floating-field";
+import { SessionTokenInput } from "@/app/_components/session-token-input";
 import { SalesCharts } from "@/app/dashboard/[condominiumId]/_components/sales-charts";
+import { SubmitButton } from "@/app/dashboard/_components/submit-button";
+import {
+  createPaymentAction,
+  createStandalonePaymentAction,
+} from "@/app/dashboard/actions";
 import { getAdminCondominiumDetails } from "@/lib/data/admin-dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -35,6 +43,21 @@ export default async function CondominiumDashboardPage({
     ballQuantity: payment.ballQuantity,
     createdAt: payment.createdAt.toISOString(),
   }));
+  const eligiblePlans = condominium.plans.filter(
+    (plan) =>
+      plan.monthlyBallAllowance > 0 &&
+      plan.monthlyBallAllowance <= condominium.remainingBallStock,
+  );
+  const canCreatePayment = eligiblePlans.length > 0;
+  const canReuseStandalonePayment =
+    (condominium.standalonePayment?.availablePaymentCount ?? 0) > 0;
+  const canCreateStandalonePayment =
+    condominium.remainingBallStock > 0 || canReuseStandalonePayment;
+  const defaultStandaloneBallQuantity =
+    condominium.standalonePayment?.ballQuantity ??
+    Math.max(1, Math.min(100, condominium.remainingBallStock || 1));
+  const defaultStandaloneAmountInCents =
+    condominium.standalonePayment?.amountInCents ?? 10000;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -71,12 +94,24 @@ export default async function CondominiumDashboardPage({
             </p>
           </div>
           <div className="rounded-[1.25rem] border border-border bg-white p-5">
-            <p className="text-sm text-slate-500">Estoque real</p>
+            <p className="text-sm text-slate-500">Estoque total</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {condominium.ballQuantity}
             </p>
           </div>
         </div>
+        {condominium.tubeStockByBrand.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {condominium.tubeStockByBrand.map((entry) => (
+              <span
+                key={entry.tubeBrandId}
+                className="rounded-full border border-border bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+              >
+                {entry.tubeBrandName}: {entry.quantity} tubos
+              </span>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <SalesCharts payments={chartPayments} />
@@ -100,7 +135,10 @@ export default async function CondominiumDashboardPage({
                       {court.name}
                     </p>
                     <p className="mt-1 text-sm text-slate-600">
-                      Marca de tubos: {court.tubeBrandName}
+                      Marcas de tubos:{" "}
+                      {court.tubeBrandNames?.length
+                        ? court.tubeBrandNames.join(", ")
+                        : court.tubeBrandName}
                     </p>
                   </article>
                 ))
@@ -171,6 +209,157 @@ export default async function CondominiumDashboardPage({
             )}
           </div>
         </section>
+      </section>
+
+      <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+              Cobranças
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+              Criar cobrança para este condomínio
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-slate-600">
+            O saldo de tubos só entra como confirmado depois que o pagamento PIX for
+            aprovado.
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <section className="rounded-[1.25rem] border border-border bg-slate-50 p-5">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Compra avulsa de tubos
+            </h3>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              Use quando o condomínio precisar comprar tubos fora de um plano. Se
+              já houver QR avulso aberto, ele será reaproveitado.
+            </p>
+
+            <form action={createStandalonePaymentAction} className="mt-6 space-y-4">
+              <SessionTokenInput />
+              <input type="hidden" name="condominiumId" value={condominium.id} />
+
+              {condominium.standalonePayment ? (
+                <>
+                  <input
+                    type="hidden"
+                    name="ballQuantity"
+                    value={defaultStandaloneBallQuantity}
+                  />
+                  <input
+                    type="hidden"
+                    name="amountInCents"
+                    value={defaultStandaloneAmountInCents}
+                  />
+                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-700">
+                    QR avulso aberto:{" "}
+                    <strong className="font-semibold text-slate-900">
+                      {condominium.standalonePayment.ballQuantity} tubos
+                    </strong>{" "}
+                    por{" "}
+                    <strong className="font-semibold text-slate-900">
+                      {currencyFormatter.format(
+                        condominium.standalonePayment.amountInCents / 100,
+                      )}
+                    </strong>
+                    .
+                  </div>
+                </>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FloatingInput
+                    label="Quantidade de tubos"
+                    name="ballQuantity"
+                    type="number"
+                    min={1}
+                    max={condominium.remainingBallStock || undefined}
+                    defaultValue={defaultStandaloneBallQuantity}
+                    placeholder="Quantidade de tubos"
+                    className="bg-white"
+                  />
+                  <CurrencyInput
+                    label="Valor"
+                    name="amountInCents"
+                    defaultValueInCents={defaultStandaloneAmountInCents}
+                    className="bg-white"
+                  />
+                </div>
+              )}
+
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-7 text-slate-700">
+                {condominium.standalonePayment
+                  ? canReuseStandalonePayment
+                    ? "O botão abre o checkout PIX avulso que já está pendente para este condomínio."
+                    : "O QR avulso aberto não cabe mais no estoque atual; ajuste o estoque para reutilizar."
+                  : canCreateStandalonePayment
+                    ? "O sistema mantém um único QR avulso aberto por condomínio e reserva os tubos dele no estoque."
+                    : "Atualize o estoque real do condomínio para habilitar compra avulsa."}
+              </div>
+
+              <SubmitButton
+                idleLabel={
+                  condominium.standalonePayment
+                    ? "Abrir compra avulsa aberta"
+                    : "Criar compra avulsa"
+                }
+                pendingLabel="Criando..."
+                disabled={!canCreateStandalonePayment}
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </form>
+          </section>
+
+          <section className="rounded-[1.25rem] border border-border bg-slate-50 p-5">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Plano mensal/anual
+            </h3>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              Escolha um plano já vinculado a este condomínio. A cobrança só é
+              criada se a quantidade de tubos ainda couber no estoque livre.
+            </p>
+
+            <form action={createPaymentAction} className="mt-6 space-y-4">
+              <SessionTokenInput />
+              <input type="hidden" name="condominiumId" value={condominium.id} />
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Plano</span>
+                <select
+                  name="planId"
+                  disabled={!canCreatePayment}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                  defaultValue={eligiblePlans[0]?.id ?? ""}
+                >
+                  {canCreatePayment ? (
+                    eligiblePlans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.name} - {plan.monthlyBallAllowance} tubos -{" "}
+                        {currencyFormatter.format(plan.monthlyPriceInCents / 100)} -{" "}
+                        {plan.availablePaymentCount} cobrança(s) cabem no estoque
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Sem planos habilitados para cobrança</option>
+                  )}
+                </select>
+              </label>
+
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-7 text-slate-700">
+                {canCreatePayment
+                  ? "O checkout abre em seguida se o plano ainda couber no estoque real do condomínio."
+                  : "Ajuste estoque ou cadastre um plano com tubos dentro do saldo livre."}
+              </div>
+
+              <SubmitButton
+                idleLabel="Criar plano mensal/anual"
+                pendingLabel="Criando..."
+                disabled={!canCreatePayment}
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </form>
+          </section>
+        </div>
       </section>
     </main>
   );

@@ -38,6 +38,7 @@ export async function createPaymentAction(formData: FormData) {
   await requireAuthenticatedAdminFromFormData(formData);
 
   const planId = String(formData.get("planId") ?? "");
+  const condominiumId = String(formData.get("condominiumId") ?? "");
 
   if (!planId) {
     throw new Error("Plano é obrigatório para criar pagamento.");
@@ -46,9 +47,13 @@ export async function createPaymentAction(formData: FormData) {
   try {
     const payment = await createCondominiumPayment({
       planId,
+      condominiumId: condominiumId || undefined,
     });
 
     revalidatePath("/dashboard");
+    if (condominiumId) {
+      revalidatePath(`/condominio/${condominiumId}`);
+    }
     redirect(`/pagamentos/${payment.id}`);
   } catch (error) {
     const message =
@@ -102,10 +107,11 @@ export async function createStandalonePaymentAction(formData: FormData) {
     });
 
     revalidatePath("/dashboard");
+    revalidatePath(`/condominio/${condominiumId}`);
     redirect(`/pagamentos/${payment.id}`);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
+      error instanceof Error ? error.message : "Falha ao criar compra avulsa.";
 
     if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       throw new Error(

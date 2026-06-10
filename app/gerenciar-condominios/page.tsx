@@ -4,6 +4,7 @@ import {
   FloatingInput,
   FloatingTextarea,
 } from "@/app/_components/floating-field";
+import { CondominiumBrandStockFieldset } from "@/app/gerenciar-condominios/_components/condominium-brand-stock-fieldset";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
@@ -85,15 +86,7 @@ export default async function GerenciarCondominiosPage() {
               />
             </div>
             <CondominiumCourtsFieldset tubeBrands={tubeBrands} />
-            <FloatingInput
-              label="Estoque real de tubos"
-              name="ballQuantity"
-              type="number"
-              min={0}
-              defaultValue={0}
-              placeholder="Estoque real de tubos"
-              className="bg-white"
-            />
+            <CondominiumBrandStockFieldset tubeBrands={tubeBrands} />
 
             <button
               type="submit"
@@ -164,7 +157,7 @@ export default async function GerenciarCondominiosPage() {
                         </span>
                       </div>
                       <p className="text-sm text-slate-500">
-                        {condominium.courts} quadras - estoque real de{" "}
+                        {condominium.courts} quadras - estoque total de{" "}
                         {condominium.ballQuantity} tubos
                       </p>
                     </div>
@@ -205,8 +198,35 @@ export default async function GerenciarCondominiosPage() {
                       state={condominium.state}
                       courtDetails={condominium.courtDetails}
                       tubeBrands={tubeBrands}
-                      ballQuantity={condominium.ballQuantity}
+                      tubeStockByBrand={condominium.tubeStockByBrand}
                     />
+
+                    <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                      <h4 className="text-lg font-semibold text-slate-900">
+                        Estoque por marca
+                      </h4>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {condominium.tubeStockByBrand.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-500">
+                            Nenhum estoque por marca informado.
+                          </div>
+                        ) : (
+                          condominium.tubeStockByBrand.map((entry) => (
+                            <div
+                              key={entry.tubeBrandId}
+                              className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                            >
+                              <p className="font-semibold text-slate-900">
+                                {entry.tubeBrandName}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                {entry.quantity} tubos
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
 
                     <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
                       <h4 className="text-lg font-semibold text-slate-900">
@@ -227,7 +247,10 @@ export default async function GerenciarCondominiosPage() {
                                 {court.name}
                               </p>
                               <p className="mt-1 text-sm text-slate-500">
-                                Marca: {court.tubeBrandName}
+                                Marcas:{" "}
+                                {court.tubeBrandNames?.length
+                                  ? court.tubeBrandNames.join(", ")
+                                  : court.tubeBrandName}
                               </p>
                             </div>
                           ))

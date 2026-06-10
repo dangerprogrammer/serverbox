@@ -11,6 +11,7 @@ export type CondominiumCourt = {
   updatedAt: Date;
   condominium: Condominium;
   tubeBrand: TubeBrand;
+  tubeBrands: TubeBrand[];
 };
 
 export const CondominiumCourtEntity = new EntitySchema<CondominiumCourt>({
@@ -58,6 +59,21 @@ export const CondominiumCourtEntity = new EntitySchema<CondominiumCourt>({
       },
       nullable: false,
       onDelete: "RESTRICT",
+    },
+    tubeBrands: {
+      type: "many-to-many",
+      target: "TubeBrand",
+      joinTable: {
+        name: "condominium_court_tube_brands",
+        joinColumn: {
+          name: "courtId",
+          referencedColumnName: "id",
+        },
+        inverseJoinColumn: {
+          name: "tubeBrandId",
+          referencedColumnName: "id",
+        },
+      },
     },
   },
 });

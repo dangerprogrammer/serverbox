@@ -1,13 +1,5 @@
 ﻿import Link from "next/link";
 
-import { CurrencyInput } from "@/app/_components/currency-input";
-import { SubmitButton } from "@/app/dashboard/_components/submit-button";
-import { FloatingInput } from "@/app/_components/floating-field";
-import { SessionTokenInput } from "@/app/_components/session-token-input";
-import {
-  createPaymentAction,
-  createStandalonePaymentAction,
-} from "@/app/dashboard/actions";
 import { getAdminDashboardData } from "@/lib/data/admin-dashboard";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -26,26 +18,8 @@ export default async function DashboardPage() {
   const stockReadyCondominiums = dashboard.condominiums.filter(
     (condominium) => condominium.remainingBallStock > 0,
   );
-  const eligibleStandaloneCondominiums = dashboard.condominiums.filter(
-    (condominium) =>
-      condominium.remainingBallStock > 0 ||
-      (condominium.standalonePayment?.availablePaymentCount ?? 0) > 0,
-  );
-  const eligiblePlans = dashboard.plans.filter(
-    (plan) =>
-      plan.monthlyBallAllowance > 0 &&
-      plan.monthlyBallAllowance <= plan.remainingBallStock,
-  );
   const hasCondominiums = dashboard.condominiums.length > 0;
   const hasStockReadyCondominiums = stockReadyCondominiums.length > 0;
-  const canCreateStandalonePayment = eligibleStandaloneCondominiums.length > 0;
-  const canCreatePayment = eligiblePlans.length > 0;
-  const defaultStandaloneCondominium = eligibleStandaloneCondominiums[0];
-  const defaultStandaloneBallQuantity =
-    defaultStandaloneCondominium?.standalonePayment?.ballQuantity ??
-    Math.max(1, Math.min(100, defaultStandaloneCondominium?.remainingBallStock ?? 1));
-  const defaultStandaloneAmountInCents =
-    defaultStandaloneCondominium?.standalonePayment?.amountInCents ?? 10000;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -128,9 +102,7 @@ export default async function DashboardPage() {
                 <div className="rounded-xl border border-dashed border-border bg-white px-4 py-4 leading-7">
                   {!hasStockReadyCondominiums
                     ? "Atualize o estoque real dos condomínios para liberar novas cobranças."
-                    : canCreatePayment
-                      ? "Compras avulsas e planos mensais/anuais prontos para operar dentro do estoque."
-                      : "Compras avulsas liberadas. Ajuste estoque ou planos para ativar cobrança mensal/anual."}
+                    : "Compras avulsas e planos mensais/anuais prontos para operar nas dashboards dos condomínios."}
                 </div>
               </div>
             </div>
@@ -140,131 +112,6 @@ export default async function DashboardPage() {
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.45fr]">
         <div className="flex flex-col gap-6">
-          <section className="order-2 rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-slate-900">
-              Novo plano mensal/anual
-            </h2>
-            <p className="mt-2 text-sm leading-7 text-slate-600">
-              Escolha um plano já vinculado a um condomínio. O crédito de
-              tubos só entra no saldo depois da confirmação do pagamento.
-            </p>
-
-            <form action={createPaymentAction} className="mt-6 space-y-4">
-              <SessionTokenInput />
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Plano</span>
-                <select
-                  name="planId"
-                  disabled={!canCreatePayment}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                  defaultValue={eligiblePlans[0]?.id ?? ""}
-                >
-                  {canCreatePayment ? (
-                    eligiblePlans.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.condominiumName} - {plan.name} -{" "}
-                        {plan.monthlyBallAllowance} tubos -{" "}
-                        {currencyFormatter.format(plan.monthlyPriceInCents / 100)} -{" "}
-                        {plan.availablePaymentCount} cobrança(s) cabem no estoque
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">Sem planos habilitados para cobrança</option>
-                  )}
-                </select>
-              </label>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
-                {canCreatePayment
-                  ? "O checkout abre em seguida se o plano ainda couber no estoque real do condomínio."
-                  : "Ajuste estoque ou cadastre um plano com tubos dentro do saldo livre."}
-              </div>
-
-              <SubmitButton
-                idleLabel="Criar plano mensal/anual"
-                pendingLabel="Criando..."
-                disabled={!canCreatePayment}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </form>
-
-            {!canCreatePayment ? (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Sem estoque livre suficiente para um plano não existe cobrança mensal/anual para emitir.
-              </div>
-            ) : null}
-          </section>
-
-          <section className="order-1 rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-slate-900">
-              Compra avulsa de tubos
-            </h2>
-            <p className="mt-2 text-sm leading-7 text-slate-600">
-              Use esta cobrança quando o condomínio precisar comprar tubos fora
-              de um plano já cadastrado. Se já houver QR avulso aberto, ele é
-              reaproveitado.
-            </p>
-
-            <form action={createStandalonePaymentAction} className="mt-6 space-y-4">
-              <SessionTokenInput />
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Condomínio</span>
-                <select
-                  name="condominiumId"
-                  disabled={!canCreateStandalonePayment}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                  defaultValue={defaultStandaloneCondominium?.id ?? ""}
-                >
-                  {canCreateStandalonePayment ? (
-                    eligibleStandaloneCondominiums.map((condominium) => (
-                      <option key={condominium.id} value={condominium.id}>
-                        {condominium.name} - {condominium.city}/{condominium.state} -{" "}
-                        {condominium.remainingBallStock} tubos livres
-                        {condominium.standalonePayment
-                          ? ` - QR aberto: ${condominium.standalonePayment.availablePaymentCount}x de ${condominium.standalonePayment.ballQuantity} tubos`
-                          : ""}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">Nenhum condomínio habilitado</option>
-                  )}
-                </select>
-              </label>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <FloatingInput
-                  label="Quantidade de tubos"
-                  name="ballQuantity"
-                  type="number"
-                  min={1}
-                  max={defaultStandaloneCondominium?.remainingBallStock || undefined}
-                  defaultValue={defaultStandaloneBallQuantity}
-                  placeholder="Quantidade de tubos"
-                  className="bg-white"
-                />
-                <CurrencyInput
-                  label="Valor"
-                  name="amountInCents"
-                  defaultValueInCents={defaultStandaloneAmountInCents}
-                  className="bg-white"
-                />
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
-                {canCreateStandalonePayment
-                  ? "O sistema mantém um único QR avulso aberto por condomínio e reserva os tubos dele no estoque."
-                  : "Atualize o estoque real do condomínio para habilitar compra avulsa."}
-              </div>
-
-              <SubmitButton
-                idleLabel="Criar compra avulsa"
-                pendingLabel="Criando..."
-                disabled={!canCreateStandalonePayment}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </form>
-          </section>
-
           <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900">
               Cobranças em aberto
@@ -361,13 +208,29 @@ export default async function DashboardPage() {
                           : "Nenhum plano vinculado a este condomínio ainda."}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Estoque real informado: {condominium.ballQuantity} tubos
+                        Estoque total informado: {condominium.ballQuantity} tubos
                       </p>
+                      {condominium.tubeStockByBrand.length > 0 ? (
+                        <p className="mt-1 text-sm text-slate-600">
+                          Estoque por marca:{" "}
+                          {condominium.tubeStockByBrand
+                            .map(
+                              (entry) => `${entry.tubeBrandName} (${entry.quantity})`,
+                            )
+                            .join(", ")}
+                        </p>
+                      ) : null}
                       {condominium.courtDetails.length > 0 ? (
                         <p className="mt-1 text-sm text-slate-600">
                           Quadras:{" "}
                           {condominium.courtDetails
-                            .map((court) => `${court.name} (${court.tubeBrandName})`)
+                            .map((court) => {
+                              const brandNames = court.tubeBrandNames?.length
+                                ? court.tubeBrandNames.join(", ")
+                                : court.tubeBrandName;
+
+                              return `${court.name} (${brandNames})`;
+                            })
                             .join(", ")}
                         </p>
                       ) : null}
