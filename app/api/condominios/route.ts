@@ -5,12 +5,18 @@ import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
+import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
+import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 
 type CreateCondominiumPayload = {
   name?: string;
   city?: string;
   state?: string;
   courts?: number;
+  courtDetails?: Array<{
+    name?: string;
+    tubeBrandId?: string;
+  }>;
   ballQuantity?: number;
   activeResidents?: number;
   adminEmail?: string;
@@ -32,6 +38,9 @@ export async function GET(request: Request) {
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
+      courtDetails: {
+        tubeBrand: true,
+      },
     },
     order: {
       createdAt: "DESC",
@@ -44,7 +53,17 @@ export async function GET(request: Request) {
       name: condominium.name,
       city: condominium.city,
       state: condominium.state,
-      courts: condominium.courts,
+      courts: condominium.courtDetails?.length || condominium.courts,
+      courtDetails: [...(condominium.courtDetails ?? [])]
+        .sort((left, right) => left.sortOrder - right.sortOrder)
+        .map((court) => ({
+          id: court.id,
+          name: court.name,
+          tubeBrand: {
+            id: court.tubeBrand.id,
+            name: court.tubeBrand.name,
+          },
+        })),
       ballQuantity: condominium.ballQuantity,
       createdAt: condominium.createdAt,
       administrator: {
@@ -83,12 +102,15 @@ export async function POST(request: Request) {
   const dataSource = await getDataSource();
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const courtRepository = dataSource.getRepository(CondominiumCourtEntity);
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
 
   let assignedAdministrator = payload.adminEmail
     ? await administratorRepository.findOneBy({
         email: payload.adminEmail.trim().toLowerCase(),
       })
     : await administratorRepository.findOne({
+        where: {},
         order: { createdAt: "ASC" },
       });
 
@@ -106,11 +128,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const requestedCourtCount =
+    payload.courtDetails && payload.courtDetails.length > 0
+      ? payload.courtDetails.length
+      : payload.courts && payload.courts > 0
+        ? payload.courts
+        : 1;
+
   const savedCondominium = await condominiumRepository.save({
     name: payload.name.trim(),
     city: payload.city.trim(),
     state: payload.state.trim().toUpperCase().slice(0, 2),
-    courts: payload.courts && payload.courts > 0 ? payload.courts : 1,
+    courts: requestedCourtCount,
     ballQuantity:
       payload.ballQuantity !== undefined
         ? payload.ballQuantity >= 0
@@ -122,12 +151,54 @@ export async function POST(request: Request) {
     primaryAdmin: assignedAdministrator,
   });
 
+  const brands = await brandRepository.find({ order: { name: "ASC" } });
+  const brandById = new Map(brands.map((brand) => [brand.id, brand]));
+  const defaultBrand = brands[0];
+  const courtDetails =
+    payload.courtDetails && payload.courtDetails.length > 0
+      ? payload.courtDetails
+      : Array.from({ length: requestedCourtCount }, (_, index) => ({
+          name: `Quadra ${index + 1}`,
+          tubeBrandId: defaultBrand?.id,
+        }));
+
+  const savedCourts =
+    courtDetails.length > 0
+      ? await courtRepository.save(
+          courtDetails.map((court, index) => {
+            const tubeBrand = court.tubeBrandId
+              ? brandById.get(court.tubeBrandId)
+              : defaultBrand;
+
+            if (!tubeBrand) {
+              throw new Error("Marca de tubos invalida para uma das quadras.");
+            }
+
+            return {
+              name: court.name?.trim() || `Quadra ${index + 1}`,
+              sortOrder: index,
+              condominium: savedCondominium,
+              tubeBrand: tubeBrand as TubeBrand,
+            };
+          }),
+        )
+      : [];
+
   return Response.json(
     {
       id: savedCondominium.id,
       name: savedCondominium.name,
       city: savedCondominium.city,
       state: savedCondominium.state,
+      courts: savedCourts.length || savedCondominium.courts,
+      courtDetails: savedCourts.map((court) => ({
+        id: court.id,
+        name: court.name,
+        tubeBrand: {
+          id: court.tubeBrand.id,
+          name: court.tubeBrand.name,
+        },
+      })),
       administrator: {
         id: assignedAdministrator.id,
         name: assignedAdministrator.name,

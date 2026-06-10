@@ -6,8 +6,11 @@ import { revalidatePath } from "next/cache";
 
 import { requireAuthenticatedAdminFromFormData } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
+import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
+import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
+import { In, type DataSource } from "typeorm";
 
 function normalizeSlug(value: string) {
   return value
@@ -56,6 +59,99 @@ function getPlansWithFallback(plans: CondominiumPlan[] | null | undefined) {
   return Array.isArray(plans) ? plans : [];
 }
 
+type CourtEntry = {
+  name: string;
+  sortOrder: number;
+  tubeBrand: TubeBrand;
+};
+
+async function parseCourtEntries(dataSource: DataSource, formData: FormData) {
+  const courtNames = formData.getAll("courtName");
+  const tubeBrandIds = formData.getAll("tubeBrandId");
+  const requestedCourts = courtNames
+    .map((courtName, index) => ({
+      name: String(courtName ?? "").trim() || `Quadra ${index + 1}`,
+      tubeBrandId: String(tubeBrandIds[index] ?? "").trim(),
+      sortOrder: index,
+    }))
+    .filter((court) => court.tubeBrandId);
+
+  if (requestedCourts.length === 0) {
+    throw new Error("Adicione ao menos uma quadra com marca de tubos.");
+  }
+
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
+  const brands = await brandRepository.find({
+    where: {
+      id: In(Array.from(new Set(requestedCourts.map((court) => court.tubeBrandId)))),
+    },
+  });
+  const brandById = new Map(brands.map((brand) => [brand.id, brand]));
+
+  return requestedCourts.map((court) => {
+    const tubeBrand = brandById.get(court.tubeBrandId);
+
+    if (!tubeBrand) {
+      throw new Error("Marca de tubos invalida para uma das quadras.");
+    }
+
+    return {
+      name: court.name,
+      sortOrder: court.sortOrder,
+      tubeBrand,
+    } satisfies CourtEntry;
+  });
+}
+
+async function replaceCondominiumCourts(
+  dataSource: DataSource,
+  condominium: { id: string },
+  courts: CourtEntry[],
+) {
+  const courtRepository = dataSource.getRepository(CondominiumCourtEntity);
+
+  await courtRepository
+    .createQueryBuilder()
+    .delete()
+    .from("condominium_courts")
+    .where("condominiumId = :condominiumId", { condominiumId: condominium.id })
+    .execute();
+
+  await courtRepository.save(
+    courts.map((court) => ({
+      name: court.name,
+      sortOrder: court.sortOrder,
+      condominium,
+      tubeBrand: court.tubeBrand,
+    })),
+  );
+}
+
+export async function createTubeBrandAction(formData: FormData) {
+  await requireAuthenticatedAdminFromFormData(formData);
+
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!name) {
+    throw new Error("Nome da marca e obrigatorio.");
+  }
+
+  const dataSource = await getDataSource();
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
+  const existingBrands = await brandRepository.find();
+  const normalizedName = name.toLocaleLowerCase("pt-BR");
+  const duplicate = existingBrands.find(
+    (brand) => brand.name.toLocaleLowerCase("pt-BR") === normalizedName,
+  );
+
+  if (duplicate) {
+    throw new Error("Esta marca ja esta cadastrada.");
+  }
+
+  await brandRepository.save({ name });
+  revalidateManagementViews();
+}
+
 export async function createCondominiumAction(formData: FormData) {
   const administrator = await requireAuthenticatedAdminFromFormData(formData);
 
@@ -72,17 +168,19 @@ export async function createCondominiumAction(formData: FormData) {
 
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const courtEntries = await parseCourtEntries(dataSource, formData);
 
-  await condominiumRepository.save({
+  const condominium = await condominiumRepository.save({
     name,
     city,
     state,
-    courts: parsePositiveNumber(formData.get("courts"), 1) || 1,
+    courts: courtEntries.length,
     ballQuantity: parsePositiveNumber(formData.get("ballQuantity"), 0),
     plans: [],
     primaryAdmin: administrator,
   });
 
+  await replaceCondominiumCourts(dataSource, condominium, courtEntries);
   revalidateManagementViews();
 }
 
@@ -97,6 +195,7 @@ export async function updateCondominiumAction(formData: FormData) {
 
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const courtEntries = await parseCourtEntries(dataSource, formData);
   const existing = await condominiumRepository.findOneBy({ id: condominiumId });
 
   if (!existing) {
@@ -109,13 +208,14 @@ export async function updateCondominiumAction(formData: FormData) {
     .trim()
     .toUpperCase()
     .slice(0, 2);
-  existing.courts = parsePositiveNumber(formData.get("courts"), 1) || 1;
+  existing.courts = courtEntries.length;
   existing.ballQuantity = parsePositiveNumber(
     formData.get("ballQuantity"),
     0,
   );
 
-  await condominiumRepository.save(existing);
+  const condominium = await condominiumRepository.save(existing);
+  await replaceCondominiumCourts(dataSource, condominium, courtEntries);
   revalidateManagementViews();
 }
 

@@ -82,8 +82,34 @@ export default async function CondominiumDashboardPage({
       <SalesCharts payments={chartPayments} />
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.45fr]">
-        <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900">Planos ativos</h2>
+        <div className="space-y-6">
+          <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold text-slate-900">Quadras</h2>
+            <div className="mt-5 space-y-3">
+              {condominium.courtDetails.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                  Nenhuma quadra detalhada para este condomínio.
+                </div>
+              ) : (
+                condominium.courtDetails.map((court) => (
+                  <article
+                    key={court.id}
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4"
+                  >
+                    <p className="text-base font-semibold text-slate-900">
+                      {court.name}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Marca de tubos: {court.tubeBrandName}
+                    </p>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold text-slate-900">Planos ativos</h2>
           <div className="mt-5 space-y-3">
             {condominium.plans.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
@@ -106,6 +132,7 @@ export default async function CondominiumDashboardPage({
             )}
           </div>
         </section>
+        </div>
 
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">Histórico de vendas</h2>

@@ -8,9 +8,11 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
 import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
+import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
 import { AdminSessionEntity } from "@/lib/db/entities/admin-session.entity";
+import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { seedDatabase } from "@/lib/db/seed";
 import { DataSource, type DataSourceOptions } from "typeorm";
 
@@ -23,11 +25,13 @@ declare global {
     | undefined;
 }
 
-const DATA_SOURCE_SCHEMA_VERSION = "2026-04-01-condominium-plans-embedded";
+const DATA_SOURCE_SCHEMA_VERSION = "2026-06-10-condominium-courts-and-brands";
 
 const entities = [
   AdministratorEntity,
+  TubeBrandEntity,
   CondominiumEntity,
+  CondominiumCourtEntity,
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
   AdminSessionEntity,
@@ -234,6 +238,49 @@ function createDataSourceOptions(): DataSourceOptions {
   };
 }
 
+async function ensurePostgresRuntimeSchema(dataSource: DataSource) {
+  if (dataSource.options.type !== "postgres") {
+    return;
+  }
+
+  await dataSource.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS tube_brands (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name character varying NOT NULL UNIQUE,
+      "createdAt" timestamp without time zone NOT NULL DEFAULT now(),
+      "updatedAt" timestamp without time zone NOT NULL DEFAULT now()
+    )
+  `);
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS condominium_courts (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name character varying NOT NULL,
+      "sortOrder" integer NOT NULL DEFAULT 0,
+      "createdAt" timestamp without time zone NOT NULL DEFAULT now(),
+      "updatedAt" timestamp without time zone NOT NULL DEFAULT now(),
+      "condominiumId" uuid NOT NULL,
+      "tubeBrandId" uuid NOT NULL,
+      CONSTRAINT "FK_condominium_courts_condominium"
+        FOREIGN KEY ("condominiumId")
+        REFERENCES condominiums(id)
+        ON DELETE CASCADE,
+      CONSTRAINT "FK_condominium_courts_tube_brand"
+        FOREIGN KEY ("tubeBrandId")
+        REFERENCES tube_brands(id)
+        ON DELETE RESTRICT
+    )
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_courts_condominium"
+      ON condominium_courts ("condominiumId")
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_courts_tube_brand"
+      ON condominium_courts ("tubeBrandId")
+  `);
+}
+
 async function createDataSource() {
   const databaseUrl = resolveDatabaseUrlForEnvironment();
 
@@ -253,6 +300,7 @@ async function createDataSource() {
     const dataSource = new DataSource(createDataSourceOptions());
 
     await dataSource.initialize();
+    await ensurePostgresRuntimeSchema(dataSource);
     await seedDatabase(dataSource);
 
     return dataSource;

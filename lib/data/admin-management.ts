@@ -5,28 +5,53 @@ import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
+import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
 
 export async function getCondominiumManagementData() {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
 
-  const condominiums = await condominiumRepository.find({
-    relations: {
-      primaryAdmin: true,
-    },
-    order: {
-      createdAt: "ASC",
-    },
-  });
+  const [condominiums, tubeBrands] = await Promise.all([
+    condominiumRepository.find({
+      relations: {
+        primaryAdmin: true,
+        courtDetails: {
+          tubeBrand: true,
+        },
+      },
+      order: {
+        createdAt: "ASC",
+      },
+    }),
+    brandRepository.find({
+      order: {
+        name: "ASC",
+      },
+    }),
+  ]);
 
   return {
+    tubeBrands: tubeBrands.map((brand) => ({
+      id: brand.id,
+      name: brand.name,
+    })),
     condominiums: condominiums.map((condominium: Condominium) => ({
       id: condominium.id,
       name: condominium.name,
       city: condominium.city,
       state: condominium.state,
-      courts: condominium.courts,
+      courts: condominium.courtDetails?.length || condominium.courts,
+      courtDetails: [...(condominium.courtDetails ?? [])]
+        .sort((left, right) => left.sortOrder - right.sortOrder)
+        .map((court) => ({
+          id: court.id,
+          name: court.name,
+          sortOrder: court.sortOrder,
+          tubeBrandId: court.tubeBrand.id,
+          tubeBrandName: court.tubeBrand.name,
+        })),
       ballQuantity: condominium.ballQuantity,
       administratorName: condominium.primaryAdmin.name,
       administratorEmail: condominium.primaryAdmin.email,

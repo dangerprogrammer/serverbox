@@ -40,6 +40,7 @@ export async function getDashboardData() {
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
+      courtDetails: { tubeBrand: true },
       payments: true,
     },
     order: {
@@ -83,7 +84,14 @@ export async function getDashboardData() {
       name: condominium.name,
       city: condominium.city,
       state: condominium.state,
-      courts: condominium.courts,
+      courts: condominium.courtDetails?.length || condominium.courts,
+      courtDetails: [...(condominium.courtDetails ?? [])]
+        .sort((left, right) => left.sortOrder - right.sortOrder)
+        .map((court) => ({
+          id: court.id,
+          name: court.name,
+          tubeBrandName: court.tubeBrand.name,
+        })),
       ballQuantity: condominium.ballQuantity,
       administratorName: condominium.primaryAdmin.name,
       availablePlanCount: condominium.plans.length,

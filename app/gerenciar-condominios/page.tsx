@@ -4,11 +4,13 @@ import {
   FloatingInput,
   FloatingTextarea,
 } from "@/app/_components/floating-field";
+import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
 import {
   createCondominiumAction,
   createPlanAction,
+  createTubeBrandAction,
   deleteCondominiumAction,
   deletePlanAction,
 } from "@/app/gerenciar-condominios/actions";
@@ -30,7 +32,7 @@ const tierLabels: Record<string, string> = {
 export const dynamic = "force-dynamic";
 
 export default async function GerenciarCondominiosPage() {
-  const { condominiums } = await getCondominiumManagementData();
+  const { condominiums, tubeBrands } = await getCondominiumManagementData();
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -81,16 +83,8 @@ export default async function GerenciarCondominiosPage() {
                 maxLength={2}
                 className="bg-white uppercase"
               />
-              <FloatingInput
-                label="Quadras"
-                name="courts"
-                type="number"
-                min={1}
-                defaultValue={1}
-                placeholder="Quadras"
-                className="bg-white"
-              />
             </div>
+            <CondominiumCourtsFieldset tubeBrands={tubeBrands} />
             <FloatingInput
               label="Estoque real de tubos"
               name="ballQuantity"
@@ -108,6 +102,40 @@ export default async function GerenciarCondominiosPage() {
               Criar condomínio
             </button>
           </form>
+
+          <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Marcas de tubos
+            </h3>
+            <form
+              action={createTubeBrandAction}
+              className="mt-4 flex flex-col gap-3 sm:flex-row"
+            >
+              <SessionTokenInput />
+              <FloatingInput
+                label="Nova marca"
+                name="name"
+                placeholder="Ex.: Wilson"
+                className="bg-white sm:flex-1"
+              />
+              <button
+                type="submit"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+              >
+                Cadastrar marca
+              </button>
+            </form>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {tubeBrands.map((brand) => (
+                <span
+                  key={brand.id}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+                >
+                  {brand.name}
+                </span>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm">
@@ -175,9 +203,37 @@ export default async function GerenciarCondominiosPage() {
                       name={condominium.name}
                       city={condominium.city}
                       state={condominium.state}
-                      courts={condominium.courts}
+                      courtDetails={condominium.courtDetails}
+                      tubeBrands={tubeBrands}
                       ballQuantity={condominium.ballQuantity}
                     />
+
+                    <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                      <h4 className="text-lg font-semibold text-slate-900">
+                        Quadras cadastradas
+                      </h4>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {condominium.courtDetails.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-500">
+                            Nenhuma quadra detalhada ainda.
+                          </div>
+                        ) : (
+                          condominium.courtDetails.map((court) => (
+                            <div
+                              key={court.id}
+                              className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                            >
+                              <p className="font-semibold text-slate-900">
+                                {court.name}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Marca: {court.tubeBrandName}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
 
                     <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-3">

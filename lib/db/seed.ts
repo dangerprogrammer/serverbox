@@ -4,6 +4,7 @@ import {
   BallInventoryMovementEntity,
   BallMovementKind,
 } from "@/lib/db/entities/ball-inventory-movement.entity";
+import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import {
   CondominiumPaymentEntity,
@@ -12,6 +13,7 @@ import {
   PaymentVerificationSource,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
+import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import { PlanTier } from "@/lib/domain/condominium-plan";
 import { Like, type DataSource } from "typeorm";
 
@@ -23,6 +25,8 @@ const administratorSeed = {
 const DEV_SEED_REFERENCE_PREFIX = "dev-seed-";
 const DEV_SEED_REASON_PREFIX = "DEV_SEED:";
 
+const tubeBrandSeeds = ["Wilson", "Head", "Dunlop", "Babolat"];
+
 const developmentCondominiumSeeds = [
   {
     key: "aurora",
@@ -30,6 +34,7 @@ const developmentCondominiumSeeds = [
     city: "São Paulo",
     state: "SP",
     courts: 3,
+    courtBrandNames: ["Wilson", "Head", "Dunlop"],
     ballQuantity: 180,
     plans: [
       {
@@ -62,6 +67,7 @@ const developmentCondominiumSeeds = [
     city: "Campinas",
     state: "SP",
     courts: 2,
+    courtBrandNames: ["Wilson", "Babolat"],
     ballQuantity: 120,
     plans: [
       {
@@ -94,6 +100,7 @@ const developmentCondominiumSeeds = [
     city: "Santos",
     state: "SP",
     courts: 4,
+    courtBrandNames: ["Head", "Dunlop", "Wilson", "Babolat"],
     ballQuantity: 240,
     plans: [
       {
@@ -227,6 +234,20 @@ function getSeedAdminPasswordHash() {
   return hashPassword(password);
 }
 
+async function seedTubeBrands(dataSource: DataSource) {
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
+  const brandByName = new Map<string, TubeBrand>();
+
+  for (const name of tubeBrandSeeds) {
+    const existingBrand = await brandRepository.findOneBy({ name });
+    const brand = existingBrand ?? (await brandRepository.save({ name }));
+
+    brandByName.set(brand.name, brand);
+  }
+
+  return brandByName;
+}
+
 function isDevelopmentSeedEnabled() {
   if (process.env.NODE_ENV !== "development") {
     return false;
@@ -254,8 +275,13 @@ function buildFixtureDate(monthOffset: number, day: number, hour = 10) {
   return base;
 }
 
-async function seedDevelopmentDatabase(dataSource: DataSource, administratorId: string) {
+async function seedDevelopmentDatabase(
+  dataSource: DataSource,
+  administratorId: string,
+  brandByName: Map<string, TubeBrand>,
+) {
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const courtRepository = dataSource.getRepository(CondominiumCourtEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const movementRepository = dataSource.getRepository(BallInventoryMovementEntity);
 
@@ -317,6 +343,30 @@ async function seedDevelopmentDatabase(dataSource: DataSource, administratorId: 
         id: administratorId,
       },
     });
+
+    await courtRepository
+      .createQueryBuilder()
+      .delete()
+      .from("condominium_courts")
+      .where("condominiumId = :condominiumId", { condominiumId: condominium.id })
+      .execute();
+
+    await courtRepository.save(
+      fixture.courtBrandNames.map((brandName, index) => {
+        const tubeBrand = brandByName.get(brandName) ?? brandByName.values().next().value;
+
+        if (!tubeBrand) {
+          throw new Error("Nenhuma marca de tubos cadastrada para seed.");
+        }
+
+        return {
+          name: `Quadra ${index + 1}`,
+          sortOrder: index,
+          condominium,
+          tubeBrand,
+        };
+      }),
+    );
 
     condominiumByKey.set(fixture.key, condominium);
   }
@@ -418,6 +468,7 @@ async function seedDevelopmentDatabase(dataSource: DataSource, administratorId: 
 
 export async function seedDatabase(dataSource: DataSource) {
   const administratorRepository = dataSource.getRepository(AdministratorEntity);
+  const brandByName = await seedTubeBrands(dataSource);
 
   let administrator = await administratorRepository.findOneBy({
     email: administratorSeed.email,
@@ -434,6 +485,6 @@ export async function seedDatabase(dataSource: DataSource) {
   }
 
   if (isDevelopmentSeedEnabled()) {
-    await seedDevelopmentDatabase(dataSource, administrator.id);
+    await seedDevelopmentDatabase(dataSource, administrator.id, brandByName);
   }
 }

@@ -7,6 +7,8 @@ import { CondominiumEntity } from "../lib/db/entities/condominium.entity";
 import { CondominiumPaymentEntity } from "../lib/db/entities/condominium-payment.entity";
 import { BallInventoryMovementEntity } from "../lib/db/entities/ball-inventory-movement.entity";
 import { AdminSessionEntity } from "../lib/db/entities/admin-session.entity";
+import { CondominiumCourtEntity } from "../lib/db/entities/condominium-court.entity";
+import { TubeBrandEntity } from "../lib/db/entities/tube-brand.entity";
 import { seedDatabase } from "../lib/db/seed";
 
 async function main() {
@@ -25,7 +27,9 @@ async function main() {
 
   const entities = [
     AdministratorEntity,
+    TubeBrandEntity,
     CondominiumEntity,
+    CondominiumCourtEntity,
     CondominiumPaymentEntity,
     BallInventoryMovementEntity,
     AdminSessionEntity,

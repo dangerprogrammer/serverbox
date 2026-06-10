@@ -73,6 +73,7 @@ export async function getAdminDashboardData() {
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
+      courtDetails: { tubeBrand: true },
       payments: true,
       ballMovements: { payment: true },
     },
@@ -197,6 +198,14 @@ export async function getAdminDashboardData() {
         name: condominium.name,
         city: condominium.city,
         state: condominium.state,
+        courts: condominium.courtDetails?.length || condominium.courts,
+        courtDetails: [...(condominium.courtDetails ?? [])]
+          .sort((left, right) => left.sortOrder - right.sortOrder)
+          .map((court) => ({
+            id: court.id,
+            name: court.name,
+            tubeBrandName: court.tubeBrand.name,
+          })),
         ballQuantity: condominium.ballQuantity,
         administratorName: condominium.primaryAdmin.name,
         availableBalls: stockSummary?.remainingBalls ?? 0,
@@ -254,6 +263,7 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
     where: { id: condominiumId },
     relations: {
       primaryAdmin: true,
+      courtDetails: { tubeBrand: true },
       payments: true,
       ballMovements: { payment: true },
     },
@@ -273,7 +283,14 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
     name: condominium.name,
     city: condominium.city,
     state: condominium.state,
-    courts: condominium.courts,
+    courts: condominium.courtDetails?.length || condominium.courts,
+    courtDetails: [...(condominium.courtDetails ?? [])]
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((court) => ({
+        id: court.id,
+        name: court.name,
+        tubeBrandName: court.tubeBrand.name,
+      })),
     ballQuantity: condominium.ballQuantity,
     administratorName: condominium.primaryAdmin.name,
     availableBalls: stockSummary.remainingBalls,

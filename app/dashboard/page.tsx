@@ -363,6 +363,14 @@ export default async function DashboardPage() {
                       <p className="mt-1 text-sm text-slate-600">
                         Estoque real informado: {condominium.ballQuantity} tubos
                       </p>
+                      {condominium.courtDetails.length > 0 ? (
+                        <p className="mt-1 text-sm text-slate-600">
+                          Quadras:{" "}
+                          {condominium.courtDetails
+                            .map((court) => `${court.name} (${court.tubeBrandName})`)
+                            .join(", ")}
+                        </p>
+                      ) : null}
                       <Link
                         href={`/condominio/${condominium.id}`}
                         className="mt-3 inline-flex h-10 items-center justify-center rounded-full border border-slate-300 px-4 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
