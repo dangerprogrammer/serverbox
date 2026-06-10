@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import {
   clearStoredAdminSessionToken,
-  getStoredAdminSessionToken,
+  clearStoredAdminSessionTokenIfCurrent,
   useStoredAdminSessionToken,
 } from "@/app/_components/admin-session-storage";
 import { AppSidebar } from "@/app/_components/app-sidebar";
@@ -42,35 +42,38 @@ export function AppShell({ children, condominiums }: AppShellProps) {
   useEffect(() => {
     let cancelled = false;
     const publicPath = isPublicPath(pathname);
+    const validatedSessionToken = sessionToken;
 
-    async function clearServerSession() {
-      const currentSessionToken = getStoredAdminSessionToken();
-
-      if (currentSessionToken) {
+    async function clearServerSession(tokenToClear: string) {
+      if (tokenToClear) {
         await fetch("/api/auth/logout", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ sessionToken: currentSessionToken }),
+          body: JSON.stringify({ sessionToken: tokenToClear }),
         }).catch(() => undefined);
       }
     }
 
     async function clearSessionAndRedirect(message: string) {
-      await clearServerSession();
-      clearStoredAdminSessionToken();
+      await clearServerSession(validatedSessionToken);
+
+      if (validatedSessionToken) {
+        clearStoredAdminSessionTokenIfCurrent(validatedSessionToken);
+      } else {
+        clearStoredAdminSessionToken();
+      }
 
       if (!cancelled) {
         window.alert(message);
+        window.location.replace("/login");
       }
-
-      window.location.replace("/login");
     }
 
     async function clearSessionAndShowPublicPage() {
-      await clearServerSession();
-      clearStoredAdminSessionToken();
+      await clearServerSession(validatedSessionToken);
+      clearStoredAdminSessionTokenIfCurrent(validatedSessionToken);
 
       if (!cancelled) {
         setSessionState("public");

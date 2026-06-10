@@ -46,6 +46,15 @@ export function clearStoredAdminSessionToken() {
   emitSessionChange();
 }
 
+export function clearStoredAdminSessionTokenIfCurrent(sessionToken: string) {
+  if (getStoredAdminSessionToken() !== sessionToken) {
+    return false;
+  }
+
+  clearStoredAdminSessionToken();
+  return true;
+}
+
 export function useStoredAdminSessionToken() {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
