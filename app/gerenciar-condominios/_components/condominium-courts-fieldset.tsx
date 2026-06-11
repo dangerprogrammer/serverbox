@@ -52,6 +52,7 @@ export function CondominiumCourtsFieldset({
     [defaultBrandId, initialCourts],
   );
   const [courts, setCourts] = useState(initialValues);
+  const [isOpen, setIsOpen] = useState(initialCourts.length <= 1);
   const initialStockQuantities = useMemo(
     () =>
       new Map(
@@ -125,59 +126,88 @@ export function CondominiumCourtsFieldset({
 
   return (
     <fieldset className="space-y-4 rounded-[1.25rem] border border-slate-200 bg-white p-4">
-      <legend className="text-sm font-semibold text-slate-900">
-        Quadras e marcas de tubos
-      </legend>
+      <legend className="sr-only">Quadras e marcas de tubos</legend>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-sm text-slate-500">
-          {courts.length} {courts.length === 1 ? "quadra" : "quadras"}
-        </span>
         <button
           type="button"
-          onClick={addCourt}
-          disabled={tubeBrands.length === 0}
-          className="inline-flex h-10 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => setIsOpen((current) => !current)}
+          className="inline-flex min-h-10 items-center gap-3 text-left"
+          aria-expanded={isOpen}
         >
-          Adicionar quadra
+          <span className="grid size-8 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-600">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              fill="none"
+              className={`size-4 transition ${isOpen ? "rotate-180" : "rotate-0"}`}
+            >
+              <path
+                d="M5 7.5 10 12.5 15 7.5"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            <span className="block text-sm font-semibold text-slate-900">
+              Quadras e marcas de tubos
+            </span>
+            <span className="mt-1 block text-sm text-slate-500">
+              {courts.length} {courts.length === 1 ? "quadra" : "quadras"}
+            </span>
+          </span>
         </button>
+        {isOpen ? (
+          <button
+            type="button"
+            onClick={addCourt}
+            disabled={tubeBrands.length === 0}
+            className="inline-flex h-10 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Adicionar quadra
+          </button>
+        ) : null}
       </div>
 
-      {tubeBrands.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm leading-7 text-slate-500">
-          Cadastre uma marca de tubos antes de adicionar quadras.
-        </div>
-      ) : (
-        <div>
+      <div hidden={!isOpen}>
+        {tubeBrands.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm leading-7 text-slate-500">
+            Cadastre uma marca de tubos antes de adicionar quadras.
+          </div>
+        ) : (
           <div>
-            {courts.map((court, index) => (
-              <div
-                key={court.id}
-                className={`py-4 last:pb-0 ${index === 0 ? "pt-0" : "border-t"}`}
-                style={
-                  index === 0
-                    ? undefined
-                    : {
-                        borderColor:
-                          "color-mix(in srgb, var(--border) 55%, transparent)",
-                      }
-                }
-              >
-                <div className="grid gap-3">
-                  <input type="hidden" name="courtKey" value={court.id} />
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-slate-700">
-                      Quadra {index + 1}
-                    </span>
-                    <input
-                      type="text"
-                      name="courtName"
-                      value={court.name}
-                      onChange={(event) =>
-                        updateCourt(court.id, { name: event.target.value })
-                      }
-                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-900"
-                    />
-                  </label>
+            <div>
+              {courts.map((court, index) => (
+                <div
+                  key={court.id}
+                  className={`py-4 last:pb-0 ${index === 0 ? "pt-0" : "border-t"}`}
+                  style={
+                    index === 0
+                      ? undefined
+                      : {
+                          borderColor:
+                            "color-mix(in srgb, var(--border) 55%, transparent)",
+                        }
+                  }
+                >
+                  <div className="grid gap-3">
+                    <input type="hidden" name="courtKey" value={court.id} />
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        Quadra {index + 1}
+                      </span>
+                      <input
+                        type="text"
+                        name="courtName"
+                        value={court.name}
+                        onChange={(event) =>
+                          updateCourt(court.id, { name: event.target.value })
+                        }
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+                      />
+                    </label>
 
                   <div className="space-y-2">
                     <span className="text-sm font-medium text-slate-700">
@@ -269,7 +299,8 @@ export function CondominiumCourtsFieldset({
             ))}
           </div>
         </div>
-      )}
+        )}
+      </div>
     </fieldset>
   );
 }

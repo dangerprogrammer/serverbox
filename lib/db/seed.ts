@@ -26,7 +26,7 @@ const administratorSeed = {
 const DEV_SEED_REFERENCE_PREFIX = "dev-seed-";
 const DEV_SEED_REASON_PREFIX = "DEV_SEED:";
 
-const tubeBrandSeeds = ["Wilson", "Head", "Dunlop", "Babolat"];
+const tubeBrandSeeds = ["Wilson", "Tecnifibre"];
 
 const developmentCondominiumSeeds = [
   {
@@ -35,7 +35,7 @@ const developmentCondominiumSeeds = [
     city: "São Paulo",
     state: "SP",
     courts: 3,
-    courtBrandNames: ["Wilson", "Head", "Dunlop"],
+    courtBrandNames: ["Wilson", "Tecnifibre", "Wilson"],
     ballQuantity: 180,
     plans: [
       {
@@ -68,7 +68,7 @@ const developmentCondominiumSeeds = [
     city: "Campinas",
     state: "SP",
     courts: 2,
-    courtBrandNames: ["Wilson", "Babolat"],
+    courtBrandNames: ["Wilson", "Tecnifibre"],
     ballQuantity: 120,
     plans: [
       {
@@ -101,7 +101,7 @@ const developmentCondominiumSeeds = [
     city: "Santos",
     state: "SP",
     courts: 4,
-    courtBrandNames: ["Head", "Dunlop", "Wilson", "Babolat"],
+    courtBrandNames: ["Wilson", "Tecnifibre", "Wilson", "Tecnifibre"],
     ballQuantity: 240,
     plans: [
       {
