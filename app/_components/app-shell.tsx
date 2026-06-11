@@ -19,7 +19,7 @@ type AppShellProps = {
   }>;
 };
 
-const hiddenSidebarPaths = ["/login"];
+const hiddenSidebarPaths = ["/login", "/cliente/login"];
 
 const publicPaths = ["/", "/login", "/sobre-nos"];
 
@@ -27,12 +27,18 @@ type SessionState = "checking" | "authenticated" | "public";
 
 function shouldHideSidebar(pathname: string) {
   return (
-    hiddenSidebarPaths.includes(pathname) || pathname.startsWith("/pagamentos")
+    hiddenSidebarPaths.includes(pathname) ||
+    pathname.startsWith("/cliente") ||
+    pathname.startsWith("/pagamentos")
   );
 }
 
 function isPublicPath(pathname: string) {
-  return publicPaths.includes(pathname) || pathname.startsWith("/pagamentos");
+  return (
+    publicPaths.includes(pathname) ||
+    pathname.startsWith("/cliente") ||
+    pathname.startsWith("/pagamentos")
+  );
 }
 
 export function AppShell({ children, condominiums }: AppShellProps) {

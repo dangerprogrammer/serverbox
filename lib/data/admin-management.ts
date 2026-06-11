@@ -21,6 +21,7 @@ export async function getCondominiumManagementData() {
     condominiumRepository.find({
       relations: {
         primaryAdmin: true,
+        clientAccesses: true,
         courtDetails: {
           tubeBrand: true,
           tubeBrands: true,
@@ -94,6 +95,17 @@ export async function getCondominiumManagementData() {
         tubeStockByBrand,
         administratorName: condominium.primaryAdmin.name,
         administratorEmail: condominium.primaryAdmin.email,
+        clientAccesses: [...(condominium.clientAccesses ?? [])]
+          .sort((left, right) =>
+            left.username.localeCompare(right.username, "pt-BR"),
+          )
+          .map((access) => ({
+            id: access.id,
+            username: access.username,
+            displayName: access.displayName,
+            isActive: access.isActive,
+            createdAt: access.createdAt,
+          })),
         plans: [...condominium.plans]
         .sort((left, right) => left.monthlyPriceInCents - right.monthlyPriceInCents)
         .map((plan: CondominiumPlan) => ({

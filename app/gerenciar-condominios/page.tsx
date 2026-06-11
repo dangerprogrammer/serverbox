@@ -4,6 +4,7 @@ import {
   FloatingInput,
   FloatingTextarea,
 } from "@/app/_components/floating-field";
+import { ClientAccessesPanel } from "@/app/gerenciar-condominios/_components/client-accesses-panel";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
@@ -153,6 +154,9 @@ export default async function GerenciarCondominiosPage() {
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
                           {condominium.plans.length} planos
                         </span>
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                          {condominium.clientAccesses.length} acessos
+                        </span>
                       </div>
                       <p className="text-sm text-slate-500">
                         {condominium.courts} quadras - estoque total de{" "}
@@ -197,6 +201,11 @@ export default async function GerenciarCondominiosPage() {
                       courtDetails={condominium.courtDetails}
                       tubeBrands={tubeBrands}
                       tubeStockByBrand={condominium.tubeStockByBrand}
+                    />
+
+                    <ClientAccessesPanel
+                      condominiumId={condominium.id}
+                      clientAccesses={condominium.clientAccesses}
                     />
 
                     <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">

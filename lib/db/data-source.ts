@@ -8,6 +8,8 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
 import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
+import { CondominiumClientAccessEntity } from "@/lib/db/entities/condominium-client-access.entity";
+import { CondominiumClientSessionEntity } from "@/lib/db/entities/condominium-client-session.entity";
 import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
@@ -26,12 +28,14 @@ declare global {
     | undefined;
 }
 
-const DATA_SOURCE_SCHEMA_VERSION = "2026-06-10-payment-tube-brand";
+const DATA_SOURCE_SCHEMA_VERSION = "2026-06-11-client-condominium-access";
 
 const entities = [
   AdministratorEntity,
   TubeBrandEntity,
   CondominiumEntity,
+  CondominiumClientAccessEntity,
+  CondominiumClientSessionEntity,
   CondominiumCourtEntity,
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
@@ -264,6 +268,51 @@ async function ensurePostgresRuntimeSchema(dataSource: DataSource) {
   await dataSource.query(`
     ALTER TABLE IF EXISTS condominium_payments
     ADD COLUMN IF NOT EXISTS "tubeBrandName" character varying
+  `);
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS condominium_client_accesses (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      username character varying NOT NULL UNIQUE,
+      "displayName" character varying,
+      "passwordHash" character varying NOT NULL,
+      "isActive" boolean NOT NULL DEFAULT true,
+      "createdAt" timestamp without time zone NOT NULL DEFAULT now(),
+      "updatedAt" timestamp without time zone NOT NULL DEFAULT now(),
+      "condominiumId" uuid NOT NULL,
+      CONSTRAINT "FK_condominium_client_accesses_condominium"
+        FOREIGN KEY ("condominiumId")
+        REFERENCES condominiums(id)
+        ON DELETE CASCADE
+    )
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_client_accesses_condominium"
+      ON condominium_client_accesses ("condominiumId")
+  `);
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS condominium_client_sessions (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "accessId" uuid NOT NULL,
+      "condominiumId" uuid NOT NULL,
+      "expiresAt" timestamp without time zone NOT NULL,
+      "createdAt" timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT "FK_condominium_client_sessions_access"
+        FOREIGN KEY ("accessId")
+        REFERENCES condominium_client_accesses(id)
+        ON DELETE CASCADE,
+      CONSTRAINT "FK_condominium_client_sessions_condominium"
+        FOREIGN KEY ("condominiumId")
+        REFERENCES condominiums(id)
+        ON DELETE CASCADE
+    )
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_client_sessions_access"
+      ON condominium_client_sessions ("accessId")
+  `);
+  await dataSource.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_condominium_client_sessions_condominium"
+      ON condominium_client_sessions ("condominiumId")
   `);
   await dataSource.query(`
     CREATE TABLE IF NOT EXISTS condominium_courts (

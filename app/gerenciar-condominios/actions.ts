@@ -5,7 +5,10 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import { requireAuthenticatedAdminFromFormData } from "@/lib/auth/session";
+import { hashPassword } from "@/lib/auth/password";
 import { getDataSource } from "@/lib/db/data-source";
+import { CondominiumClientAccessEntity } from "@/lib/db/entities/condominium-client-access.entity";
+import { CondominiumClientSessionEntity } from "@/lib/db/entities/condominium-client-session.entity";
 import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
@@ -24,6 +27,10 @@ function normalizeSlug(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function normalizeUsername(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function parsePositiveNumber(value: FormDataEntryValue | null, fallback = 0) {
@@ -62,6 +69,18 @@ function getAllowedTier(value: string) {
 
 function getPlansWithFallback(plans: CondominiumPlan[] | null | undefined) {
   return Array.isArray(plans) ? plans : [];
+}
+
+function validateClientAccessUsername(username: string) {
+  if (username.length < 3) {
+    throw new Error("Usuario deve ter pelo menos 3 caracteres.");
+  }
+
+  if (!/^[a-z0-9._@-]+$/.test(username)) {
+    throw new Error(
+      "Usuario deve usar apenas letras, numeros, ponto, hifen, underline ou @.",
+    );
+  }
 }
 
 type CourtEntry = {
@@ -338,6 +357,81 @@ export async function deleteCondominiumAction(formData: FormData) {
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
 
   await condominiumRepository.delete({ id: condominiumId });
+  revalidateManagementViews();
+}
+
+export async function createClientAccessAction(formData: FormData) {
+  await requireAuthenticatedAdminFromFormData(formData);
+
+  const condominiumId = String(formData.get("condominiumId") ?? "").trim();
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
+  const password = String(formData.get("password") ?? "").trim();
+  const displayName = String(formData.get("displayName") ?? "").trim();
+
+  if (!condominiumId) {
+    throw new Error("Condominio invalido.");
+  }
+
+  validateClientAccessUsername(username);
+
+  if (password.length < 6) {
+    throw new Error("Senha deve ter pelo menos 6 caracteres.");
+  }
+
+  const dataSource = await getDataSource();
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const accessRepository = dataSource.getRepository(
+    CondominiumClientAccessEntity,
+  );
+
+  const condominium = await condominiumRepository.findOneBy({ id: condominiumId });
+
+  if (!condominium) {
+    throw new Error("Condominio nao encontrado.");
+  }
+
+  const existingAccess = await accessRepository.findOneBy({ username });
+
+  if (existingAccess) {
+    throw new Error("Este usuario ja esta em uso.");
+  }
+
+  await accessRepository.save({
+    username,
+    displayName: displayName || null,
+    passwordHash: hashPassword(password),
+    isActive: true,
+    condominium,
+  });
+
+  revalidateManagementViews();
+}
+
+export async function deleteClientAccessAction(formData: FormData) {
+  await requireAuthenticatedAdminFromFormData(formData);
+
+  const accessId = String(formData.get("accessId") ?? "").trim();
+
+  if (!accessId) {
+    throw new Error("Acesso de cliente invalido.");
+  }
+
+  const dataSource = await getDataSource();
+  const accessRepository = dataSource.getRepository(
+    CondominiumClientAccessEntity,
+  );
+  const sessionRepository = dataSource.getRepository(
+    CondominiumClientSessionEntity,
+  );
+
+  const existingAccess = await accessRepository.findOneBy({ id: accessId });
+
+  if (!existingAccess) {
+    throw new Error("Acesso de cliente nao encontrado.");
+  }
+
+  await sessionRepository.delete({ accessId });
+  await accessRepository.delete({ id: accessId });
   revalidateManagementViews();
 }
 

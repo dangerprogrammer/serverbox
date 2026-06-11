@@ -2,6 +2,7 @@ import { EntitySchema } from "typeorm";
 
 import type { Administrator } from "@/lib/db/entities/administrator.entity";
 import type { BallInventoryMovement } from "@/lib/db/entities/ball-inventory-movement.entity";
+import type { CondominiumClientAccess } from "@/lib/db/entities/condominium-client-access.entity";
 import type { CondominiumCourt } from "@/lib/db/entities/condominium-court.entity";
 import type { CondominiumPayment } from "@/lib/db/entities/condominium-payment.entity";
 import type { CondominiumPlan } from "@/lib/domain/condominium-plan";
@@ -18,6 +19,7 @@ export type Condominium = {
   createdAt: Date;
   updatedAt: Date;
   primaryAdmin: Administrator;
+  clientAccesses: CondominiumClientAccess[];
   plans: CondominiumPlan[];
   courtDetails: CondominiumCourt[];
   payments: CondominiumPayment[];
@@ -88,6 +90,11 @@ export const CondominiumEntity = new EntitySchema<Condominium>({
     courtDetails: {
       type: "one-to-many",
       target: "CondominiumCourt",
+      inverseSide: "condominium",
+    },
+    clientAccesses: {
+      type: "one-to-many",
+      target: "CondominiumClientAccess",
       inverseSide: "condominium",
     },
     ballMovements: {
