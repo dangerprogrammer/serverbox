@@ -124,7 +124,7 @@ export function CondominiumCourtsFieldset({
   }
 
   return (
-    <fieldset className="space-y-3 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+    <fieldset className="space-y-4 rounded-[1.25rem] border border-slate-200 bg-white p-4">
       <legend className="text-sm font-semibold text-slate-900">
         Quadras e marcas de tubos
       </legend>
@@ -147,12 +147,20 @@ export function CondominiumCourtsFieldset({
           Cadastre uma marca de tubos antes de adicionar quadras.
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="space-y-3">
+        <div>
+          <div>
             {courts.map((court, index) => (
               <div
                 key={court.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                className={`py-4 last:pb-0 ${index === 0 ? "pt-0" : "border-t"}`}
+                style={
+                  index === 0
+                    ? undefined
+                    : {
+                        borderColor:
+                          "color-mix(in srgb, var(--border) 55%, transparent)",
+                      }
+                }
               >
                 <div className="grid gap-3">
                   <input type="hidden" name="courtKey" value={court.id} />
@@ -175,7 +183,7 @@ export function CondominiumCourtsFieldset({
                     <span className="text-sm font-medium text-slate-700">
                       Marcas e estoque
                     </span>
-                    <div className="divide-y divide-slate-200 rounded-xl bg-slate-50 px-2">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-x-3 gap-y-2">
                       {tubeBrands.map((brand) => {
                         const isSelected = getCourtBrandIds(court).includes(brand.id);
                         const quantity = stockQuantities.get(brand.id) ?? 0;
@@ -183,11 +191,7 @@ export function CondominiumCourtsFieldset({
                         return (
                           <div
                             key={brand.id}
-                            className={`grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-2 px-1 py-2 transition ${
-                              isSelected
-                                ? "opacity-100"
-                                : "opacity-60"
-                            }`}
+                            className={`transition ${isSelected ? "opacity-100" : "opacity-55"}`}
                           >
                             <label className="group inline-flex min-h-8 min-w-0 cursor-pointer items-center gap-2">
                               <input
@@ -213,7 +217,7 @@ export function CondominiumCourtsFieldset({
                               </span>
                             </label>
 
-                            <label>
+                            <label className="mt-2 block">
                               <span className="sr-only">
                                 Estoque de {brand.name}
                               </span>
@@ -243,7 +247,7 @@ export function CondominiumCourtsFieldset({
                                     Number(event.target.value),
                                   )
                                 }
-                                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
+                                className="h-8 w-full rounded-lg border border-slate-200 bg-transparent px-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-900 disabled:text-slate-400"
                               />
                             </label>
                           </div>
