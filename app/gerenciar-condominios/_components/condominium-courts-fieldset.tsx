@@ -17,6 +17,7 @@ type CourtValue = {
 type CondominiumCourtsFieldsetProps = {
   tubeBrands: TubeBrandOption[];
   initialCourts?: CourtValue[];
+  initialStock?: { tubeBrandId: string; quantity: number }[];
 };
 
 function createCourt(index: number, tubeBrandId: string): CourtValue {
@@ -38,6 +39,7 @@ function getCourtBrandIds(court: CourtValue) {
 export function CondominiumCourtsFieldset({
   tubeBrands,
   initialCourts = [],
+  initialStock = [],
 }: CondominiumCourtsFieldsetProps) {
   const defaultBrandId = tubeBrands[0]?.id ?? "";
   const initialValues = useMemo(
@@ -50,6 +52,23 @@ export function CondominiumCourtsFieldset({
     [defaultBrandId, initialCourts],
   );
   const [courts, setCourts] = useState(initialValues);
+  const initialStockQuantities = useMemo(
+    () =>
+      new Map(
+        initialStock
+          .filter((entry) => Number.isFinite(entry.quantity) && entry.quantity > 0)
+          .map((entry) => [entry.tubeBrandId, entry.quantity]),
+      ),
+    [initialStock],
+  );
+  const [stockQuantities, setStockQuantities] = useState(() =>
+    new Map(
+      tubeBrands.map((brand) => [
+        brand.id,
+        initialStockQuantities.get(brand.id) ?? 0,
+      ]),
+    ),
+  );
 
   function addCourt() {
     setCourts((currentCourts) => [
@@ -95,6 +114,15 @@ export function CondominiumCourtsFieldset({
     );
   }
 
+  function updateStockQuantity(tubeBrandId: string, quantity: number) {
+    setStockQuantities((currentQuantities) => {
+      const nextQuantities = new Map(currentQuantities);
+      nextQuantities.set(tubeBrandId, quantity);
+
+      return nextQuantities;
+    });
+  }
+
   return (
     <fieldset className="space-y-3 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
       <legend className="text-sm font-semibold text-slate-900">
@@ -119,62 +147,113 @@ export function CondominiumCourtsFieldset({
           Cadastre uma marca de tubos antes de adicionar quadras.
         </div>
       ) : (
-        <div className="space-y-3">
-          {courts.map((court, index) => (
-            <div
-              key={court.id}
-              className="grid gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]"
-            >
-              <input type="hidden" name="courtKey" value={court.id} />
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Quadra {index + 1}
-                </span>
-                <input
-                  type="text"
-                  name="courtName"
-                  value={court.name}
-                  onChange={(event) =>
-                    updateCourt(court.id, { name: event.target.value })
-                  }
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-900"
-                />
-              </label>
-
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Marcas de tubos
-                </span>
-                <div className="flex min-h-11 flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
-                  {tubeBrands.map((brand) => (
-                    <label
-                      key={brand.id}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
-                    >
-                      <input
-                        type="checkbox"
-                        name={`tubeBrandIds:${court.id}`}
-                        value={brand.id}
-                        checked={getCourtBrandIds(court).includes(brand.id)}
-                        onChange={() => toggleCourtBrand(court.id, brand.id)}
-                        className="size-3.5 accent-emerald-600"
-                      />
-                      {brand.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => removeCourt(court.id)}
-                disabled={courts.length <= 1}
-                className="inline-flex h-11 items-center justify-center self-end rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+        <div className="space-y-4">
+          <div className="space-y-3">
+            {courts.map((court, index) => (
+              <div
+                key={court.id}
+                className="rounded-xl border border-slate-200 bg-white/60 p-4"
               >
-                Remover
-              </button>
-            </div>
-          ))}
+                <div className="grid gap-3">
+                  <input type="hidden" name="courtKey" value={court.id} />
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-slate-700">
+                      Quadra {index + 1}
+                    </span>
+                    <input
+                      type="text"
+                      name="courtName"
+                      value={court.name}
+                      onChange={(event) =>
+                        updateCourt(court.id, { name: event.target.value })
+                      }
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+                    />
+                  </label>
+
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium text-slate-700">
+                      Marcas e estoque
+                    </span>
+                    <div className="divide-y divide-slate-200 rounded-xl bg-slate-50 px-2">
+                      {tubeBrands.map((brand) => {
+                        const isSelected = getCourtBrandIds(court).includes(brand.id);
+                        const quantity = stockQuantities.get(brand.id) ?? 0;
+
+                        return (
+                          <div
+                            key={brand.id}
+                            className={`grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-2 px-1 py-2.5 transition ${
+                              isSelected
+                                ? "opacity-100"
+                                : "opacity-60"
+                            }`}
+                          >
+                            <label className="inline-flex min-h-8 min-w-0 items-center gap-2">
+                              <input
+                                type="checkbox"
+                                name={`tubeBrandIds:${court.id}`}
+                                value={brand.id}
+                                checked={isSelected}
+                                onChange={() => toggleCourtBrand(court.id, brand.id)}
+                                className="size-4 accent-emerald-600"
+                              />
+                              <span className="truncate text-sm font-semibold text-slate-900">
+                                {brand.name}
+                              </span>
+                            </label>
+
+                            <label>
+                              <span className="sr-only">
+                                Estoque de {brand.name}
+                              </span>
+                              {isSelected ? (
+                                <>
+                                  <input
+                                    type="hidden"
+                                    name="stockBrandId"
+                                    value={brand.id}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="stockQuantity"
+                                    value={quantity}
+                                  />
+                                </>
+                              ) : null}
+                              <input
+                                type="number"
+                                min={0}
+                                aria-label={`Estoque de ${brand.name}`}
+                                value={quantity}
+                                disabled={!isSelected}
+                                onChange={(event) =>
+                                  updateStockQuantity(
+                                    brand.id,
+                                    Number(event.target.value),
+                                  )
+                                }
+                                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
+                              />
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => removeCourt(court.id)}
+                  disabled={courts.length <= 1}
+                  className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                >
+                  Remover quadra
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </fieldset>

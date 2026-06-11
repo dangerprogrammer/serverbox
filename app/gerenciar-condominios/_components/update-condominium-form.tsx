@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { FloatingInput } from "@/app/_components/floating-field";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
-import { CondominiumBrandStockFieldset } from "@/app/gerenciar-condominios/_components/condominium-brand-stock-fieldset";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { updateCondominiumAction } from "@/app/gerenciar-condominios/actions";
 
@@ -87,16 +86,13 @@ export function UpdateCondominiumForm({
       <CondominiumCourtsFieldset
         tubeBrands={tubeBrands}
         initialCourts={courtDetails}
-      />
-      <CondominiumBrandStockFieldset
-        tubeBrands={tubeBrands}
         initialStock={tubeStockByBrand}
       />
 
       <div className="flex flex-wrap gap-3">
         <button
           type="submit"
-          className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
         >
           Salvar condomínio
         </button>

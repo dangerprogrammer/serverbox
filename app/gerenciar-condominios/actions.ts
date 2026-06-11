@@ -145,10 +145,7 @@ async function parseTubeStockEntries(dataSource: DataSource, formData: FormData)
       return;
     }
 
-    requestedStockByBrandId.set(
-      tubeBrandId,
-      (requestedStockByBrandId.get(tubeBrandId) ?? 0) + quantity,
-    );
+    requestedStockByBrandId.set(tubeBrandId, quantity);
   });
 
   if (requestedStockByBrandId.size === 0) {

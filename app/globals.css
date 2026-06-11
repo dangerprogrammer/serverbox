@@ -299,6 +299,10 @@ textarea:disabled,
   background-color: var(--card) !important;
 }
 
+.bg-white\/60 {
+  background-color: color-mix(in srgb, var(--card) 60%, transparent) !important;
+}
+
 .bg-white\/90 {
   background-color: var(--card-elevated) !important;
 }
@@ -403,6 +407,10 @@ textarea:disabled,
 
 .border-rose-200 {
   border-color: var(--danger-border) !important;
+}
+
+.divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border) !important;
 }
 
 .shadow-sm {

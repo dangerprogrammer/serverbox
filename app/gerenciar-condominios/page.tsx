@@ -4,7 +4,6 @@ import {
   FloatingInput,
   FloatingTextarea,
 } from "@/app/_components/floating-field";
-import { CondominiumBrandStockFieldset } from "@/app/gerenciar-condominios/_components/condominium-brand-stock-fieldset";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
@@ -86,11 +85,10 @@ export default async function GerenciarCondominiosPage() {
               />
             </div>
             <CondominiumCourtsFieldset tubeBrands={tubeBrands} />
-            <CondominiumBrandStockFieldset tubeBrands={tubeBrands} />
 
             <button
               type="submit"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500"
             >
               Criar condomínio
             </button>
@@ -321,7 +319,7 @@ export default async function GerenciarCondominiosPage() {
                         />
                         <button
                           type="submit"
-                          className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
                         >
                           Criar plano
                         </button>

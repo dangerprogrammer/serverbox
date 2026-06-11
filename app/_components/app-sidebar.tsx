@@ -256,7 +256,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
           </div>
         </nav>
 
-        <LogoutButton className="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800" />
+        <LogoutButton className="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500" />
       </aside>
 
       <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur lg:hidden">
@@ -356,7 +356,7 @@ export function AppSidebar({ condominiums }: AppSidebarProps) {
             {isRefreshing ? "Atualizando..." : "Atualizar"}
           </button>
 
-          <LogoutButton className="inline-flex h-[2.625rem] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <LogoutButton className="inline-flex h-[2.625rem] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500">
             <LogoutIcon className="size-4 shrink-0" />
             Sair
           </LogoutButton>
