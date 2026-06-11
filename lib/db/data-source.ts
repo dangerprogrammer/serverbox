@@ -26,7 +26,7 @@ declare global {
     | undefined;
 }
 
-const DATA_SOURCE_SCHEMA_VERSION = "2026-06-10-brand-stock";
+const DATA_SOURCE_SCHEMA_VERSION = "2026-06-10-payment-tube-brand";
 
 const entities = [
   AdministratorEntity,
@@ -256,6 +256,14 @@ async function ensurePostgresRuntimeSchema(dataSource: DataSource) {
   await dataSource.query(`
     ALTER TABLE condominiums
     ADD COLUMN IF NOT EXISTS "tubeStockByBrand" text NOT NULL DEFAULT '[]'
+  `);
+  await dataSource.query(`
+    ALTER TABLE IF EXISTS condominium_payments
+    ADD COLUMN IF NOT EXISTS "tubeBrandId" character varying
+  `);
+  await dataSource.query(`
+    ALTER TABLE IF EXISTS condominium_payments
+    ADD COLUMN IF NOT EXISTS "tubeBrandName" character varying
   `);
   await dataSource.query(`
     CREATE TABLE IF NOT EXISTS condominium_courts (

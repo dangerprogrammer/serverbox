@@ -154,6 +154,9 @@ export default async function DashboardPage() {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm text-slate-600">
                           +{payment.ballQuantity} tubos
+                          {payment.tubeBrandName
+                            ? ` - ${payment.tubeBrandName}`
+                            : ""}
                         </div>
                         <Link
                           href={`/pagamentos/${payment.id}`}
@@ -289,6 +292,9 @@ export default async function DashboardPage() {
                           <p className="mt-3 text-sm text-slate-600">
                             {currencyFormatter.format(payment.amountInCents / 100)} -{" "}
                             {payment.ballQuantity} tubos
+                            {payment.tubeBrandName
+                              ? ` - ${payment.tubeBrandName}`
+                              : ""}
                           </p>
                           <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-700">
                             {payment.status}

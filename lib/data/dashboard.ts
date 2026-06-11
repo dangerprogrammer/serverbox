@@ -14,7 +14,7 @@ import {
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
-import { sumTubeStockEntries } from "@/lib/domain/tube-stock";
+import { sumActiveTubeStockEntries } from "@/lib/domain/tube-stock";
 import { calculateRemainingBallStock } from "@/lib/payments/stock";
 
 const tierLabels: Record<PlanTier, string> = {
@@ -71,9 +71,11 @@ export async function getDashboardData() {
       totalPlans: plans.length,
       availableBalls: condominiums.reduce(
         (total, condominium) => {
-          const stockQuantity =
-            sumTubeStockEntries(condominium.tubeStockByBrand) ||
-            condominium.ballQuantity;
+          const stockQuantity = sumActiveTubeStockEntries(
+            condominium.tubeStockByBrand,
+            condominium.courtDetails,
+            condominium.ballQuantity,
+          );
 
           return (
             total +
@@ -88,9 +90,11 @@ export async function getDashboardData() {
     },
     plans,
     condominiums: condominiums.map((condominium: Condominium) => {
-      const stockQuantity =
-        sumTubeStockEntries(condominium.tubeStockByBrand) ||
-        condominium.ballQuantity;
+      const stockQuantity = sumActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+        condominium.ballQuantity,
+      );
 
       return {
         id: condominium.id,

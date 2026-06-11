@@ -49,15 +49,12 @@ export default async function CondominiumDashboardPage({
       plan.monthlyBallAllowance <= condominium.remainingBallStock,
   );
   const canCreatePayment = eligiblePlans.length > 0;
-  const canReuseStandalonePayment =
-    (condominium.standalonePayment?.availablePaymentCount ?? 0) > 0;
   const canCreateStandalonePayment =
-    condominium.remainingBallStock > 0 || canReuseStandalonePayment;
+    condominium.remainingBallStock > 0 && condominium.tubeStockByBrand.length > 0;
+  const defaultTubeBrandId = condominium.tubeStockByBrand[0]?.tubeBrandId ?? "";
   const defaultStandaloneBallQuantity =
-    condominium.standalonePayment?.ballQuantity ??
     Math.max(1, Math.min(100, condominium.remainingBallStock || 1));
-  const defaultStandaloneAmountInCents =
-    condominium.standalonePayment?.amountInCents ?? 10000;
+  const defaultStandaloneAmountInCents = 10000;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -195,6 +192,7 @@ export default async function CondominiumDashboardPage({
                       <p className="mt-1 text-sm text-slate-600">{payment.planName}</p>
                       <p className="mt-2 text-sm text-slate-600">
                         {currencyFormatter.format(payment.amountInCents / 100)} - {payment.ballQuantity} tubos
+                        {payment.tubeBrandName ? ` - ${payment.tubeBrandName}` : ""}
                       </p>
                     </div>
                     <div className="text-right text-xs uppercase tracking-[0.18em] text-slate-500">
@@ -233,77 +231,62 @@ export default async function CondominiumDashboardPage({
               Compra avulsa de tubos
             </h3>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Use quando o condomínio precisar comprar tubos fora de um plano. Se
-              já houver QR avulso aberto, ele será reaproveitado.
+              Use quando o condomínio precisar comprar tubos fora de um plano.
+              Escolha a marca para reservar o estoque correto.
             </p>
 
             <form action={createStandalonePaymentAction} className="mt-6 space-y-4">
               <SessionTokenInput />
               <input type="hidden" name="condominiumId" value={condominium.id} />
 
-              {condominium.standalonePayment ? (
-                <>
-                  <input
-                    type="hidden"
-                    name="ballQuantity"
-                    value={defaultStandaloneBallQuantity}
-                  />
-                  <input
-                    type="hidden"
-                    name="amountInCents"
-                    value={defaultStandaloneAmountInCents}
-                  />
-                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-700">
-                    QR avulso aberto:{" "}
-                    <strong className="font-semibold text-slate-900">
-                      {condominium.standalonePayment.ballQuantity} tubos
-                    </strong>{" "}
-                    por{" "}
-                    <strong className="font-semibold text-slate-900">
-                      {currencyFormatter.format(
-                        condominium.standalonePayment.amountInCents / 100,
-                      )}
-                    </strong>
-                    .
-                  </div>
-                </>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FloatingInput
-                    label="Quantidade de tubos"
-                    name="ballQuantity"
-                    type="number"
-                    min={1}
-                    max={condominium.remainingBallStock || undefined}
-                    defaultValue={defaultStandaloneBallQuantity}
-                    placeholder="Quantidade de tubos"
-                    className="bg-white"
-                  />
-                  <CurrencyInput
-                    label="Valor"
-                    name="amountInCents"
-                    defaultValueInCents={defaultStandaloneAmountInCents}
-                    className="bg-white"
-                  />
-                </div>
-              )}
+              <div className="grid gap-4 md:grid-cols-3">
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-slate-700">
+                    Marca do tubo
+                  </span>
+                  <select
+                    name="tubeBrandId"
+                    disabled={!canCreateStandalonePayment}
+                    defaultValue={defaultTubeBrandId}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                  >
+                    {condominium.tubeStockByBrand.length > 0 ? (
+                      condominium.tubeStockByBrand.map((entry) => (
+                        <option key={entry.tubeBrandId} value={entry.tubeBrandId}>
+                          {entry.tubeBrandName} - {entry.quantity} tubos
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Sem marcas com estoque ativo</option>
+                    )}
+                  </select>
+                </label>
+                <FloatingInput
+                  label="Quantidade de tubos"
+                  name="ballQuantity"
+                  type="number"
+                  min={1}
+                  max={condominium.remainingBallStock || undefined}
+                  defaultValue={defaultStandaloneBallQuantity}
+                  placeholder="Quantidade de tubos"
+                  className="bg-white"
+                />
+                <CurrencyInput
+                  label="Valor"
+                  name="amountInCents"
+                  defaultValueInCents={defaultStandaloneAmountInCents}
+                  className="bg-white"
+                />
+              </div>
 
               <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-7 text-slate-700">
-                {condominium.standalonePayment
-                  ? canReuseStandalonePayment
-                    ? "O botão abre o checkout PIX avulso que já está pendente para este condomínio."
-                    : "O QR avulso aberto não cabe mais no estoque atual; ajuste o estoque para reutilizar."
-                  : canCreateStandalonePayment
-                    ? "O sistema mantém um único QR avulso aberto por condomínio e reserva os tubos dele no estoque."
-                    : "Atualize o estoque real do condomínio para habilitar compra avulsa."}
+                {canCreateStandalonePayment
+                  ? "A compra avulsa reserva os tubos da marca escolhida. Se já existir um QR avulso aberto para essa marca, ele será reaproveitado."
+                  : "Atualize o estoque real do condomínio com ao menos uma marca ativa para habilitar compra avulsa."}
               </div>
 
               <SubmitButton
-                idleLabel={
-                  condominium.standalonePayment
-                    ? "Abrir compra avulsa aberta"
-                    : "Criar compra avulsa"
-                }
+                idleLabel="Criar compra avulsa"
                 pendingLabel="Criando..."
                 disabled={!canCreateStandalonePayment}
                 className="inline-flex h-12 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"

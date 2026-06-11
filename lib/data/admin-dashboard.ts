@@ -16,7 +16,10 @@ import {
 } from "@/lib/db/entities/condominium-payment.entity";
 import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
-import { getTubeStockEntries, sumTubeStockEntries } from "@/lib/domain/tube-stock";
+import {
+  getActiveTubeStockEntries,
+  sumActiveTubeStockEntries,
+} from "@/lib/domain/tube-stock";
 import {
   calculateRemainingBallStock,
   calculateStandalonePaymentCapacity,
@@ -46,8 +49,11 @@ function sumAmountByStatus(
 
 function buildCondominiumStockSummary(condominium: Condominium) {
   const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments);
-  const stockQuantity =
-    sumTubeStockEntries(condominium.tubeStockByBrand) || condominium.ballQuantity;
+  const stockQuantity = sumActiveTubeStockEntries(
+    condominium.tubeStockByBrand,
+    condominium.courtDetails,
+    condominium.ballQuantity,
+  );
 
   return {
     stockLimit: stockQuantity,
@@ -204,7 +210,10 @@ export async function getAdminDashboardData() {
       const recentPayments = [...condominium.payments]
         .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
         .slice(0, 3);
-      const tubeStockByBrand = getTubeStockEntries(condominium.tubeStockByBrand)
+      const tubeStockByBrand = getActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+      )
         .map((entry) => {
           const tubeBrand = brandById.get(entry.tubeBrandId);
 
@@ -216,8 +225,11 @@ export async function getAdminDashboardData() {
             : null;
         })
         .filter((entry) => entry !== null);
-      const stockQuantity =
-        sumTubeStockEntries(tubeStockByBrand) || condominium.ballQuantity;
+      const stockQuantity = sumActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+        condominium.ballQuantity,
+      );
 
       return {
         id: condominium.id,
@@ -258,6 +270,8 @@ export async function getAdminDashboardData() {
               id: stockSummary.openStandalonePayment.id,
               amountInCents: stockSummary.openStandalonePayment.amountInCents,
               ballQuantity: stockSummary.openStandalonePayment.ballQuantity,
+              tubeBrandId: stockSummary.openStandalonePayment.tubeBrandId,
+              tubeBrandName: stockSummary.openStandalonePayment.tubeBrandName,
               availablePaymentCount: stockSummary.openStandalonePaymentCapacity,
             }
           : null,
@@ -267,6 +281,8 @@ export async function getAdminDashboardData() {
           status: payment.status,
           planName: payment.planName || "Plano antigo",
           ballQuantity: payment.ballQuantity,
+          tubeBrandId: payment.tubeBrandId,
+          tubeBrandName: payment.tubeBrandName,
           amountInCents: payment.amountInCents,
         })),
       };
@@ -280,6 +296,8 @@ export async function getAdminDashboardData() {
         planName: payment.planName || "Plano antigo",
         amountInCents: payment.amountInCents,
         ballQuantity: payment.ballQuantity,
+        tubeBrandId: payment.tubeBrandId,
+        tubeBrandName: payment.tubeBrandName,
         method: payment.method,
         provider: payment.provider,
         providerPaymentId: payment.providerPaymentId,
@@ -320,7 +338,10 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
   );
   const stockSummary = buildCondominiumStockSummary(condominium);
   const brandById = new Map(tubeBrands.map((brand) => [brand.id, brand]));
-  const tubeStockByBrand = getTubeStockEntries(condominium.tubeStockByBrand)
+  const tubeStockByBrand = getActiveTubeStockEntries(
+    condominium.tubeStockByBrand,
+    condominium.courtDetails,
+  )
     .map((entry) => {
       const tubeBrand = brandById.get(entry.tubeBrandId);
 
@@ -332,8 +353,11 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
         : null;
     })
     .filter((entry) => entry !== null);
-  const stockQuantity =
-    sumTubeStockEntries(tubeStockByBrand) || condominium.ballQuantity;
+  const stockQuantity = sumActiveTubeStockEntries(
+    condominium.tubeStockByBrand,
+    condominium.courtDetails,
+    condominium.ballQuantity,
+  );
 
   return {
     id: condominium.id,
@@ -383,8 +407,10 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
       ? {
           id: stockSummary.openStandalonePayment.id,
           amountInCents: stockSummary.openStandalonePayment.amountInCents,
-          ballQuantity: stockSummary.openStandalonePayment.ballQuantity,
-          availablePaymentCount: stockSummary.openStandalonePaymentCapacity,
+      ballQuantity: stockSummary.openStandalonePayment.ballQuantity,
+      tubeBrandId: stockSummary.openStandalonePayment.tubeBrandId,
+      tubeBrandName: stockSummary.openStandalonePayment.tubeBrandName,
+      availablePaymentCount: stockSummary.openStandalonePaymentCapacity,
         }
       : null,
     payments: sortedPayments.map((payment) => ({
@@ -394,6 +420,8 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
       planName: payment.planName || "Plano antigo",
       amountInCents: payment.amountInCents,
       ballQuantity: payment.ballQuantity,
+      tubeBrandId: payment.tubeBrandId,
+      tubeBrandName: payment.tubeBrandName,
       createdAt: payment.createdAt,
     })),
   };

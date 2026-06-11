@@ -27,6 +27,8 @@ export type CondominiumPayment = {
   status: PaymentStatus;
   amountInCents: number;
   ballQuantity: number;
+  tubeBrandId: string | null;
+  tubeBrandName: string | null;
   provider: string | null;
   providerPaymentId: string | null;
   providerRawStatus: string | null;
@@ -70,6 +72,14 @@ export const CondominiumPaymentEntity = new EntitySchema<CondominiumPayment>({
     },
     ballQuantity: {
       type: Number,
+    },
+    tubeBrandId: {
+      type: String,
+      nullable: true,
+    },
+    tubeBrandName: {
+      type: String,
+      nullable: true,
     },
     planId: {
       type: String,

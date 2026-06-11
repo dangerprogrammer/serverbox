@@ -13,6 +13,8 @@ type StockPayment = Pick<
   | "status"
   | "amountInCents"
   | "ballQuantity"
+  | "tubeBrandId"
+  | "tubeBrandName"
   | "pixExpiresAt"
   | "createdAt"
 >;
@@ -44,10 +46,13 @@ export function isStockCommitment(payment: Pick<StockPayment, "status" | "pixExp
 
 export function sumCommittedBallQuantity(
   payments: StockPayment[],
-  options: { exceptPaymentId?: string } = {},
+  options: { exceptPaymentId?: string; tubeBrandId?: string } = {},
 ) {
   return payments
     .filter((payment) => payment.id !== options.exceptPaymentId)
+    .filter((payment) =>
+      options.tubeBrandId ? payment.tubeBrandId === options.tubeBrandId : true,
+    )
     .filter(isStockCommitment)
     .reduce((total, payment) => total + payment.ballQuantity, 0);
 }
@@ -68,17 +73,20 @@ export function calculateRemainingBallStock({
   stockQuantity,
   payments,
   exceptPaymentId,
+  tubeBrandId,
 }: {
   stockQuantity: number;
   payments: StockPayment[];
   exceptPaymentId?: string;
+  tubeBrandId?: string;
 }) {
   const normalizedStock = Number.isFinite(stockQuantity)
     ? Math.max(0, stockQuantity)
     : 0;
 
   return Math.max(
-    normalizedStock - sumCommittedBallQuantity(payments, { exceptPaymentId }),
+    normalizedStock -
+      sumCommittedBallQuantity(payments, { exceptPaymentId, tubeBrandId }),
     0,
   );
 }
@@ -87,10 +95,12 @@ export function calculateStandalonePaymentCapacity({
   stockQuantity,
   payments,
   payment,
+  tubeBrandId,
 }: {
   stockQuantity: number;
   payments: StockPayment[];
   payment: StockPayment;
+  tubeBrandId?: string;
 }) {
   if (!Number.isFinite(payment.ballQuantity) || payment.ballQuantity <= 0) {
     return 0;
@@ -100,14 +110,21 @@ export function calculateStandalonePaymentCapacity({
     stockQuantity,
     payments,
     exceptPaymentId: payment.id,
+    tubeBrandId,
   });
 
   return Math.floor(stockAvailableForThisPayment / payment.ballQuantity);
 }
 
-export function findOpenStandaloneBallPayment(payments: StockPayment[]) {
+export function findOpenStandaloneBallPayment(
+  payments: StockPayment[],
+  options: { tubeBrandId?: string } = {},
+) {
   return payments
     .filter(isStandaloneBallPayment)
+    .filter((payment) =>
+      options.tubeBrandId ? payment.tubeBrandId === options.tubeBrandId : true,
+    )
     .filter(isOpenPendingPayment)
     .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
 }

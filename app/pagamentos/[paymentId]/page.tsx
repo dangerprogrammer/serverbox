@@ -102,6 +102,12 @@ export default async function PaymentPage({
               <span className="font-semibold text-slate-900">Item:</span>{" "}
               {payment.planName}
             </p>
+            {payment.tubeBrandName ? (
+              <p>
+                <span className="font-semibold text-slate-900">Marca:</span>{" "}
+                {payment.tubeBrandName}
+              </p>
+            ) : null}
             <p className="break-all font-mono text-xs">
               {payment.pixCopyPasteCode ?? "Codigo PIX indisponivel"}
             </p>

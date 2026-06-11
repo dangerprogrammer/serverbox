@@ -7,7 +7,10 @@ import {
 } from "@/lib/db/entities/condominium.entity";
 import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
-import { getTubeStockEntries, sumTubeStockEntries } from "@/lib/domain/tube-stock";
+import {
+  getActiveTubeStockEntries,
+  sumActiveTubeStockEntries,
+} from "@/lib/domain/tube-stock";
 
 export async function getCondominiumManagementData() {
   const dataSource = await getDataSource();
@@ -42,7 +45,10 @@ export async function getCondominiumManagementData() {
       name: brand.name,
     })),
     condominiums: condominiums.map((condominium: Condominium) => {
-      const tubeStockByBrand = getTubeStockEntries(condominium.tubeStockByBrand)
+      const tubeStockByBrand = getActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+      )
         .map((entry) => {
           const tubeBrand = brandById.get(entry.tubeBrandId);
 
@@ -54,8 +60,11 @@ export async function getCondominiumManagementData() {
             : null;
         })
         .filter((entry) => entry !== null);
-      const totalStock =
-        sumTubeStockEntries(tubeStockByBrand) || condominium.ballQuantity;
+      const totalStock = sumActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+        condominium.ballQuantity,
+      );
 
       return {
         id: condominium.id,

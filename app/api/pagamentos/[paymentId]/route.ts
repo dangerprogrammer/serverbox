@@ -47,7 +47,9 @@ export async function POST(
     revalidatePath("/dashboard");
     revalidatePath(`/pagamentos/${paymentId}`);
 
-    return Response.json(savedPayment);
+    const payment = await getPaymentDetails(paymentId);
+
+    return Response.json(payment ?? savedPayment);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Falha ao sincronizar pagamento.";

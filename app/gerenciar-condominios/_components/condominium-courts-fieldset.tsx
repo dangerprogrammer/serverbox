@@ -152,7 +152,7 @@ export function CondominiumCourtsFieldset({
             {courts.map((court, index) => (
               <div
                 key={court.id}
-                className="rounded-xl border border-slate-200 bg-white/60 p-4"
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
               >
                 <div className="grid gap-3">
                   <input type="hidden" name="courtKey" value={court.id} />
@@ -183,21 +183,31 @@ export function CondominiumCourtsFieldset({
                         return (
                           <div
                             key={brand.id}
-                            className={`grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-2 px-1 py-2.5 transition ${
+                            className={`grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-2 px-1 py-2 transition ${
                               isSelected
                                 ? "opacity-100"
                                 : "opacity-60"
                             }`}
                           >
-                            <label className="inline-flex min-h-8 min-w-0 items-center gap-2">
+                            <label className="group inline-flex min-h-8 min-w-0 cursor-pointer items-center gap-2">
                               <input
                                 type="checkbox"
                                 name={`tubeBrandIds:${court.id}`}
                                 value={brand.id}
                                 checked={isSelected}
                                 onChange={() => toggleCourtBrand(court.id, brand.id)}
-                                className="size-4 accent-emerald-600"
+                                className="peer sr-only"
                               />
+                              <span
+                                aria-hidden="true"
+                                className={`grid size-5 shrink-0 place-items-center rounded-md border text-[0.68rem] font-black leading-none transition peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 ${
+                                  isSelected
+                                    ? "border-emerald-600 bg-emerald-600 text-white peer-focus-visible:outline-emerald-600"
+                                    : "border-slate-300 bg-white text-transparent group-hover:border-slate-900 peer-focus-visible:outline-slate-400"
+                                }`}
+                              >
+                                ✓
+                              </span>
                               <span className="truncate text-sm font-semibold text-slate-900">
                                 {brand.name}
                               </span>

@@ -7,7 +7,12 @@ import {
 } from "@/lib/db/entities/condominium.entity";
 import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
-import { getTubeStockEntries, sumTubeStockEntries } from "@/lib/domain/tube-stock";
+import {
+  getActiveTubeStockEntries,
+  getTubeStockEntries,
+  sumActiveTubeStockEntries,
+  sumTubeStockEntries,
+} from "@/lib/domain/tube-stock";
 
 type CreateCondominiumPayload = {
   name?: string;
@@ -65,7 +70,10 @@ export async function GET(request: Request) {
 
   return Response.json(
     condominiums.map((condominium: Condominium) => {
-      const tubeStockByBrand = getTubeStockEntries(condominium.tubeStockByBrand)
+      const tubeStockByBrand = getActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+      )
         .map((entry) => {
           const tubeBrand = brandById.get(entry.tubeBrandId);
 
@@ -77,8 +85,11 @@ export async function GET(request: Request) {
             : null;
         })
         .filter((entry) => entry !== null);
-      const ballQuantity =
-        sumTubeStockEntries(tubeStockByBrand) || condominium.ballQuantity;
+      const ballQuantity = sumActiveTubeStockEntries(
+        condominium.tubeStockByBrand,
+        condominium.courtDetails,
+        condominium.ballQuantity,
+      );
 
       return {
         id: condominium.id,
@@ -215,16 +226,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const savedCondominium = await condominiumRepository.save({
-    name: payload.name.trim(),
-    city: payload.city.trim(),
-    state: payload.state.trim().toUpperCase().slice(0, 2),
-    courts: requestedCourtCount,
-    ballQuantity: sumTubeStockEntries(validTubeStockByBrand),
-    tubeStockByBrand: validTubeStockByBrand,
-    primaryAdmin: assignedAdministrator,
-  });
-
   const courtDetails =
     payload.courtDetails && payload.courtDetails.length > 0
       ? payload.courtDetails
@@ -233,6 +234,40 @@ export async function POST(request: Request) {
           tubeBrandId: defaultBrand?.id,
           tubeBrandIds: defaultBrand ? [defaultBrand.id] : [],
         }));
+  const activeBrandIds = new Set<string>();
+  courtDetails.forEach((court) => {
+    const selectedBrandIds =
+      court.tubeBrandIds && court.tubeBrandIds.length > 0
+        ? court.tubeBrandIds
+        : [court.tubeBrandId].filter(Boolean);
+    const selectedTubeBrands = selectedBrandIds
+      .map((brandId) => brandById.get(String(brandId)))
+      .filter(Boolean) as TubeBrand[];
+    const resolvedTubeBrands =
+      selectedTubeBrands.length > 0
+        ? selectedTubeBrands
+        : defaultBrand
+          ? [defaultBrand]
+          : [];
+
+    resolvedTubeBrands.forEach((brand) => activeBrandIds.add(brand.id));
+  });
+  const activeTubeStockByBrand =
+    activeBrandIds.size > 0
+      ? validTubeStockByBrand.filter((entry) =>
+          activeBrandIds.has(entry.tubeBrandId),
+        )
+      : validTubeStockByBrand;
+
+  const savedCondominium = await condominiumRepository.save({
+    name: payload.name.trim(),
+    city: payload.city.trim(),
+    state: payload.state.trim().toUpperCase().slice(0, 2),
+    courts: requestedCourtCount,
+    ballQuantity: sumTubeStockEntries(activeTubeStockByBrand),
+    tubeStockByBrand: activeTubeStockByBrand,
+    primaryAdmin: assignedAdministrator,
+  });
 
   const savedCourts =
     courtDetails.length > 0
@@ -272,7 +307,7 @@ export async function POST(request: Request) {
       state: savedCondominium.state,
       courts: savedCourts.length || savedCondominium.courts,
       ballQuantity: savedCondominium.ballQuantity,
-      tubeStockByBrand: validTubeStockByBrand.map((entry) => {
+      tubeStockByBrand: activeTubeStockByBrand.map((entry) => {
         const tubeBrand = brandById.get(entry.tubeBrandId);
 
         return {

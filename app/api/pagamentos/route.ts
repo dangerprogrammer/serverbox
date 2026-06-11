@@ -12,6 +12,7 @@ import {
 type CreatePaymentPayload = {
   planId?: string;
   condominiumId?: string;
+  tubeBrandId?: string;
   ballQuantity?: number;
   amountInCents?: number;
   method?: string;
@@ -38,6 +39,8 @@ export async function GET() {
       method: payment.method,
       amountInCents: payment.amountInCents,
       ballQuantity: payment.ballQuantity,
+      tubeBrandId: payment.tubeBrandId,
+      tubeBrandName: payment.tubeBrandName,
       provider: payment.provider,
       providerPaymentId: payment.providerPaymentId,
       providerRawStatus: payment.providerRawStatus,
@@ -80,6 +83,7 @@ export async function POST(request: Request) {
         })
       : await createStandaloneBallPayment({
           condominiumId: String(payload.condominiumId ?? ""),
+          tubeBrandId: String(payload.tubeBrandId ?? ""),
           ballQuantity: Number(payload.ballQuantity),
           amountInCents: Number(payload.amountInCents),
         });

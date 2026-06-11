@@ -392,13 +392,26 @@ textarea:disabled,
 .border-border,
 .border-slate-200,
 .border-slate-300,
-.hover\:border-slate-400:hover {
+.hover\:border-slate-400:hover,
+.group:hover .group-hover\:border-slate-900 {
   border-color: var(--border) !important;
 }
 
 .border-slate-900,
 .hover\:border-slate-900:hover {
   border-color: var(--border-strong) !important;
+}
+
+.border-emerald-600 {
+  border-color: var(--accent) !important;
+}
+
+.peer:focus-visible ~ .peer-focus-visible\:outline-slate-400 {
+  outline-color: var(--border-strong) !important;
+}
+
+.peer:focus-visible ~ .peer-focus-visible\:outline-emerald-600 {
+  outline-color: var(--accent) !important;
 }
 
 .border-amber-200 {

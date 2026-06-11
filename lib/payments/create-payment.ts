@@ -17,7 +17,11 @@ import {
   findOpenStandaloneBallPayment,
   hasPendingPaymentExpired,
 } from "@/lib/payments/stock";
-import { sumTubeStockEntries, type TubeStockEntry } from "@/lib/domain/tube-stock";
+import {
+  sumActiveTubeStockEntries,
+  getActiveTubeStockEntries,
+  type TubeStockEntry,
+} from "@/lib/domain/tube-stock";
 
 type CreateCondominiumPaymentInput = {
   planId: string;
@@ -26,6 +30,7 @@ type CreateCondominiumPaymentInput = {
 
 type CreateStandaloneBallPaymentInput = {
   condominiumId: string;
+  tubeBrandId: string;
   ballQuantity: number;
   amountInCents: number;
 };
@@ -85,8 +90,57 @@ function assertBallStockAvailable({
 function getCondominiumStockQuantity(condominium: {
   ballQuantity: number;
   tubeStockByBrand?: TubeStockEntry[] | null;
+  courtDetails?: Array<{
+    tubeBrand?: { id?: string | null } | null;
+    tubeBrands?: Array<{ id?: string | null } | null> | null;
+  }> | null;
 }) {
-  return sumTubeStockEntries(condominium.tubeStockByBrand) || condominium.ballQuantity;
+  return sumActiveTubeStockEntries(
+    condominium.tubeStockByBrand,
+    condominium.courtDetails,
+    condominium.ballQuantity,
+  );
+}
+
+function getActiveTubeBrandName(
+  condominium: {
+    courtDetails?: Array<{
+      tubeBrand?: { id?: string | null; name?: string | null } | null;
+      tubeBrands?: Array<{ id?: string | null; name?: string | null } | null> | null;
+    }> | null;
+  },
+  tubeBrandId: string,
+) {
+  for (const court of condominium.courtDetails ?? []) {
+    const tubeBrands =
+      court.tubeBrands && court.tubeBrands.length > 0
+        ? court.tubeBrands
+        : [court.tubeBrand];
+    const tubeBrand = tubeBrands.find((brand) => brand?.id === tubeBrandId);
+
+    if (tubeBrand?.name) {
+      return tubeBrand.name;
+    }
+  }
+
+  return "Marca selecionada";
+}
+
+function getCondominiumTubeBrandStock(
+  condominium: {
+    ballQuantity: number;
+    tubeStockByBrand?: TubeStockEntry[] | null;
+    courtDetails?: Array<{
+      tubeBrand?: { id?: string | null; name?: string | null } | null;
+      tubeBrands?: Array<{ id?: string | null; name?: string | null } | null> | null;
+    }> | null;
+  },
+  tubeBrandId: string,
+) {
+  return getActiveTubeStockEntries(
+    condominium.tubeStockByBrand,
+    condominium.courtDetails,
+  ).find((entry) => entry.tubeBrandId === tubeBrandId);
 }
 
 async function buildChargeForCondominium({
@@ -149,6 +203,7 @@ export async function createCondominiumPayment({
   const condominiums = await condominiumRepository.find({
     relations: {
       primaryAdmin: true,
+      courtDetails: { tubeBrand: true, tubeBrands: true },
       payments: true,
     },
   });
@@ -213,6 +268,8 @@ export async function createCondominiumPayment({
     status: PaymentStatus.PENDING,
     amountInCents: charge.amountInCents,
     ballQuantity: plan.monthlyBallAllowance,
+    tubeBrandId: null,
+    tubeBrandName: null,
     provider: charge.provider,
     providerPaymentId: charge.providerPaymentId,
     providerRawStatus: charge.providerRawStatus,
@@ -230,9 +287,12 @@ export async function createCondominiumPayment({
 
 export async function createStandaloneBallPayment({
   condominiumId,
+  tubeBrandId,
   ballQuantity,
   amountInCents,
 }: CreateStandaloneBallPaymentInput) {
+  const requestedTubeBrandId = tubeBrandId.trim();
+
   if (!condominiumId) {
     throw new Error("CondomÃ­nio Ã© obrigatÃ³rio para compra avulsa.");
   }
@@ -245,6 +305,10 @@ export async function createStandaloneBallPayment({
     throw new Error("Valor em centavos invÃ¡lido.");
   }
 
+  if (!requestedTubeBrandId) {
+    throw new Error("Marca de tubos Ã© obrigatÃ³ria para compra avulsa.");
+  }
+
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
@@ -253,6 +317,7 @@ export async function createStandaloneBallPayment({
     where: { id: condominiumId },
     relations: {
       primaryAdmin: true,
+      courtDetails: { tubeBrand: true, tubeBrands: true },
       payments: true,
     },
   });
@@ -262,19 +327,41 @@ export async function createStandaloneBallPayment({
   }
 
   await expirePendingPaymentsIfNeeded(paymentRepository, condominium.payments);
-  const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments);
+  const tubeBrandStock = getCondominiumTubeBrandStock(
+    condominium,
+    requestedTubeBrandId,
+  );
+
+  if (!tubeBrandStock) {
+    throw new Error("Marca de tubos indisponÃ­vel para compra avulsa.");
+  }
+
+  const tubeBrandName = getActiveTubeBrandName(condominium, requestedTubeBrandId);
+  const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments, {
+    tubeBrandId: requestedTubeBrandId,
+  });
 
   if (openStandalonePayment) {
-    const stockQuantity = getCondominiumStockQuantity(condominium);
-    const availablePaymentCount = calculateStandalonePaymentCapacity({
-      stockQuantity,
+    const totalStockQuantity = getCondominiumStockQuantity(condominium);
+    const availableByBrand = calculateStandalonePaymentCapacity({
+      stockQuantity: tubeBrandStock.quantity,
+      payments: condominium.payments,
+      payment: openStandalonePayment,
+      tubeBrandId: requestedTubeBrandId,
+    });
+    const availableByTotalStock = calculateStandalonePaymentCapacity({
+      stockQuantity: totalStockQuantity,
       payments: condominium.payments,
       payment: openStandalonePayment,
     });
+    const availablePaymentCount = Math.min(
+      availableByBrand,
+      availableByTotalStock,
+    );
 
     if (availablePaymentCount <= 0) {
       throw new Error(
-        "Estoque insuficiente para reutilizar o QR Code avulso aberto deste condomínio.",
+        "Estoque insuficiente para reutilizar o QR Code avulso aberto desta marca.",
       );
     }
 
@@ -292,14 +379,20 @@ export async function createStandaloneBallPayment({
     return reusablePayment;
   }
 
-  const remainingBallStock = calculateRemainingBallStock({
+  const totalRemainingBallStock = calculateRemainingBallStock({
     stockQuantity: getCondominiumStockQuantity(condominium),
     payments: condominium.payments,
   });
+  const remainingBrandStock = calculateRemainingBallStock({
+    stockQuantity: tubeBrandStock.quantity,
+    payments: condominium.payments,
+    tubeBrandId: requestedTubeBrandId,
+  });
+  const availableBallStock = Math.min(totalRemainingBallStock, remainingBrandStock);
 
   assertBallStockAvailable({
     requestedBallQuantity: ballQuantity,
-    remainingBallStock,
+    remainingBallStock: availableBallStock,
   });
 
   const { charge, reference } = await buildChargeForCondominium({
@@ -310,6 +403,8 @@ export async function createStandaloneBallPayment({
     metadata: {
       condominiumId: condominium.id,
       paymentType: "standalone_ball_purchase",
+      tubeBrandId: requestedTubeBrandId,
+      tubeBrandName,
       ballQuantity,
     },
   });
@@ -323,6 +418,8 @@ export async function createStandaloneBallPayment({
     status: PaymentStatus.PENDING,
     amountInCents: charge.amountInCents,
     ballQuantity,
+    tubeBrandId: requestedTubeBrandId,
+    tubeBrandName,
     provider: charge.provider,
     providerPaymentId: charge.providerPaymentId,
     providerRawStatus: charge.providerRawStatus,

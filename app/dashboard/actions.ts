@@ -85,9 +85,14 @@ export async function createStandalonePaymentAction(formData: FormData) {
   await requireAuthenticatedAdminFromFormData(formData);
 
   const condominiumId = String(formData.get("condominiumId") ?? "");
+  const tubeBrandId = String(formData.get("tubeBrandId") ?? "");
 
   if (!condominiumId) {
     throw new Error("Condomínio é obrigatório para criar compra avulsa.");
+  }
+
+  if (!tubeBrandId) {
+    throw new Error("Marca de tubos é obrigatória para criar compra avulsa.");
   }
 
   const ballQuantity = parsePositiveInteger(
@@ -102,6 +107,7 @@ export async function createStandalonePaymentAction(formData: FormData) {
   try {
     const payment = await createStandaloneBallPayment({
       condominiumId,
+      tubeBrandId,
       ballQuantity,
       amountInCents,
     });

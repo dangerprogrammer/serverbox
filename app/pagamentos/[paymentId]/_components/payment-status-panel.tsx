@@ -10,6 +10,8 @@ type PaymentDetails = {
   status: PaymentStatus;
   amountInCents: number;
   ballQuantity: number;
+  tubeBrandId: string | null;
+  tubeBrandName: string | null;
   provider: string | null;
   providerPaymentId: string | null;
   providerReceiptUrl: string | null;
@@ -169,6 +171,11 @@ export function PaymentStatusPanel({
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {payment.planName}
           </p>
+          {payment.tubeBrandName ? (
+            <p className="mt-1 text-sm text-slate-600">
+              Marca: {payment.tubeBrandName}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-[1.25rem] border border-border bg-slate-50 p-4">
           <p className="text-sm text-slate-500">Liberação</p>

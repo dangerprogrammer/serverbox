@@ -10,7 +10,11 @@ import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.enti
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
-import { sumTubeStockEntries, type TubeStockEntry } from "@/lib/domain/tube-stock";
+import {
+  getActiveTubeStockEntries,
+  sumTubeStockEntries,
+  type TubeStockEntry,
+} from "@/lib/domain/tube-stock";
 import { In, type DataSource } from "typeorm";
 
 function normalizeSlug(value: string) {
@@ -174,6 +178,19 @@ async function parseTubeStockEntries(dataSource: DataSource, formData: FormData)
   );
 }
 
+function getActiveCourtTubeStockEntries(
+  stockEntries: TubeStockEntry[],
+  courtEntries: CourtEntry[],
+) {
+  const activeStockEntries = getActiveTubeStockEntries(stockEntries, courtEntries);
+
+  if (activeStockEntries.length === 0) {
+    throw new Error("Adicione ao menos uma marca ativa com quantidade de tubos.");
+  }
+
+  return activeStockEntries;
+}
+
 async function replaceCondominiumCourts(
   dataSource: DataSource,
   condominium: { id: string },
@@ -251,7 +268,10 @@ export async function createCondominiumAction(formData: FormData) {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const courtEntries = await parseCourtEntries(dataSource, formData);
-  const tubeStockByBrand = await parseTubeStockEntries(dataSource, formData);
+  const tubeStockByBrand = getActiveCourtTubeStockEntries(
+    await parseTubeStockEntries(dataSource, formData),
+    courtEntries,
+  );
 
   const condominium = await condominiumRepository.save({
     name,
@@ -280,7 +300,10 @@ export async function updateCondominiumAction(formData: FormData) {
   const dataSource = await getDataSource();
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
   const courtEntries = await parseCourtEntries(dataSource, formData);
-  const tubeStockByBrand = await parseTubeStockEntries(dataSource, formData);
+  const tubeStockByBrand = getActiveCourtTubeStockEntries(
+    await parseTubeStockEntries(dataSource, formData),
+    courtEntries,
+  );
   const existing = await condominiumRepository.findOneBy({ id: condominiumId });
 
   if (!existing) {

@@ -57,6 +57,8 @@ export async function getPaymentDetails(paymentId: string) {
     method: freshPayment.method,
     amountInCents: freshPayment.amountInCents,
     ballQuantity: freshPayment.ballQuantity,
+    tubeBrandId: freshPayment.tubeBrandId,
+    tubeBrandName: freshPayment.tubeBrandName,
     provider: freshPayment.provider,
     providerPaymentId: freshPayment.providerPaymentId,
     providerReceiptUrl: freshPayment.providerReceiptUrl,
