@@ -65,7 +65,7 @@ Fluxo atual:
 
 1. Cria um pagamento pendente para um plano de um condominio
 2. Abre a cobranca PIX com QR Code e copia e cola
-3. O backend so libera o credito quando a AbacatePay confirma o pagamento
+3. O backend so libera o credito quando o gateway confirma o pagamento
 4. O sistema gera um credito em `BallInventoryMovement`
 5. O saldo de tubos fica visivel na dashboard
 
@@ -110,22 +110,60 @@ curl -X POST http://localhost:3000/api/pagamentos \
   -d "{\"planId\":\"SEU_PLAN_ID\",\"method\":\"pix\"}"
 ```
 
-## Configuracao AbacatePay
+## Configuracao do gateway PIX
 
-O fluxo de checkout agora nasce diretamente na AbacatePay. Para criar cobrancas
-PIX, configure no `.env.local`:
+Novas cobrancas sao criadas pelo provider definido em `PAYMENT_PROVIDER`.
+Use `santander` para a integracao nova ou `abacatepay` para rollback/legado.
+
+### Santander
+
+No Portal do Desenvolvedor Santander:
+
+1. Crie uma aplicacao para o ServerBox.
+2. Habilite a API `Pix - QRCode Generation`.
+3. Cadastre a chave Pix recebedora.
+4. Configure o certificado A1 em PEM para mTLS.
+5. Copie `client_id` e `client_secret`.
+6. Configure o webhook com base `https://seu-dominio.com/api/webhooks/santander`.
+   O callback esperado pelo projeto fica em `/api/webhooks/santander/pix`.
+
+Variaveis principais:
 
 ```bash
+PAYMENT_PROVIDER=santander
+PAYMENT_DEFAULT_CUSTOMER_TAX_ID=12345678909
+
+SANTANDER_ENV=sandbox
+SANTANDER_CLIENT_ID=seu_client_id
+SANTANDER_CLIENT_SECRET=seu_client_secret
+SANTANDER_PIX_KEY=sua_chave_pix
+SANTANDER_CERT_PATH=./certs/santander-cert.pem
+SANTANDER_KEY_PATH=./certs/santander-key.pem
+SANTANDER_PIX_EXPIRATION_SECONDS=3600
+```
+
+Em deploy, prefira `SANTANDER_CERT_PEM_BASE64` e
+`SANTANDER_KEY_PEM_BASE64` para nao depender de arquivos locais. Nunca versione
+certificado, chave privada ou `.env.local`.
+
+Se o ambiente Santander usar hosts diferentes dos defaults, configure:
+
+```bash
+SANTANDER_API_BASE_URL=https://host-santander/api/v1
+SANTANDER_AUTH_URL=https://host-santander/auth/oauth/v2/token
+```
+
+### AbacatePay legado
+
+O provider antigo continua disponivel para pagamentos pendentes antigos ou
+rollback:
+
+```bash
+PAYMENT_PROVIDER=abacatepay
 ABACATEPAY_API_KEY=sua_chave
 ABACATEPAY_WEBHOOK_SECRET=seu_segredo
 ABACATEPAY_PUBLIC_WEBHOOK_KEY=sua_chave_publica_do_webhook
 ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE=5511999999999
 ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID=12345678909
 ```
-
-Sem `ABACATEPAY_API_KEY`, a API passa a recusar a criacao de novas cobrancas
-com `503`.
-
-Como o dominio atual ainda nao cadastra telefone e documento por condominio, a
-criacao da cobranca usa um contato padrao da AbacatePay vindo do ambiente.
 

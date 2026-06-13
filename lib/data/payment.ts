@@ -6,7 +6,7 @@ import {
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
-import { syncAbacatePixPayment } from "@/lib/payments/settle-payment";
+import { syncPixPayment } from "@/lib/payments/settle-payment";
 
 function hasPaymentExpired(payment: CondominiumPayment) {
   return (
@@ -46,7 +46,7 @@ export async function getPaymentDetails(paymentId: string) {
 
   const syncedPayment =
     payment.status === PaymentStatus.PENDING
-      ? await syncAbacatePixPayment({ paymentId })
+      ? await syncPixPayment({ paymentId })
       : payment;
   const freshPayment = await expirePaymentIfNeeded(syncedPayment ?? payment);
 

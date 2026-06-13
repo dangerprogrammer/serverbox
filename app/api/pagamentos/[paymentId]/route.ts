@@ -1,14 +1,20 @@
 import { revalidatePath } from "next/cache";
 
 import { getPaymentDetails } from "@/lib/data/payment";
-import {
-  simulateAbacatePixPayment,
-  syncAbacatePixPayment,
-} from "@/lib/payments/settle-payment";
+import { simulatePixPayment, syncPixPayment } from "@/lib/payments/settle-payment";
 
 type ConfirmPaymentPayload = {
   simulate?: boolean;
 };
+
+function isProviderConfigurationMessage(message: string) {
+  return (
+    message.includes("ABACATEPAY") ||
+    message.includes("SANTANDER") ||
+    message.includes("PAYMENT_PROVIDER") ||
+    message.includes("gateway")
+  );
+}
 
 export async function GET(
   _request: Request,
@@ -18,7 +24,7 @@ export async function GET(
   const payment = await getPaymentDetails(paymentId);
 
   if (!payment) {
-    return Response.json({ error: "Pagamento não encontrado." }, { status: 404 });
+    return Response.json({ error: "Pagamento nao encontrado." }, { status: 404 });
   }
 
   return Response.json(payment);
@@ -33,12 +39,12 @@ export async function POST(
 
   try {
     const savedPayment = payload.simulate
-      ? await simulateAbacatePixPayment(paymentId)
-      : await syncAbacatePixPayment({ paymentId });
+      ? await simulatePixPayment(paymentId)
+      : await syncPixPayment({ paymentId });
 
     if (!savedPayment) {
       return Response.json(
-        { error: "Configure ABACATEPAY_API_KEY para sincronizar pagamentos." },
+        { error: "Configure as credenciais do gateway para sincronizar pagamentos." },
         { status: 503 },
       );
     }
@@ -54,19 +60,19 @@ export async function POST(
     const message =
       error instanceof Error ? error.message : "Falha ao sincronizar pagamento.";
 
-    if (message === "Pagamento não encontrado.") {
+    if (message === "Pagamento nao encontrado.") {
       return Response.json({ error: message }, { status: 404 });
     }
 
-    if (message === "Pagamento não está vinculado a AbacatePay.") {
+    if (
+      message === "Pagamento nao esta vinculado ao gateway de pagamento." ||
+      message === "Simulacao nao disponivel para este gateway."
+    ) {
       return Response.json({ error: message }, { status: 409 });
     }
 
-    if (message === "ABACATEPAY_API_KEY não configurada.") {
-      return Response.json(
-        { error: "Configure ABACATEPAY_API_KEY para operar pagamentos." },
-        { status: 503 },
-      );
+    if (isProviderConfigurationMessage(message)) {
+      return Response.json({ error: message }, { status: 503 });
     }
 
     return Response.json({ error: message }, { status: 400 });

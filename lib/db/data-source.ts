@@ -1,11 +1,11 @@
 import "reflect-metadata";
 import "server-only";
 
-import fs from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
 import Database from "better-sqlite3";
+import ormConfigFile from "@/ormconfig.json";
 import { AdministratorEntity } from "@/lib/db/entities/administrator.entity";
 import { BallInventoryMovementEntity } from "@/lib/db/entities/ball-inventory-movement.entity";
 import { CondominiumClientAccessEntity } from "@/lib/db/entities/condominium-client-access.entity";
@@ -53,18 +53,7 @@ type OrmConfig = {
 };
 
 function getOrmConfig() {
-  const ormconfigPath = path.resolve(process.cwd(), "ormconfig.json");
-
-  if (!fs.existsSync(ormconfigPath)) {
-    return {} satisfies OrmConfig;
-  }
-
-  try {
-    return JSON.parse(fs.readFileSync(ormconfigPath, "utf8")) as OrmConfig;
-  } catch (error) {
-    console.error("Failed to parse ormconfig.json", error);
-    return {} satisfies OrmConfig;
-  }
+  return ormConfigFile as OrmConfig;
 }
 
 const ormConfig = getOrmConfig();
@@ -106,14 +95,11 @@ function isProductionBuild() {
 }
 
 function getDatabasePath() {
-  const baseDirectory = isVercelRuntime()
-    ? path.join("/tmp", "serverbox")
-    : path.join(process.cwd(), "data");
+  const databaseFilename = ormConfig.database ?? process.env.DB_FILENAME ?? "serverbox.sqlite";
 
-  return path.join(
-    baseDirectory,
-    ormConfig.database ?? process.env.DB_FILENAME ?? "serverbox.sqlite",
-  );
+  return isVercelRuntime()
+    ? path.join("/tmp", "serverbox", databaseFilename)
+    : path.join(process.cwd(), "data", databaseFilename);
 }
 
 async function resetLegacyDatabaseIfNeeded(databasePath: string) {

@@ -4,6 +4,10 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from "@/lib/db/entities/condominium-payment.entity";
+import type {
+  CreatePixChargeInput,
+  PaymentChargeSnapshot,
+} from "@/lib/payments/types";
 
 const ABACATEPAY_API_BASE_URL =
   process.env.ABACATEPAY_API_BASE_URL?.trim() || "https://api.abacatepay.com/v2";
@@ -43,31 +47,11 @@ type AbacatePayTransparent = {
   externalId?: string | null;
 };
 
-type CreateAbacatePixChargeInput = {
-  amountInCents: number;
-  reference: string;
-  customer: {
-    name: string;
-    email: string;
-    cellphone?: string;
-    taxId?: string;
-  };
-  metadata?: Record<string, string>;
-};
+type CreateAbacatePixChargeInput = CreatePixChargeInput;
 
-export type AbacatePayChargeSnapshot = {
+export type AbacatePayChargeSnapshot = PaymentChargeSnapshot & {
   provider: typeof ABACATEPAY_PROVIDER;
-  providerPaymentId: string;
   providerRawStatus: AbacatePayTransparentStatus;
-  providerReceiptUrl: string | null;
-  providerDevMode: boolean;
-  method: PaymentMethod;
-  status: PaymentStatus;
-  amountInCents: number;
-  pixTransactionId: string | null;
-  pixQrCode: string | null;
-  pixCopyPasteCode: string | null;
-  pixExpiresAt: Date | null;
 };
 
 export type AbacatePayWebhookPayload = {

@@ -33,14 +33,14 @@ export default async function PaymentPage({
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-              Checkout PIX AbacatePay
+              Checkout PIX
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               QR Code e cópia e cola com liberação automática.
             </h1>
             <p className="mt-4 text-base leading-8 text-slate-600">
               Esta cobrança fica em acompanhamento automático. O saldo só deve
-              ser liberado quando a AbacatePay confirmar o pagamento.
+              ser liberado quando o gateway confirmar o pagamento.
             </p>
           </div>
 
@@ -90,7 +90,7 @@ export default async function PaymentPage({
             )}
           </div>
           <p className="mt-4 text-sm leading-7 text-slate-600">
-            Escaneie o QR Code ou copie o código PIX. Assim que a AbacatePay
+            Escaneie o QR Code ou copie o código PIX. Assim que o gateway
             confirmar a cobrança, o status muda automaticamente.
           </p>
           <div className="payment-print-only mt-6 space-y-3 text-sm text-slate-700">

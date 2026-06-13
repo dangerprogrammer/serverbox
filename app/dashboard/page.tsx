@@ -11,6 +11,17 @@ const paymentMethodLabels: Record<string, string> = {
   pix: "PIX",
 };
 
+function getProviderLabel(provider: string | null) {
+  switch (provider) {
+    case "abacatepay":
+      return "AbacatePay";
+    case "santander":
+      return "Santander";
+    default:
+      return "Gateway";
+  }
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
@@ -141,8 +152,8 @@ export default async function DashboardPage() {
                             {currencyFormatter.format(payment.amountInCents / 100)}
                           </p>
                           <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-                            {payment.provider === "abacatepay"
-                              ? `AbacatePay ID: ${payment.providerPaymentId ?? "aguardando geração"}`
+                            {payment.provider
+                              ? `${getProviderLabel(payment.provider)} ID: ${payment.providerPaymentId ?? "aguardando geração"}`
                               : `Referencia: ${payment.reference}`}
                           </p>
                         </div>

@@ -10,25 +10,36 @@ import {
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import {
-  type AbacatePayChargeSnapshot,
-  checkAbacatePixCharge,
-  getAbacatePayProviderName,
-  isAbacatePayConfigured,
-  simulateAbacatePixCharge,
-} from "@/lib/payments/abacatepay";
+  checkPixCharge,
+  getPaymentProviderConfigError,
+  isPaymentProviderConfigured,
+  normalizePaymentProviderName,
+  simulatePixCharge,
+} from "@/lib/payments/gateway";
+import type { SantanderPix } from "@/lib/payments/santander";
+import type { PaymentChargeSnapshot } from "@/lib/payments/types";
 
-function isAbacatePayAuthOrKeyError(errorMessage: string) {
+function isProviderAuthOrConfigError(errorMessage: string) {
   const normalizedMessage = errorMessage.toLowerCase();
 
   return (
     normalizedMessage.includes("invalid or inactive api key") ||
     normalizedMessage.includes("api key") ||
+    normalizedMessage.includes("client_id") ||
+    normalizedMessage.includes("client_secret") ||
+    normalizedMessage.includes("certificado") ||
+    normalizedMessage.includes("chave privada") ||
+    normalizedMessage.includes("nao configurad") ||
+    normalizedMessage.includes("não configurad") ||
     normalizedMessage.includes("unauthorized") ||
     normalizedMessage.includes("forbidden")
   );
 }
 
-function isAmountMismatch(payment: CondominiumPayment, snapshot: AbacatePayChargeSnapshot) {
+function isAmountMismatch(
+  payment: CondominiumPayment,
+  snapshot: PaymentChargeSnapshot,
+) {
   return snapshot.amountInCents !== payment.amountInCents;
 }
 
@@ -38,7 +49,7 @@ export async function applyProviderPaymentSnapshot({
   verificationSource,
 }: {
   payment: CondominiumPayment;
-  snapshot: AbacatePayChargeSnapshot;
+  snapshot: PaymentChargeSnapshot;
   verificationSource: PaymentVerificationSource;
 }) {
   const dataSource = await getDataSource();
@@ -50,20 +61,18 @@ export async function applyProviderPaymentSnapshot({
   payment.providerRawStatus = snapshot.providerRawStatus;
   payment.providerReceiptUrl = snapshot.providerReceiptUrl;
   payment.providerDevMode = snapshot.providerDevMode;
+  payment.pixTransactionId = snapshot.pixTransactionId ?? payment.pixTransactionId;
   payment.pixQrCode = snapshot.pixQrCode ?? payment.pixQrCode;
   payment.pixCopyPasteCode = snapshot.pixCopyPasteCode ?? payment.pixCopyPasteCode;
   payment.pixExpiresAt = snapshot.pixExpiresAt ?? payment.pixExpiresAt;
 
   if (isAmountMismatch(payment, snapshot)) {
-    console.warn(
-      "[abacatepay] amount mismatch while syncing payment snapshot",
-      {
-        paymentId: payment.id,
-        reference: payment.reference,
-        localAmountInCents: payment.amountInCents,
-        providerAmountInCents: snapshot.amountInCents,
-      },
-    );
+    console.warn("[payments] amount mismatch while syncing payment snapshot", {
+      paymentId: payment.id,
+      reference: payment.reference,
+      localAmountInCents: payment.amountInCents,
+      providerAmountInCents: snapshot.amountInCents,
+    });
   }
 
   const existingCredit = await movementRepository.findOne({
@@ -102,17 +111,15 @@ export async function applyProviderPaymentSnapshot({
   return savedPayment;
 }
 
-export async function syncAbacatePixPayment({
+export async function syncPixPayment({
   paymentId,
   verificationSource = PaymentVerificationSource.STATUS_CHECK,
+  santanderWebhookPix,
 }: {
   paymentId: string;
   verificationSource?: PaymentVerificationSource;
+  santanderWebhookPix?: SantanderPix;
 }) {
-  if (!isAbacatePayConfigured()) {
-    return null;
-  }
-
   const dataSource = await getDataSource();
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const payment = await paymentRepository.findOne({
@@ -122,19 +129,27 @@ export async function syncAbacatePixPayment({
     },
   });
 
-  if (
-    !payment ||
-    payment.provider !== getAbacatePayProviderName() ||
-    !payment.providerPaymentId
-  ) {
+  if (!payment || !payment.providerPaymentId) {
     return payment;
   }
 
+  const provider = normalizePaymentProviderName(payment.provider);
+
+  if (!provider) {
+    return payment;
+  }
+
+  if (!isPaymentProviderConfigured(provider)) {
+    return null;
+  }
+
   try {
-    const snapshot = await checkAbacatePixCharge(
-      payment.providerPaymentId,
-      payment.amountInCents,
-    );
+    const snapshot = await checkPixCharge({
+      provider,
+      providerPaymentId: payment.providerPaymentId,
+      amountInCents: payment.amountInCents,
+      santanderWebhookPix,
+    });
 
     return applyProviderPaymentSnapshot({
       payment,
@@ -144,9 +159,9 @@ export async function syncAbacatePixPayment({
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    if (isAbacatePayAuthOrKeyError(errorMessage)) {
+    if (isProviderAuthOrConfigError(errorMessage)) {
       console.warn(
-        "[abacatepay] skipping payment sync because the API key is invalid, inactive, or unavailable",
+        "[payments] skipping payment sync because provider credentials are invalid, inactive, or unavailable",
       );
 
       return payment;
@@ -156,7 +171,7 @@ export async function syncAbacatePixPayment({
   }
 }
 
-export async function simulateAbacatePixPayment(paymentId: string) {
+export async function simulatePixPayment(paymentId: string) {
   const dataSource = await getDataSource();
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
   const payment = await paymentRepository.findOne({
@@ -167,16 +182,22 @@ export async function simulateAbacatePixPayment(paymentId: string) {
   });
 
   if (!payment) {
-    throw new Error("Pagamento não encontrado.");
+    throw new Error("Pagamento nao encontrado.");
   }
 
-  if (payment.provider !== getAbacatePayProviderName() || !payment.providerPaymentId) {
-    throw new Error("Pagamento não está vinculado a AbacatePay.");
+  const provider = normalizePaymentProviderName(payment.provider);
+
+  if (!provider || !payment.providerPaymentId) {
+    throw new Error("Pagamento nao esta vinculado ao gateway de pagamento.");
   }
 
-  if (process.env.NODE_ENV === "development" && payment.providerDevMode) {
-    const snapshot: AbacatePayChargeSnapshot = {
-      provider: getAbacatePayProviderName(),
+  if (
+    provider === "abacatepay" &&
+    process.env.NODE_ENV === "development" &&
+    payment.providerDevMode
+  ) {
+    const snapshot: PaymentChargeSnapshot = {
+      provider,
       providerPaymentId: payment.providerPaymentId,
       providerRawStatus: "PAID",
       providerReceiptUrl: payment.providerReceiptUrl,
@@ -197,11 +218,14 @@ export async function simulateAbacatePixPayment(paymentId: string) {
     });
   }
 
-  if (!isAbacatePayConfigured()) {
-    throw new Error("ABACATEPAY_API_KEY não configurada.");
+  if (!isPaymentProviderConfigured(provider)) {
+    throw new Error(getPaymentProviderConfigError(provider));
   }
 
-  const snapshot = await simulateAbacatePixCharge(payment.providerPaymentId);
+  const snapshot = await simulatePixCharge({
+    provider,
+    providerPaymentId: payment.providerPaymentId,
+  });
 
   return applyProviderPaymentSnapshot({
     payment,

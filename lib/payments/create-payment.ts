@@ -1,15 +1,18 @@
 ﻿import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import type { Repository } from "typeorm";
+import crypto from "node:crypto";
 import {
   CondominiumPaymentEntity,
   PaymentStatus,
   type CondominiumPayment,
 } from "@/lib/db/entities/condominium-payment.entity";
 import {
-  createAbacatePixCharge,
-  isAbacatePayConfigured,
-} from "@/lib/payments/abacatepay";
+  createPixCharge,
+  getActivePaymentProviderName,
+  getPaymentProviderConfigError,
+  isPaymentProviderConfigured,
+} from "@/lib/payments/gateway";
 import {
   STANDALONE_BALL_PURCHASE_PLAN_NAME,
   calculateRemainingBallStock,
@@ -35,12 +38,21 @@ type CreateStandaloneBallPaymentInput = {
   amountInCents: number;
 };
 
-function getDefaultAbacatePayCustomerCellphone() {
-  return process.env.ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE?.trim() || null;
+function getDefaultPaymentCustomerCellphone() {
+  return (
+    process.env.PAYMENT_DEFAULT_CUSTOMER_CELLPHONE?.trim() ||
+    process.env.ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE?.trim() ||
+    null
+  );
 }
 
-function getDefaultAbacatePayCustomerTaxId() {
-  return process.env.ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID?.trim() || null;
+function getDefaultPaymentCustomerTaxId() {
+  return (
+    process.env.PAYMENT_DEFAULT_CUSTOMER_TAX_ID?.trim() ||
+    process.env.SANTANDER_DEFAULT_PAYER_TAX_ID?.trim() ||
+    process.env.ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID?.trim() ||
+    null
+  );
 }
 
 function buildPaymentReference() {
@@ -51,7 +63,7 @@ function buildPaymentReference() {
     now.getMinutes(),
   ).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
 
-  return `pay-${serial}-${Math.random().toString(36).slice(2, 6)}`;
+  return `SB${serial}${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
 }
 
 async function expirePendingPaymentsIfNeeded(
@@ -156,36 +168,41 @@ async function buildChargeForCondominium({
   amountInCents: number;
   metadata: Record<string, string | number>;
 }) {
-  if (!isAbacatePayConfigured()) {
-    throw new Error("ABACATEPAY_API_KEY nÃ£o configurada.");
+  const provider = getActivePaymentProviderName();
+
+  if (!isPaymentProviderConfigured(provider)) {
+    throw new Error(getPaymentProviderConfigError(provider));
   }
 
-  const defaultCustomerCellphone = getDefaultAbacatePayCustomerCellphone();
+  const defaultCustomerCellphone = getDefaultPaymentCustomerCellphone();
 
-  if (!defaultCustomerCellphone) {
-    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE nÃ£o configurado.");
+  if (provider === "abacatepay" && !defaultCustomerCellphone) {
+    throw new Error("PAYMENT_DEFAULT_CUSTOMER_CELLPHONE nao configurado.");
   }
 
-  const defaultCustomerTaxId = getDefaultAbacatePayCustomerTaxId();
+  const defaultCustomerTaxId = getDefaultPaymentCustomerTaxId();
 
   if (!defaultCustomerTaxId) {
-    throw new Error("ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID nÃ£o configurado.");
+    throw new Error("PAYMENT_DEFAULT_CUSTOMER_TAX_ID nao configurado.");
   }
 
   const reference = buildPaymentReference();
-  const charge = await createAbacatePixCharge({
+  const stringMetadata = Object.fromEntries(
+    Object.entries(metadata).map(([key, value]) => [key, String(value)]),
+  );
+  const charge = await createPixCharge({
     amountInCents,
     reference,
     customer: {
       name: administratorName,
       email: administratorEmail,
-      cellphone: defaultCustomerCellphone,
+      cellphone: defaultCustomerCellphone ?? undefined,
       taxId: defaultCustomerTaxId,
     },
     metadata: {
       reference,
       condominiumName,
-      ...metadata,
+      ...stringMetadata,
     },
   });
 

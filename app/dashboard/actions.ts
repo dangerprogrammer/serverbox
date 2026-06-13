@@ -34,6 +34,26 @@ function parseCurrencyToCents(value: FormDataEntryValue | null, fieldLabel: stri
   return parsed;
 }
 
+function getPaymentGatewayConfigurationMessage(message: string) {
+  if (message === "PAYMENT_DEFAULT_CUSTOMER_CELLPHONE nao configurado.") {
+    return "Configure PAYMENT_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobrancas neste gateway.";
+  }
+
+  if (message === "PAYMENT_DEFAULT_CUSTOMER_TAX_ID nao configurado.") {
+    return "Configure PAYMENT_DEFAULT_CUSTOMER_TAX_ID no .env.local para criar cobrancas neste gateway.";
+  }
+
+  if (
+    message.includes("SANTANDER") ||
+    message.includes("ABACATEPAY") ||
+    message.includes("PAYMENT_PROVIDER")
+  ) {
+    return message;
+  }
+
+  return null;
+}
+
 export async function createPaymentAction(formData: FormData) {
   await requireAuthenticatedAdminFromFormData(formData);
 
@@ -58,6 +78,11 @@ export async function createPaymentAction(formData: FormData) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
+    const gatewayMessage = getPaymentGatewayConfigurationMessage(message);
+
+    if (gatewayMessage) {
+      throw new Error(gatewayMessage);
+    }
 
     if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       throw new Error(
@@ -118,6 +143,11 @@ export async function createStandalonePaymentAction(formData: FormData) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Falha ao criar compra avulsa.";
+    const gatewayMessage = getPaymentGatewayConfigurationMessage(message);
+
+    if (gatewayMessage) {
+      throw new Error(gatewayMessage);
+    }
 
     if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
       throw new Error(

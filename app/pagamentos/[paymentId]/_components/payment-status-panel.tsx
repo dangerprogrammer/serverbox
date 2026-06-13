@@ -41,6 +41,8 @@ export function PaymentStatusPanel({
   const [payment, setPayment] = useState(initialPayment);
   const [copied, setCopied] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const canSimulatePayment =
+    payment.provider === "abacatepay" && Boolean(payment.providerDevMode);
 
   useEffect(() => {
     if (payment.status !== "pending") {
@@ -149,7 +151,7 @@ export function PaymentStatusPanel({
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
             {payment.status === "pending"
-              ? "O saldo só deve ser liberado depois que a AbacatePay confirmar o pagamento deste PIX."
+              ? "O saldo só deve ser liberado depois que o gateway confirmar o pagamento deste PIX."
               : "A cobrança já recebeu um retorno definitivo do pagamento."}
           </p>
         </div>
@@ -204,12 +206,12 @@ export function PaymentStatusPanel({
         </div>
       </div>
 
-      {payment.providerDevMode ? (
+      {canSimulatePayment ? (
         <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-slate-900">
-                Ambiente de desenvolvimento da AbacatePay
+                Ambiente de desenvolvimento do gateway
               </p>
               <p className="mt-1 text-sm text-slate-600">
                 Você pode simular a confirmação para testar a liberação do saldo.

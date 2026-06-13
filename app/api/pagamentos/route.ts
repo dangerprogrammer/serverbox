@@ -18,6 +18,23 @@ type CreatePaymentPayload = {
   method?: string;
 };
 
+function isProviderConfigurationMessage(message: string) {
+  return (
+    message.includes("ABACATEPAY") ||
+    message.includes("SANTANDER") ||
+    message.includes("PAYMENT_") ||
+    message.includes("certificado") ||
+    message.includes("Chave privada")
+  );
+}
+
+function normalizeErrorMessage(message: string) {
+  return message
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export async function GET() {
   const dataSource = await getDataSource();
   const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
@@ -70,7 +87,7 @@ export async function POST(request: Request) {
 
   if (payload.method && payload.method !== PaymentMethod.PIX) {
     return Response.json(
-      { error: "Somente pagamentos PIX são suportados." },
+      { error: "Somente pagamentos PIX sao suportados." },
       { status: 400 },
     );
   }
@@ -92,69 +109,34 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
+    const normalizedMessage = normalizeErrorMessage(message);
 
-    if (message === "Plano não encontrado.") {
-      return Response.json({ error: message }, { status: 404 });
-    }
-
-    if (message === "Plano não pertence ao condomínio informado.") {
-      return Response.json({ error: message }, { status: 404 });
-    }
-
-    if (message === "Condomínio não encontrado.") {
-      return Response.json({ error: message }, { status: 404 });
-    }
-
-    if (message === "Pagamento avulso em aberto não encontrado.") {
+    if (
+      normalizedMessage === "plano nao encontrado." ||
+      normalizedMessage === "plano nao pertence ao condominio informado." ||
+      normalizedMessage === "condominio nao encontrado." ||
+      normalizedMessage === "pagamento avulso em aberto nao encontrado."
+    ) {
       return Response.json({ error: message }, { status: 404 });
     }
 
     if (
       message.startsWith("Estoque insuficiente") ||
-      message === "Estoque insuficiente para reutilizar o QR Code avulso aberto deste condomínio."
+      normalizedMessage ===
+        "estoque insuficiente para reutilizar o qr code avulso aberto deste condominio."
     ) {
       return Response.json({ error: message }, { status: 409 });
     }
 
-    if (message === "Plano precisa ter uma quantidade de tubos maior que zero.") {
+    if (
+      message === "Plano precisa ter uma quantidade de tubos maior que zero." ||
+      message === "Referencia de pagamento invalida para o Santander. Use um txid alfanumerico de 26 a 35 caracteres."
+    ) {
       return Response.json({ error: message }, { status: 400 });
     }
 
-    if (message === "ABACATEPAY_API_KEY não configurada.") {
-      return Response.json(
-        { error: "Configure ABACATEPAY_API_KEY para criar planos mensais/anuais." },
-        { status: 503 },
-      );
-    }
-
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
-      return Response.json(
-        {
-          error:
-            "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE para criar planos mensais/anuais.",
-        },
-        { status: 503 },
-      );
-    }
-
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
-      return Response.json(
-        {
-          error:
-            "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID para criar planos mensais/anuais.",
-        },
-        { status: 503 },
-      );
-    }
-
-    if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
-      return Response.json(
-        {
-          error:
-            "A ABACATEPAY_API_BASE_URL configurada precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
-        },
-        { status: 503 },
-      );
+    if (isProviderConfigurationMessage(message)) {
+      return Response.json({ error: message }, { status: 503 });
     }
 
     return Response.json({ error: message }, { status: 400 });
