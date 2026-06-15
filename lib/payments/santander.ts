@@ -14,7 +14,10 @@ import type {
 
 const SANTANDER_PROVIDER = "santander";
 const DEFAULT_PIX_EXPIRATION_IN_SECONDS = 60 * 60;
-const SANTANDER_SANDBOX_HOST = "https://trust-pix-h.santander.com.br";
+const SANTANDER_SANDBOX_API_BASE_URL =
+  "https://pix.santander.com.br/api/v1/sandbox";
+const SANTANDER_SANDBOX_AUTH_URL =
+  "https://trust-sandbox.api.santander.com.br/auth/oauth/v2/token";
 const SANTANDER_PRODUCTION_HOST = "https://trust-pix.santander.com.br";
 
 type SantanderEnvironment = "sandbox" | "production";
@@ -96,9 +99,7 @@ function getSantanderHost() {
     return new URL(apiBaseUrl).origin;
   }
 
-  return getSantanderEnvironment() === "production"
-    ? SANTANDER_PRODUCTION_HOST
-    : SANTANDER_SANDBOX_HOST;
+  return SANTANDER_PRODUCTION_HOST;
 }
 
 function getSantanderApiBaseUrl() {
@@ -108,14 +109,23 @@ function getSantanderApiBaseUrl() {
     return apiBaseUrl.replace(/\/$/, "");
   }
 
+  if (getSantanderEnvironment() === "sandbox") {
+    return SANTANDER_SANDBOX_API_BASE_URL;
+  }
+
   return `${getSantanderHost()}/api/v1`;
 }
 
 function getSantanderAuthUrl() {
-  return (
-    getTrimmedEnv("SANTANDER_AUTH_URL") ||
-    `${getSantanderHost()}/auth/oauth/v2/token`
-  );
+  const authUrl = getTrimmedEnv("SANTANDER_AUTH_URL");
+
+  if (authUrl) {
+    return authUrl;
+  }
+
+  return getSantanderEnvironment() === "sandbox"
+    ? SANTANDER_SANDBOX_AUTH_URL
+    : `${getSantanderHost()}/auth/oauth/v2/token`;
 }
 
 function getSantanderClientId() {

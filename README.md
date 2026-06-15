@@ -140,13 +140,15 @@ SANTANDER_PIX_KEY=sua_chave_pix
 SANTANDER_CERT_PATH=./certs/santander-cert.pem
 SANTANDER_KEY_PATH=./certs/santander-key.pem
 SANTANDER_PIX_EXPIRATION_SECONDS=3600
+SANTANDER_API_BASE_URL=https://pix.santander.com.br/api/v1/sandbox
+SANTANDER_AUTH_URL=https://trust-sandbox.api.santander.com.br/auth/oauth/v2/token
 ```
 
 Em deploy, prefira `SANTANDER_CERT_PEM_BASE64` e
 `SANTANDER_KEY_PEM_BASE64` para nao depender de arquivos locais. Nunca versione
 certificado, chave privada ou `.env.local`.
 
-Se o ambiente Santander usar hosts diferentes dos defaults, configure:
+Se o ambiente Santander usar hosts diferentes dos defaults, ajuste:
 
 ```bash
 SANTANDER_API_BASE_URL=https://host-santander/api/v1
