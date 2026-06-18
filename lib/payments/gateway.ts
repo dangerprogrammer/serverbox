@@ -3,7 +3,6 @@ import "server-only";
 import {
   checkAbacatePixCharge,
   createAbacatePixCharge,
-  getAbacatePayProviderName,
   isAbacatePayConfigured,
   simulateAbacatePixCharge,
 } from "@/lib/payments/abacatepay";
@@ -44,7 +43,7 @@ export function getActivePaymentProviderName(): PaymentProviderName {
   const provider = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
 
   if (!provider) {
-    return getAbacatePayProviderName();
+    return "infinitepay";
   }
 
   const normalizedProvider = normalizePaymentProviderName(provider);
