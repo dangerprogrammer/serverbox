@@ -237,7 +237,6 @@ export function isInfinitePayConfigured() {
 export async function createInfinitePayCheckoutCharge({
   amountInCents,
   reference,
-  customer,
   metadata,
 }: CreatePixChargeInput) {
   const handle = getInfinitePayTag();
@@ -256,11 +255,6 @@ export async function createInfinitePayCheckoutCharge({
       },
     ],
     order_nsu: reference,
-    customer: {
-      name: customer.name,
-      email: customer.email,
-      ...(customer.cellphone ? { phone_number: customer.cellphone } : {}),
-    },
     metadata: {
       reference,
       ...metadata,
