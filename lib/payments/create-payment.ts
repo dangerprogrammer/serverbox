@@ -15,8 +15,10 @@ import {
 } from "@/lib/payments/gateway";
 import {
   STANDALONE_BALL_PURCHASE_PLAN_NAME,
+  buildStandalonePurchasePaymentPlanId,
   calculateRemainingBallStock,
   calculateStandalonePaymentCapacity,
+  calculateStandalonePaymentCapacityForQuantity,
   findOpenStandaloneBallPayment,
   hasPendingPaymentExpired,
 } from "@/lib/payments/stock";
@@ -25,6 +27,10 @@ import {
   getActiveTubeStockEntries,
   type TubeStockEntry,
 } from "@/lib/domain/tube-stock";
+import {
+  getStandalonePurchaseOffers,
+  type StandalonePurchaseOffer,
+} from "@/lib/domain/standalone-purchase";
 
 type CreateCondominiumPaymentInput = {
   planId: string;
@@ -36,6 +42,19 @@ type CreateStandaloneBallPaymentInput = {
   tubeBrandId: string;
   ballQuantity: number;
   amountInCents: number;
+};
+
+type CreateStandalonePurchaseOfferInput = {
+  condominiumId: string;
+  tubeBrandId: string;
+  ballQuantity: number;
+  amountInCents: number;
+  name?: string;
+};
+
+type CreateStandalonePaymentFromOfferInput = {
+  condominiumId: string;
+  standalonePurchaseId: string;
 };
 
 function getDefaultPaymentCustomerCellphone() {
@@ -153,6 +172,56 @@ function getCondominiumTubeBrandStock(
     condominium.tubeStockByBrand,
     condominium.courtDetails,
   ).find((entry) => entry.tubeBrandId === tubeBrandId);
+}
+
+function getStandalonePurchaseName({
+  name,
+  tubeBrandName,
+  ballQuantity,
+}: {
+  name?: string;
+  tubeBrandName: string;
+  ballQuantity: number;
+}) {
+  const normalizedName = name?.trim();
+
+  if (normalizedName) {
+    return normalizedName;
+  }
+
+  return `${ballQuantity} ${ballQuantity === 1 ? "tubo" : "tubos"} - ${tubeBrandName}`;
+}
+
+function calculateAvailableStandalonePurchaseCount({
+  stockQuantity,
+  brandStockQuantity,
+  payments,
+  ballQuantity,
+  tubeBrandId,
+  exceptPaymentId,
+}: {
+  stockQuantity: number;
+  brandStockQuantity: number;
+  payments: CondominiumPayment[];
+  ballQuantity: number;
+  tubeBrandId: string;
+  exceptPaymentId?: string;
+}) {
+  const availableByTotalStock = calculateStandalonePaymentCapacityForQuantity({
+    stockQuantity,
+    payments,
+    ballQuantity,
+    exceptPaymentId,
+  });
+  const availableByBrand = calculateStandalonePaymentCapacityForQuantity({
+    stockQuantity: brandStockQuantity,
+    payments,
+    ballQuantity,
+    exceptPaymentId,
+    tubeBrandId,
+  });
+
+  return Math.min(availableByBrand, availableByTotalStock);
 }
 
 async function buildChargeForCondominium({
@@ -287,6 +356,246 @@ export async function createCondominiumPayment({
     ballQuantity: plan.monthlyBallAllowance,
     tubeBrandId: null,
     tubeBrandName: null,
+    provider: charge.provider,
+    providerPaymentId: charge.providerPaymentId,
+    providerRawStatus: charge.providerRawStatus,
+    providerReceiptUrl: charge.providerReceiptUrl,
+    providerDevMode: charge.providerDevMode,
+    pixTransactionId: charge.pixTransactionId,
+    pixQrCode: charge.pixQrCode,
+    pixCopyPasteCode: charge.pixCopyPasteCode,
+    pixExpiresAt: charge.pixExpiresAt,
+    paidAt: null,
+    verifiedAt: null,
+    verificationSource: null,
+  });
+}
+
+export async function createStandalonePurchaseOffer({
+  condominiumId,
+  tubeBrandId,
+  ballQuantity,
+  amountInCents,
+  name,
+}: CreateStandalonePurchaseOfferInput) {
+  const requestedTubeBrandId = tubeBrandId.trim();
+
+  if (!condominiumId) {
+    throw new Error("Condomínio é obrigatório para compra avulsa fixa.");
+  }
+
+  if (!Number.isFinite(ballQuantity) || ballQuantity <= 0) {
+    throw new Error("Quantidade de tubos inválida.");
+  }
+
+  if (!Number.isFinite(amountInCents) || amountInCents <= 0) {
+    throw new Error("Valor em centavos inválido.");
+  }
+
+  if (!requestedTubeBrandId) {
+    throw new Error("Marca de tubos é obrigatória para compra avulsa fixa.");
+  }
+
+  const dataSource = await getDataSource();
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const condominium = await condominiumRepository.findOne({
+    where: { id: condominiumId },
+    relations: {
+      courtDetails: { tubeBrand: true, tubeBrands: true },
+    },
+  });
+
+  if (!condominium) {
+    throw new Error("Condomínio não encontrado.");
+  }
+
+  const tubeBrandStock = getCondominiumTubeBrandStock(
+    condominium,
+    requestedTubeBrandId,
+  );
+
+  if (!tubeBrandStock) {
+    throw new Error("Marca de tubos indisponível para compra avulsa fixa.");
+  }
+
+  const tubeBrandName = getActiveTubeBrandName(condominium, requestedTubeBrandId);
+  const now = new Date().toISOString();
+  const standalonePurchases = getStandalonePurchaseOffers(
+    condominium.standalonePurchases,
+  );
+  const offerName = getStandalonePurchaseName({
+    name,
+    tubeBrandName,
+    ballQuantity,
+  });
+  const existingOffer = standalonePurchases.find(
+    (offer) =>
+      offer.isActive &&
+      offer.tubeBrandId === requestedTubeBrandId &&
+      offer.ballQuantity === ballQuantity &&
+      offer.amountInCents === amountInCents &&
+      offer.name.toLocaleLowerCase("pt-BR") ===
+        offerName.toLocaleLowerCase("pt-BR"),
+  );
+
+  if (existingOffer) {
+    return existingOffer;
+  }
+
+  const createdOffer: StandalonePurchaseOffer = {
+    id: crypto.randomUUID(),
+    name: offerName,
+    tubeBrandId: requestedTubeBrandId,
+    tubeBrandName,
+    ballQuantity,
+    amountInCents,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  condominium.standalonePurchases = [...standalonePurchases, createdOffer];
+  await condominiumRepository.save(condominium);
+
+  return createdOffer;
+}
+
+export async function createStandaloneBallPaymentFromOffer({
+  condominiumId,
+  standalonePurchaseId,
+}: CreateStandalonePaymentFromOfferInput) {
+  const requestedStandalonePurchaseId = standalonePurchaseId.trim();
+
+  if (!condominiumId) {
+    throw new Error("Condomínio é obrigatório para compra avulsa fixa.");
+  }
+
+  if (!requestedStandalonePurchaseId) {
+    throw new Error("Compra avulsa fixa é obrigatória para gerar QR Code.");
+  }
+
+  const dataSource = await getDataSource();
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+  const paymentRepository = dataSource.getRepository(CondominiumPaymentEntity);
+
+  const condominium = await condominiumRepository.findOne({
+    where: { id: condominiumId },
+    relations: {
+      primaryAdmin: true,
+      courtDetails: { tubeBrand: true, tubeBrands: true },
+      payments: true,
+    },
+  });
+
+  if (!condominium) {
+    throw new Error("Condomínio não encontrado.");
+  }
+
+  const standalonePurchase = getStandalonePurchaseOffers(
+    condominium.standalonePurchases,
+  ).find(
+    (offer) =>
+      offer.id === requestedStandalonePurchaseId && offer.isActive,
+  );
+
+  if (!standalonePurchase) {
+    throw new Error("Compra avulsa fixa não encontrada.");
+  }
+
+  await expirePendingPaymentsIfNeeded(paymentRepository, condominium.payments);
+  const tubeBrandStock = getCondominiumTubeBrandStock(
+    condominium,
+    standalonePurchase.tubeBrandId,
+  );
+
+  if (!tubeBrandStock) {
+    throw new Error("Marca de tubos indisponível para compra avulsa fixa.");
+  }
+
+  const tubeBrandName = getActiveTubeBrandName(
+    condominium,
+    standalonePurchase.tubeBrandId,
+  );
+  const stockQuantity = getCondominiumStockQuantity(condominium);
+  const openStandalonePayment = findOpenStandaloneBallPayment(condominium.payments, {
+    tubeBrandId: standalonePurchase.tubeBrandId,
+    standalonePurchaseId: standalonePurchase.id,
+  });
+
+  if (openStandalonePayment) {
+    const availablePaymentCount = calculateAvailableStandalonePurchaseCount({
+      stockQuantity,
+      brandStockQuantity: tubeBrandStock.quantity,
+      payments: condominium.payments,
+      ballQuantity: standalonePurchase.ballQuantity,
+      tubeBrandId: standalonePurchase.tubeBrandId,
+      exceptPaymentId: openStandalonePayment.id,
+    });
+
+    if (availablePaymentCount <= 0) {
+      throw new Error(
+        "Estoque insuficiente para reutilizar o QR Code avulso aberto desta compra.",
+      );
+    }
+
+    const reusablePayment = await paymentRepository.findOne({
+      where: { id: openStandalonePayment.id },
+      relations: {
+        condominium: true,
+      },
+    });
+
+    if (!reusablePayment) {
+      throw new Error("Pagamento avulso em aberto não encontrado.");
+    }
+
+    return reusablePayment;
+  }
+
+  const totalRemainingBallStock = calculateRemainingBallStock({
+    stockQuantity,
+    payments: condominium.payments,
+  });
+  const remainingBrandStock = calculateRemainingBallStock({
+    stockQuantity: tubeBrandStock.quantity,
+    payments: condominium.payments,
+    tubeBrandId: standalonePurchase.tubeBrandId,
+  });
+
+  assertBallStockAvailable({
+    requestedBallQuantity: standalonePurchase.ballQuantity,
+    remainingBallStock: Math.min(totalRemainingBallStock, remainingBrandStock),
+  });
+
+  const { charge, reference } = await buildChargeForCondominium({
+    condominiumName: condominium.name,
+    administratorName: condominium.primaryAdmin.name,
+    administratorEmail: condominium.primaryAdmin.email,
+    amountInCents: standalonePurchase.amountInCents,
+    metadata: {
+      condominiumId: condominium.id,
+      paymentType: "standalone_ball_purchase",
+      standalonePurchaseId: standalonePurchase.id,
+      tubeBrandId: standalonePurchase.tubeBrandId,
+      tubeBrandName,
+      ballQuantity: standalonePurchase.ballQuantity,
+    },
+  });
+
+  return paymentRepository.save({
+    condominium,
+    planId: buildStandalonePurchasePaymentPlanId({
+      standalonePurchaseId: standalonePurchase.id,
+      reference,
+    }),
+    planName: standalonePurchase.name || STANDALONE_BALL_PURCHASE_PLAN_NAME,
+    reference,
+    method: charge.method,
+    status: PaymentStatus.PENDING,
+    amountInCents: charge.amountInCents,
+    ballQuantity: standalonePurchase.ballQuantity,
+    tubeBrandId: standalonePurchase.tubeBrandId,
+    tubeBrandName,
     provider: charge.provider,
     providerPaymentId: charge.providerPaymentId,
     providerRawStatus: charge.providerRawStatus,

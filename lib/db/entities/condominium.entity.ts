@@ -6,6 +6,7 @@ import type { CondominiumClientAccess } from "@/lib/db/entities/condominium-clie
 import type { CondominiumCourt } from "@/lib/db/entities/condominium-court.entity";
 import type { CondominiumPayment } from "@/lib/db/entities/condominium-payment.entity";
 import type { CondominiumPlan } from "@/lib/domain/condominium-plan";
+import type { StandalonePurchaseOffer } from "@/lib/domain/standalone-purchase";
 import type { TubeStockEntry } from "@/lib/domain/tube-stock";
 
 export type Condominium = {
@@ -21,6 +22,7 @@ export type Condominium = {
   primaryAdmin: Administrator;
   clientAccesses: CondominiumClientAccess[];
   plans: CondominiumPlan[];
+  standalonePurchases: StandalonePurchaseOffer[];
   courtDetails: CondominiumCourt[];
   payments: CondominiumPayment[];
   ballMovements: BallInventoryMovement[];
@@ -59,6 +61,10 @@ export const CondominiumEntity = new EntitySchema<Condominium>({
       default: "[]",
     },
     plans: {
+      type: "simple-json",
+      default: "[]",
+    },
+    standalonePurchases: {
       type: "simple-json",
       default: "[]",
     },

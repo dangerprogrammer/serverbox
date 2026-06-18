@@ -266,6 +266,7 @@ export async function POST(request: Request) {
     courts: requestedCourtCount,
     ballQuantity: sumTubeStockEntries(activeTubeStockByBrand),
     tubeStockByBrand: activeTubeStockByBrand,
+    standalonePurchases: [],
     primaryAdmin: assignedAdministrator,
   });
 

@@ -17,12 +17,18 @@ import {
 import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { type CondominiumPlan } from "@/lib/domain/condominium-plan";
 import {
+  getStandalonePurchaseOffers,
+  type StandalonePurchaseOffer,
+} from "@/lib/domain/standalone-purchase";
+import {
   getActiveTubeStockEntries,
   sumActiveTubeStockEntries,
+  type TubeStockEntry,
 } from "@/lib/domain/tube-stock";
 import {
   calculateRemainingBallStock,
   calculateStandalonePaymentCapacity,
+  calculateStandalonePaymentCapacityForQuantity,
   findOpenStandaloneBallPayment,
   isOpenPendingPayment,
   sumOpenPendingBallQuantity,
@@ -72,6 +78,75 @@ function buildCondominiumStockSummary(condominium: Condominium) {
         })
       : 0,
   };
+}
+
+function getAvailableStandalonePurchaseCount({
+  stockQuantity,
+  tubeStockByBrand,
+  payments,
+  offer,
+  exceptPaymentId,
+}: {
+  stockQuantity: number;
+  tubeStockByBrand: Array<TubeStockEntry & { tubeBrandName?: string }>;
+  payments: CondominiumPayment[];
+  offer: StandalonePurchaseOffer;
+  exceptPaymentId?: string;
+}) {
+  const brandStockQuantity =
+    tubeStockByBrand.find((entry) => entry.tubeBrandId === offer.tubeBrandId)
+      ?.quantity ?? 0;
+  const availableByTotalStock = calculateStandalonePaymentCapacityForQuantity({
+    stockQuantity,
+    payments,
+    ballQuantity: offer.ballQuantity,
+    exceptPaymentId,
+  });
+  const availableByBrand = calculateStandalonePaymentCapacityForQuantity({
+    stockQuantity: brandStockQuantity,
+    payments,
+    ballQuantity: offer.ballQuantity,
+    exceptPaymentId,
+    tubeBrandId: offer.tubeBrandId,
+  });
+
+  return Math.min(availableByTotalStock, availableByBrand);
+}
+
+function buildStandalonePurchaseSummaries({
+  condominium,
+  stockQuantity,
+  tubeStockByBrand,
+}: {
+  condominium: Condominium;
+  stockQuantity: number;
+  tubeStockByBrand: Array<TubeStockEntry & { tubeBrandName?: string }>;
+}) {
+  return getStandalonePurchaseOffers(condominium.standalonePurchases)
+    .filter((offer) => offer.isActive)
+    .map((offer) => {
+      const openPayment = findOpenStandaloneBallPayment(condominium.payments, {
+        tubeBrandId: offer.tubeBrandId,
+        standalonePurchaseId: offer.id,
+      });
+      const stockEntry = tubeStockByBrand.find(
+        (entry) => entry.tubeBrandId === offer.tubeBrandId,
+      );
+
+      return {
+        ...offer,
+        tubeBrandName:
+          stockEntry?.tubeBrandName ?? offer.tubeBrandName ?? "Marca selecionada",
+        openPaymentId: openPayment?.id ?? null,
+        availablePaymentCount: getAvailableStandalonePurchaseCount({
+          stockQuantity,
+          tubeStockByBrand,
+          payments: condominium.payments,
+          offer,
+          exceptPaymentId: openPayment?.id,
+        }),
+      };
+    });
 }
 
 export async function getAdminDashboardData() {
@@ -265,6 +340,20 @@ export async function getAdminDashboardData() {
           id: plan.id,
           name: plan.name,
         })),
+        standalonePurchases: buildStandalonePurchaseSummaries({
+          condominium,
+          stockQuantity,
+          tubeStockByBrand,
+        }).map((offer) => ({
+          id: offer.id,
+          name: offer.name,
+          amountInCents: offer.amountInCents,
+          ballQuantity: offer.ballQuantity,
+          tubeBrandId: offer.tubeBrandId,
+          tubeBrandName: offer.tubeBrandName,
+          openPaymentId: offer.openPaymentId,
+          availablePaymentCount: offer.availablePaymentCount,
+        })),
         standalonePayment: stockSummary?.openStandalonePayment
           ? {
               id: stockSummary.openStandalonePayment.id,
@@ -402,6 +491,20 @@ export async function getAdminCondominiumDetails(condominiumId: string) {
         plan.monthlyBallAllowance > 0
           ? Math.floor(stockSummary.remainingBalls / plan.monthlyBallAllowance)
           : 0,
+    })),
+    standalonePurchases: buildStandalonePurchaseSummaries({
+      condominium,
+      stockQuantity,
+      tubeStockByBrand,
+    }).map((offer) => ({
+      id: offer.id,
+      name: offer.name,
+      amountInCents: offer.amountInCents,
+      ballQuantity: offer.ballQuantity,
+      tubeBrandId: offer.tubeBrandId,
+      tubeBrandName: offer.tubeBrandName,
+      openPaymentId: offer.openPaymentId,
+      availablePaymentCount: offer.availablePaymentCount,
     })),
     standalonePayment: stockSummary.openStandalonePayment
       ? {

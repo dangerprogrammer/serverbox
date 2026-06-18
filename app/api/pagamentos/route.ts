@@ -6,11 +6,13 @@ import {
 } from "@/lib/db/entities/condominium-payment.entity";
 import {
   createCondominiumPayment,
+  createStandaloneBallPaymentFromOffer,
   createStandaloneBallPayment,
 } from "@/lib/payments/create-payment";
 
 type CreatePaymentPayload = {
   planId?: string;
+  standalonePurchaseId?: string;
   condominiumId?: string;
   tubeBrandId?: string;
   ballQuantity?: number;
@@ -99,12 +101,17 @@ export async function POST(request: Request) {
           planId: payload.planId,
           condominiumId: payload.condominiumId,
         })
-      : await createStandaloneBallPayment({
-          condominiumId: String(payload.condominiumId ?? ""),
-          tubeBrandId: String(payload.tubeBrandId ?? ""),
-          ballQuantity: Number(payload.ballQuantity),
-          amountInCents: Number(payload.amountInCents),
-        });
+      : payload.standalonePurchaseId
+        ? await createStandaloneBallPaymentFromOffer({
+            condominiumId: String(payload.condominiumId ?? ""),
+            standalonePurchaseId: payload.standalonePurchaseId,
+          })
+        : await createStandaloneBallPayment({
+            condominiumId: String(payload.condominiumId ?? ""),
+            tubeBrandId: String(payload.tubeBrandId ?? ""),
+            ballQuantity: Number(payload.ballQuantity),
+            amountInCents: Number(payload.amountInCents),
+          });
 
     return Response.json(payment, { status: 201 });
   } catch (error) {
@@ -116,6 +123,7 @@ export async function POST(request: Request) {
       normalizedMessage === "plano nao encontrado." ||
       normalizedMessage === "plano nao pertence ao condominio informado." ||
       normalizedMessage === "condominio nao encontrado." ||
+      normalizedMessage === "compra avulsa fixa nao encontrada." ||
       normalizedMessage === "pagamento avulso em aberto nao encontrado."
     ) {
       return Response.json({ error: message }, { status: 404 });

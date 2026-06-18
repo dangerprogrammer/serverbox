@@ -4,6 +4,7 @@ import {
 } from "@/lib/db/entities/condominium-payment.entity";
 
 export const STANDALONE_BALL_PURCHASE_PLAN_NAME = "Compra avulsa de tubos";
+export const STANDALONE_PURCHASE_PAYMENT_PLAN_ID_PREFIX = "standalone-offer:";
 
 type StockPayment = Pick<
   CondominiumPayment,
@@ -26,6 +27,28 @@ export function isStandaloneBallPayment(
     payment.planId?.startsWith("standalone-") ||
     payment.planName === STANDALONE_BALL_PURCHASE_PLAN_NAME
   );
+}
+
+export function buildStandalonePurchasePaymentPlanId({
+  standalonePurchaseId,
+  reference,
+}: {
+  standalonePurchaseId: string;
+  reference: string;
+}) {
+  return `${STANDALONE_PURCHASE_PAYMENT_PLAN_ID_PREFIX}${standalonePurchaseId}:${reference}`;
+}
+
+export function getStandalonePurchaseIdFromPayment(
+  payment: Pick<CondominiumPayment, "planId">,
+) {
+  if (!payment.planId?.startsWith(STANDALONE_PURCHASE_PAYMENT_PLAN_ID_PREFIX)) {
+    return null;
+  }
+
+  const [, standalonePurchaseId] = payment.planId.split(":");
+
+  return standalonePurchaseId || null;
 }
 
 export function hasPendingPaymentExpired(payment: Pick<StockPayment, "status" | "pixExpiresAt">) {
@@ -102,28 +125,55 @@ export function calculateStandalonePaymentCapacity({
   payment: StockPayment;
   tubeBrandId?: string;
 }) {
-  if (!Number.isFinite(payment.ballQuantity) || payment.ballQuantity <= 0) {
+  return calculateStandalonePaymentCapacityForQuantity({
+    stockQuantity,
+    payments,
+    ballQuantity: payment.ballQuantity,
+    exceptPaymentId: payment.id,
+    tubeBrandId,
+  });
+}
+
+export function calculateStandalonePaymentCapacityForQuantity({
+  stockQuantity,
+  payments,
+  ballQuantity,
+  exceptPaymentId,
+  tubeBrandId,
+}: {
+  stockQuantity: number;
+  payments: StockPayment[];
+  ballQuantity: number;
+  exceptPaymentId?: string;
+  tubeBrandId?: string;
+}) {
+  if (!Number.isFinite(ballQuantity) || ballQuantity <= 0) {
     return 0;
   }
 
   const stockAvailableForThisPayment = calculateRemainingBallStock({
     stockQuantity,
     payments,
-    exceptPaymentId: payment.id,
+    exceptPaymentId,
     tubeBrandId,
   });
 
-  return Math.floor(stockAvailableForThisPayment / payment.ballQuantity);
+  return Math.floor(stockAvailableForThisPayment / ballQuantity);
 }
 
 export function findOpenStandaloneBallPayment(
   payments: StockPayment[],
-  options: { tubeBrandId?: string } = {},
+  options: { tubeBrandId?: string; standalonePurchaseId?: string } = {},
 ) {
   return payments
     .filter(isStandaloneBallPayment)
     .filter((payment) =>
       options.tubeBrandId ? payment.tubeBrandId === options.tubeBrandId : true,
+    )
+    .filter((payment) =>
+      options.standalonePurchaseId
+        ? getStandalonePurchaseIdFromPayment(payment) === options.standalonePurchaseId
+        : true,
     )
     .filter(isOpenPendingPayment)
     .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];

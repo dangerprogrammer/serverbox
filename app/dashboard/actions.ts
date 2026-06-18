@@ -6,7 +6,9 @@ import { redirect } from "next/navigation";
 import { requireAuthenticatedAdminFromFormData } from "@/lib/auth/session";
 import {
   createCondominiumPayment,
+  createStandaloneBallPaymentFromOffer,
   createStandaloneBallPayment,
+  createStandalonePurchaseOffer,
 } from "@/lib/payments/create-payment";
 
 function parsePositiveInteger(value: FormDataEntryValue | null, fieldLabel: string) {
@@ -55,11 +57,41 @@ function getPaymentGatewayConfigurationMessage(message: string) {
   return null;
 }
 
+function getPaymentActionError(error: unknown, fallbackMessage: string) {
+  const message = error instanceof Error ? error.message : fallbackMessage;
+  const gatewayMessage = getPaymentGatewayConfigurationMessage(message);
+
+  if (gatewayMessage) {
+    return new Error(gatewayMessage);
+  }
+
+  if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
+    return new Error(
+      "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobranças na AbacatePay.",
+    );
+  }
+
+  if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
+    return new Error(
+      "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID no .env.local para criar cobranças na AbacatePay.",
+    );
+  }
+
+  if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
+    return new Error(
+      "A ABACATEPAY_API_BASE_URL do .env.local precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
+    );
+  }
+
+  return error instanceof Error ? error : new Error(message);
+}
+
 export async function createPaymentAction(formData: FormData) {
   await requireAuthenticatedAdminFromFormData(formData);
 
   const planId = String(formData.get("planId") ?? "");
   const condominiumId = String(formData.get("condominiumId") ?? "");
+  let paymentId = "";
 
   if (!planId) {
     throw new Error("Plano é obrigatório para criar pagamento.");
@@ -71,40 +103,16 @@ export async function createPaymentAction(formData: FormData) {
       condominiumId: condominiumId || undefined,
     });
 
-    revalidatePath("/dashboard");
-    if (condominiumId) {
-      revalidatePath(`/condominio/${condominiumId}`);
-    }
-    redirect(`/pagamentos/${payment.id}`);
+    paymentId = payment.id;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Falha ao criar plano mensal/anual.";
-    const gatewayMessage = getPaymentGatewayConfigurationMessage(message);
-
-    if (gatewayMessage) {
-      throw new Error(gatewayMessage);
-    }
-
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
-      throw new Error(
-        "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobranças na AbacatePay.",
-      );
-    }
-
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
-      throw new Error(
-        "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID no .env.local para criar cobranças na AbacatePay.",
-      );
-    }
-
-    if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
-      throw new Error(
-        "A ABACATEPAY_API_BASE_URL do .env.local precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
-      );
-    }
-
-    throw error;
+    throw getPaymentActionError(error, "Falha ao criar plano mensal/anual.");
   }
+
+  revalidatePath("/dashboard");
+  if (condominiumId) {
+    revalidatePath(`/condominio/${condominiumId}`);
+  }
+  redirect(`/pagamentos/${paymentId}`);
 }
 
 export async function createStandalonePaymentAction(formData: FormData) {
@@ -129,6 +137,7 @@ export async function createStandalonePaymentAction(formData: FormData) {
     formData.get("amountInCents"),
     "Valor",
   );
+  let paymentId = "";
 
   try {
     const payment = await createStandaloneBallPayment({
@@ -138,37 +147,99 @@ export async function createStandalonePaymentAction(formData: FormData) {
       amountInCents,
     });
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/condominio/${condominiumId}`);
-    redirect(`/pagamentos/${payment.id}`);
+    paymentId = payment.id;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Falha ao criar compra avulsa.";
-    const gatewayMessage = getPaymentGatewayConfigurationMessage(message);
-
-    if (gatewayMessage) {
-      throw new Error(gatewayMessage);
-    }
-
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE não configurado.") {
-      throw new Error(
-        "Configure ABACATEPAY_DEFAULT_CUSTOMER_CELLPHONE no .env.local para criar cobranças na AbacatePay.",
-      );
-    }
-
-    if (message === "ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID não configurado.") {
-      throw new Error(
-        "Configure ABACATEPAY_DEFAULT_CUSTOMER_TAX_ID no .env.local para criar cobranças na AbacatePay.",
-      );
-    }
-
-    if (message === "ABACATEPAY_API_BASE_URL inválida. Use uma URL da API v1 ou v2 da AbacatePay.") {
-      throw new Error(
-        "A ABACATEPAY_API_BASE_URL do .env.local precisa apontar para uma URL válida da AbacatePay, como https://api.abacatepay.com/v1 ou https://api.abacatepay.com/v2.",
-      );
-    }
-
-    throw error;
+    throw getPaymentActionError(error, "Falha ao criar compra avulsa.");
   }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/condominio/${condominiumId}`);
+  redirect(`/pagamentos/${paymentId}`);
+}
+
+export async function createStandalonePurchaseAction(formData: FormData) {
+  await requireAuthenticatedAdminFromFormData(formData);
+
+  const condominiumId = String(formData.get("condominiumId") ?? "");
+  const tubeBrandId = String(formData.get("tubeBrandId") ?? "");
+  const name = String(formData.get("name") ?? "");
+
+  if (!condominiumId) {
+    throw new Error("Condomínio é obrigatório para criar compra avulsa fixa.");
+  }
+
+  if (!tubeBrandId) {
+    throw new Error("Marca de tubos é obrigatória para criar compra avulsa fixa.");
+  }
+
+  const ballQuantity = parsePositiveInteger(
+    formData.get("ballQuantity"),
+    "Quantidade de tubos",
+  );
+  const amountInCents = parseCurrencyToCents(
+    formData.get("amountInCents"),
+    "Valor",
+  );
+  let paymentId = "";
+
+  try {
+    const offer = await createStandalonePurchaseOffer({
+      condominiumId,
+      tubeBrandId,
+      ballQuantity,
+      amountInCents,
+      name,
+    });
+    const payment = await createStandaloneBallPaymentFromOffer({
+      condominiumId,
+      standalonePurchaseId: offer.id,
+    });
+
+    paymentId = payment.id;
+  } catch (error) {
+    throw getPaymentActionError(
+      error,
+      "Falha ao criar compra avulsa fixa.",
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/condominio/${condominiumId}`);
+  redirect(`/pagamentos/${paymentId}`);
+}
+
+export async function openStandalonePurchasePaymentAction(formData: FormData) {
+  await requireAuthenticatedAdminFromFormData(formData);
+
+  const condominiumId = String(formData.get("condominiumId") ?? "");
+  const standalonePurchaseId = String(formData.get("standalonePurchaseId") ?? "");
+
+  if (!condominiumId) {
+    throw new Error("Condomínio é obrigatório para abrir compra avulsa fixa.");
+  }
+
+  if (!standalonePurchaseId) {
+    throw new Error("Compra avulsa fixa é obrigatória para abrir QR Code.");
+  }
+
+  let paymentId = "";
+
+  try {
+    const payment = await createStandaloneBallPaymentFromOffer({
+      condominiumId,
+      standalonePurchaseId,
+    });
+
+    paymentId = payment.id;
+  } catch (error) {
+    throw getPaymentActionError(
+      error,
+      "Falha ao abrir compra avulsa fixa.",
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/condominio/${condominiumId}`);
+  redirect(`/pagamentos/${paymentId}`);
 }
 

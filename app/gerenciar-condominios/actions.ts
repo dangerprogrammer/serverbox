@@ -300,6 +300,7 @@ export async function createCondominiumAction(formData: FormData) {
     ballQuantity: sumTubeStockEntries(tubeStockByBrand),
     tubeStockByBrand,
     plans: [],
+    standalonePurchases: [],
     primaryAdmin: administrator,
   });
 
