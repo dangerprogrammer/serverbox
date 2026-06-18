@@ -22,6 +22,7 @@ function isProviderConfigurationMessage(message: string) {
   return (
     message.includes("ABACATEPAY") ||
     message.includes("SANTANDER") ||
+    message.includes("INFINITEPAY") ||
     message.includes("PAYMENT_") ||
     message.includes("certificado") ||
     message.includes("Chave privada")

@@ -164,7 +164,7 @@ export default async function SobreNosPage() {
               operação daquele cliente.
             </p>
             <p>
-              O pagamento gera um checkout PIX e o saldo de tubos só muda
+              O pagamento gera um checkout e o saldo de tubos só muda
               depois da confirmação real do gateway.
             </p>
           </div>

@@ -3,7 +3,7 @@ import type {
   PaymentStatus,
 } from "@/lib/db/entities/condominium-payment.entity";
 
-export type PaymentProviderName = "abacatepay" | "santander";
+export type PaymentProviderName = "abacatepay" | "santander" | "infinitepay";
 
 export type CreatePixChargeInput = {
   amountInCents: number;

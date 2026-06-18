@@ -46,6 +46,7 @@ function getPaymentGatewayConfigurationMessage(message: string) {
   if (
     message.includes("SANTANDER") ||
     message.includes("ABACATEPAY") ||
+    message.includes("INFINITEPAY") ||
     message.includes("PAYMENT_PROVIDER")
   ) {
     return message;

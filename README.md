@@ -55,16 +55,16 @@ Se quiser trocar o nome do arquivo local, use `DB_FILENAME` no `.env.local`.
 
 ## Dashboard
 
-- `GET /dashboard`: tela administrativa com saldo de tubos e cobrancas PIX em aberto
+- `GET /dashboard`: tela administrativa com saldo de tubos e cobrancas em aberto
 
-## Checkout PIX
+## Checkout
 
-- `GET /pagamentos/:paymentId`: tela da cobranca com QR Code, copia e cola e atualizacao automatica de status
+- `GET /pagamentos/:paymentId`: tela da cobranca com QR Code/link de checkout e atualizacao automatica de status
 
 Fluxo atual:
 
 1. Cria um pagamento pendente para um plano de um condominio
-2. Abre a cobranca PIX com QR Code e copia e cola
+2. Abre a cobranca pelo gateway ativo
 3. O backend so libera o credito quando o gateway confirma o pagamento
 4. O sistema gera um credito em `BallInventoryMovement`
 5. O saldo de tubos fica visivel na dashboard
@@ -110,10 +110,34 @@ curl -X POST http://localhost:3000/api/pagamentos \
   -d "{\"planId\":\"SEU_PLAN_ID\",\"method\":\"pix\"}"
 ```
 
-## Configuracao do gateway PIX
+## Configuracao do gateway de pagamento
 
 Novas cobrancas sao criadas pelo provider definido em `PAYMENT_PROVIDER`.
-Use `santander` para a integracao nova ou `abacatepay` para rollback/legado.
+Use `infinitepay` para a integracao principal. `santander` e `abacatepay`
+continuam disponiveis para pagamentos pendentes antigos ou rollback.
+
+### InfinitePay
+
+A integracao usa o Checkout integrado da InfinitePay, criando um link em
+`https://api.checkout.infinitepay.io/links` com `order_nsu` igual a referencia
+local do pagamento. A confirmacao automatica chega no webhook:
+
+```text
+https://seu-dominio.com/api/webhooks/infinitepay
+```
+
+Variaveis principais:
+
+```bash
+PAYMENT_PROVIDER=infinitepay
+PAYMENT_APP_BASE_URL=https://seu-dominio.com
+INFINITEPAY_TAG=sua_infinite_tag_sem_cifrao
+INFINITEPAY_WEBHOOK_SECRET=um_segredo_opcional
+```
+
+`PAYMENT_APP_BASE_URL` e usado para montar `webhook_url` e `redirect_url`.
+Se `INFINITEPAY_WEBHOOK_SECRET` for configurado, o projeto envia esse segredo
+na URL do webhook e exige o mesmo valor para aceitar a notificacao.
 
 ### Santander
 
@@ -141,7 +165,7 @@ SANTANDER_CERT_PATH=./certs/santander-cert.pem
 SANTANDER_KEY_PATH=./certs/santander-key.pem
 SANTANDER_PIX_EXPIRATION_SECONDS=3600
 SANTANDER_API_BASE_URL=https://pix.santander.com.br/api/v1/sandbox
-SANTANDER_AUTH_URL=https://trust-sandbox.api.santander.com.br/auth/oauth/v2/token
+SANTANDER_AUTH_URL=https://pix.santander.com.br/auth/oauth/v2/token
 ```
 
 Em deploy, prefira `SANTANDER_CERT_PEM_BASE64` e
@@ -151,8 +175,8 @@ certificado, chave privada ou `.env.local`.
 Se o ambiente Santander usar hosts diferentes dos defaults, ajuste:
 
 ```bash
-SANTANDER_API_BASE_URL=https://host-santander/api/v1
-SANTANDER_AUTH_URL=https://host-santander/auth/oauth/v2/token
+SANTANDER_API_BASE_URL=https://trust-pix.santander.com.br/api/v1
+SANTANDER_AUTH_URL=https://trust-pix.santander.com.br/oauth/token?grant_type=client_credentials
 ```
 
 ### AbacatePay legado

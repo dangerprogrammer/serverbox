@@ -220,7 +220,7 @@ export default async function CondominiumDashboardPage({
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-slate-600">
-            O saldo de tubos só entra como confirmado depois que o pagamento PIX for
+            O saldo de tubos só entra como confirmado depois que o pagamento for
             aprovado.
           </p>
         </div>

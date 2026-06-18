@@ -17,7 +17,7 @@ const DEFAULT_PIX_EXPIRATION_IN_SECONDS = 60 * 60;
 const SANTANDER_SANDBOX_API_BASE_URL =
   "https://pix.santander.com.br/api/v1/sandbox";
 const SANTANDER_SANDBOX_AUTH_URL =
-  "https://trust-sandbox.api.santander.com.br/auth/oauth/v2/token";
+  "https://pix.santander.com.br/auth/oauth/v2/token";
 const SANTANDER_PRODUCTION_HOST = "https://trust-pix.santander.com.br";
 
 type SantanderEnvironment = "sandbox" | "production";
@@ -67,6 +67,11 @@ export type SantanderPix = {
 
 type SantanderWebhookPayload = {
   pix?: SantanderPix[];
+};
+
+type SantanderInfoAdicional = {
+  nome: string;
+  valor: string;
 };
 
 type MtlsCredentials = {
@@ -371,6 +376,8 @@ async function getSantanderAccessToken() {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
+      client_id: clientId,
+      client_secret: clientSecret,
     },
     body: formBody,
   });
@@ -574,6 +581,28 @@ function buildSolicitacaoPagador(
   return `ServerBox${paymentType} ${reference}`.slice(0, 140);
 }
 
+function buildInfoAdicionais(
+  reference: string,
+  metadata: CreatePixChargeInput["metadata"],
+): SantanderInfoAdicional[] {
+  const paymentType = metadata?.paymentType?.replace(/_/g, " ");
+  const entries: Array<[string, string | undefined]> = [
+    ["Referencia", reference],
+    ["Condominio", metadata?.condominiumName],
+    ["Tipo", paymentType],
+    ["Marca", metadata?.tubeBrandName],
+    ["Tubos", metadata?.ballQuantity],
+  ];
+
+  return entries
+    .filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()))
+    .slice(0, 9)
+    .map(([nome, valor]) => ({
+      nome: nome.slice(0, 50),
+      valor: valor.slice(0, 150),
+    }));
+}
+
 export type SantanderWebhookPixPayload = SantanderWebhookPayload;
 
 export function isSantanderConfigured() {
@@ -605,6 +634,7 @@ export async function createSantanderPixCharge({
     throw new Error("SANTANDER_PIX_KEY nao configurado.");
   }
 
+  const infoAdicionais = buildInfoAdicionais(reference, metadata);
   const cob = await requestSantander<SantanderCob>({
     method: "PUT",
     path: `/cob/${reference}`,
@@ -615,10 +645,10 @@ export async function createSantanderPixCharge({
       devedor: buildDebtor(customer),
       valor: {
         original: formatAmountInReais(amountInCents),
-        modalidadeAlteracao: 0,
       },
       chave: pixKey,
       solicitacaoPagador: buildSolicitacaoPagador(reference, metadata),
+      ...(infoAdicionais.length > 0 ? { infoAdicionais } : {}),
     },
   });
 

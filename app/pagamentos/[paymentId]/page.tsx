@@ -21,10 +21,15 @@ export default async function PaymentPage({
     notFound();
   }
 
+  const isInfinitePayCheckout = payment.provider === "infinitepay";
+  const checkoutUrl = isInfinitePayCheckout
+    ? payment.providerReceiptUrl ?? payment.pixCopyPasteCode
+    : null;
+  const qrCodePayload = checkoutUrl ?? payment.pixCopyPasteCode;
   const qrCodeSvg = payment.pixQrCode?.startsWith("data:image/")
     ? null
-    : payment.pixCopyPasteCode
-      ? await buildPixQrCodeSvg(payment.pixCopyPasteCode)
+    : qrCodePayload
+      ? await buildPixQrCodeSvg(qrCodePayload)
       : null;
 
   return (
@@ -33,10 +38,12 @@ export default async function PaymentPage({
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-              Checkout PIX
+              {isInfinitePayCheckout ? "Checkout InfinitePay" : "Checkout PIX"}
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              QR Code e cópia e cola com liberação automática.
+              {isInfinitePayCheckout
+                ? "Link de pagamento com liberação automática."
+                : "QR Code e cópia e cola com liberação automática."}
             </h1>
             <p className="mt-4 text-base leading-8 text-slate-600">
               Esta cobrança fica em acompanhamento automático. O saldo só deve
@@ -58,7 +65,7 @@ export default async function PaymentPage({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
-                Pague com PIX
+                {isInfinitePayCheckout ? "Pague pela InfinitePay" : "Pague com PIX"}
               </p>
               <h2 className="payment-print-only mt-2 text-2xl font-semibold text-slate-900">
                 Pagamento ServerBox
@@ -72,7 +79,7 @@ export default async function PaymentPage({
             {payment.pixQrCode?.startsWith("data:image/") ? (
               <Image
                 src={payment.pixQrCode}
-                alt="QR Code PIX"
+                alt={isInfinitePayCheckout ? "QR Code do checkout" : "QR Code PIX"}
                 width={280}
                 height={280}
                 unoptimized
@@ -80,7 +87,7 @@ export default async function PaymentPage({
               />
             ) : qrCodeSvg ? (
               <div
-                aria-label="QR Code PIX"
+                aria-label={isInfinitePayCheckout ? "QR Code do checkout" : "QR Code PIX"}
                 dangerouslySetInnerHTML={{ __html: qrCodeSvg }}
               />
             ) : (
@@ -90,8 +97,9 @@ export default async function PaymentPage({
             )}
           </div>
           <p className="mt-4 text-sm leading-7 text-slate-600">
-            Escaneie o QR Code ou copie o código PIX. Assim que o gateway
-            confirmar a cobrança, o status muda automaticamente.
+            {isInfinitePayCheckout
+              ? "Escaneie o QR Code ou abra o link da InfinitePay. Assim que o gateway confirmar a cobrança, o status muda automaticamente."
+              : "Escaneie o QR Code ou copie o código PIX. Assim que o gateway confirmar a cobrança, o status muda automaticamente."}
           </p>
           <div className="payment-print-only mt-6 space-y-3 text-sm text-slate-700">
             <p>
@@ -109,7 +117,7 @@ export default async function PaymentPage({
               </p>
             ) : null}
             <p className="break-all font-mono text-xs">
-              {payment.pixCopyPasteCode ?? "Codigo PIX indisponivel"}
+              {qrCodePayload ?? "Codigo indisponivel"}
             </p>
           </div>
         </section>

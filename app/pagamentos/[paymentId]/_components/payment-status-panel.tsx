@@ -41,6 +41,13 @@ export function PaymentStatusPanel({
   const [payment, setPayment] = useState(initialPayment);
   const [copied, setCopied] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const checkoutUrl =
+    payment.provider === "infinitepay"
+      ? payment.providerReceiptUrl ?? payment.pixCopyPasteCode
+      : null;
+  const paymentCodeValue = checkoutUrl ?? payment.pixCopyPasteCode;
+  const paymentCodeLabel = checkoutUrl ? "Link de checkout" : "Código cópia e cola";
+  const copyButtonLabel = checkoutUrl ? "Copiar link" : "Copiar código";
   const canSimulatePayment =
     payment.provider === "abacatepay" && Boolean(payment.providerDevMode);
 
@@ -102,11 +109,11 @@ export function PaymentStatusPanel({
   }, [payment.paidAt]);
 
   async function copyPixCode() {
-    if (!payment.pixCopyPasteCode) {
+    if (!paymentCodeValue) {
       return;
     }
 
-    await navigator.clipboard.writeText(payment.pixCopyPasteCode);
+    await navigator.clipboard.writeText(paymentCodeValue);
     setCopied(true);
   }
 
@@ -151,7 +158,9 @@ export function PaymentStatusPanel({
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
             {payment.status === "pending"
-              ? "O saldo só deve ser liberado depois que o gateway confirmar o pagamento deste PIX."
+              ? checkoutUrl
+                ? "Abra o checkout da InfinitePay. O saldo só deve ser liberado depois que o gateway confirmar o pagamento."
+                : "O saldo só deve ser liberado depois que o gateway confirmar o pagamento deste PIX."
               : "A cobrança já recebeu um retorno definitivo do pagamento."}
           </p>
         </div>
@@ -190,19 +199,31 @@ export function PaymentStatusPanel({
       <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Código cópia e cola</p>
+            <p className="text-sm text-slate-500">{paymentCodeLabel}</p>
             <p className="mt-2 break-all font-mono text-sm text-slate-900">
-              {payment.pixCopyPasteCode ?? "Código PIX indisponível"}
+              {paymentCodeValue ?? "Código indisponível"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={copyPixCode}
-            disabled={!payment.pixCopyPasteCode}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
-          >
-            {copied ? "Copiado" : "Copiar código"}
-          </button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            {checkoutUrl ? (
+              <a
+                href={checkoutUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto"
+              >
+                Abrir checkout
+              </a>
+            ) : null}
+            <button
+              type="button"
+              onClick={copyPixCode}
+              disabled={!paymentCodeValue}
+              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {copied ? "Copiado" : copyButtonLabel}
+            </button>
+          </div>
         </div>
       </div>
 

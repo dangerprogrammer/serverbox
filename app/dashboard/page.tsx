@@ -17,6 +17,8 @@ function getProviderLabel(provider: string | null) {
       return "AbacatePay";
     case "santander":
       return "Santander";
+    case "infinitepay":
+      return "InfinitePay";
     default:
       return "Gateway";
   }
@@ -128,7 +130,7 @@ export default async function DashboardPage() {
               Cobranças em aberto
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Pagamentos pendentes que ainda aguardam confirmação do PIX.
+              Pagamentos pendentes que ainda aguardam confirmação do gateway.
             </p>
             <div className="mt-5 space-y-4">
               {dashboard.pendingPayments.length === 0 ? (
@@ -158,7 +160,9 @@ export default async function DashboardPage() {
                           </p>
                         </div>
                         <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
-                          {paymentMethodLabels[payment.method] ?? payment.method}
+                          {payment.provider === "infinitepay"
+                            ? "Checkout"
+                            : paymentMethodLabels[payment.method] ?? payment.method}
                         </span>
                       </div>
 
@@ -173,7 +177,7 @@ export default async function DashboardPage() {
                           href={`/pagamentos/${payment.id}`}
                           className="inline-flex h-10 w-full items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto"
                         >
-                          Abrir checkout PIX
+                          Abrir checkout
                         </Link>
                       </div>
                     </div>

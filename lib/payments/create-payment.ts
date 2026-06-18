@@ -182,7 +182,7 @@ async function buildChargeForCondominium({
 
   const defaultCustomerTaxId = getDefaultPaymentCustomerTaxId();
 
-  if (!defaultCustomerTaxId) {
+  if (provider !== "infinitepay" && !defaultCustomerTaxId) {
     throw new Error("PAYMENT_DEFAULT_CUSTOMER_TAX_ID nao configurado.");
   }
 
@@ -197,7 +197,7 @@ async function buildChargeForCondominium({
       name: administratorName,
       email: administratorEmail,
       cellphone: defaultCustomerCellphone ?? undefined,
-      taxId: defaultCustomerTaxId,
+      taxId: defaultCustomerTaxId ?? undefined,
     },
     metadata: {
       reference,

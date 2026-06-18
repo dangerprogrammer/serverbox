@@ -59,7 +59,8 @@ export async function applyProviderPaymentSnapshot({
   payment.provider = snapshot.provider;
   payment.providerPaymentId = snapshot.providerPaymentId;
   payment.providerRawStatus = snapshot.providerRawStatus;
-  payment.providerReceiptUrl = snapshot.providerReceiptUrl;
+  payment.providerReceiptUrl =
+    snapshot.providerReceiptUrl ?? payment.providerReceiptUrl;
   payment.providerDevMode = snapshot.providerDevMode;
   payment.pixTransactionId = snapshot.pixTransactionId ?? payment.pixTransactionId;
   payment.pixQrCode = snapshot.pixQrCode ?? payment.pixQrCode;
