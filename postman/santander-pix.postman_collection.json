@@ -1,0 +1,292 @@
+{
+  "info": {
+    "_postman_id": "fb1cc8eb-0f7d-4611-a0a8-9086eb13f997",
+    "name": "ServerBox - Santander Pix",
+    "description": "Santander Pix COB sandbox/production diagnostics. Import the environment template and configure the client certificate in Postman before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. OAuth - Documentation token URL",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "function decodeJwtPayload(token) {",
+              "  const payload = token.split('.')[1];",
+              "  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');",
+              "  const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');",
+              "  return JSON.parse(atob(padded));",
+              "}",
+              "",
+              "pm.test('OAuth responded', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 403]);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "if (json.access_token) {",
+              "  pm.environment.set('access_token', json.access_token);",
+              "  const payload = decodeJwtPayload(json.access_token);",
+              "  pm.environment.set('token_scope', payload.scope || '');",
+              "  console.log('OAuth documentation token scope:', payload.scope);",
+              "  pm.test('Token has cob.write', function () {",
+              "    pm.expect(payload.scope || '').to.include('cob.write');",
+              "  });",
+              "} else {",
+              "  console.log('OAuth documentation response:', json);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          },
+          {
+            "key": "client_id",
+            "value": "{{client_id}}"
+          },
+          {
+            "key": "client_secret",
+            "value": "{{client_secret}}"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text"
+            },
+            {
+              "key": "grant_type",
+              "value": "client_credentials",
+              "type": "text"
+            },
+            {
+              "key": "scope",
+              "value": "cob.write",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{auth_url_doc}}",
+          "host": [
+            "{{auth_url_doc}}"
+          ]
+        },
+        "description": "Uses the Token URL displayed by the Santander API Pix technical documentation: /api/v1/oauth."
+      },
+      "response": []
+    },
+    {
+      "name": "2. OAuth - Legacy Pix token URL",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "function decodeJwtPayload(token) {",
+              "  const payload = token.split('.')[1];",
+              "  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');",
+              "  const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');",
+              "  return JSON.parse(atob(padded));",
+              "}",
+              "",
+              "pm.test('OAuth legacy responded', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 403]);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "if (json.access_token) {",
+              "  pm.environment.set('access_token', json.access_token);",
+              "  const payload = decodeJwtPayload(json.access_token);",
+              "  pm.environment.set('token_scope', payload.scope || '');",
+              "  console.log('OAuth legacy token scope:', payload.scope);",
+              "  pm.test('Token has cob.write', function () {",
+              "    pm.expect(payload.scope || '').to.include('cob.write');",
+              "  });",
+              "} else {",
+              "  console.log('OAuth legacy response:', json);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text"
+            },
+            {
+              "key": "grant_type",
+              "value": "client_credentials",
+              "type": "text"
+            },
+            {
+              "key": "scope",
+              "value": "cob.write",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{auth_url_legacy}}",
+          "host": [
+            "{{auth_url_legacy}}"
+          ]
+        },
+        "description": "Diagnostic token endpoint that generated an HS256 token locally. It currently returned webhook.read for this app, so use it to confirm whether Santander starts returning cob.write."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Create COB - R$ 1.00",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.environment.get('txid')) {",
+              "  pm.environment.set('txid', `SB${Date.now()}POSTMANPIXTESTE`);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('COB request reached Santander', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 401, 403, 404, 500]);",
+              "});",
+              "",
+              "let json = {};",
+              "try { json = pm.response.json(); } catch (error) {}",
+              "console.log('COB response:', json || pm.response.text());",
+              "",
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "  pm.test('COB created', function () {",
+              "    pm.expect(json.txid || '').to.eql(pm.environment.get('txid'));",
+              "  });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json, application/problem+json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "X-Application-Key",
+            "value": "{{client_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"calendario\": {\n    \"expiracao\": 3600\n  },\n  \"devedor\": {\n    \"cnpj\": \"{{payer_tax_id}}\",\n    \"nome\": \"{{payer_name}}\"\n  },\n  \"valor\": {\n    \"original\": \"1.00\"\n  },\n  \"chave\": \"{{pix_key}}\",\n  \"solicitacaoPagador\": \"ServerBox teste {{txid}}\",\n  \"infoAdicionais\": [\n    {\n      \"nome\": \"Referencia\",\n      \"valor\": \"{{txid}}\"\n    },\n    {\n      \"nome\": \"Tipo\",\n      \"valor\": \"teste sandbox\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{api_base_url}}/cob/{{txid}}",
+          "host": [
+            "{{api_base_url}}"
+          ],
+          "path": [
+            "cob",
+            "{{txid}}"
+          ]
+        },
+        "description": "Creates a dynamic Pix COB for R$ 1.00 using the access_token stored by one of the OAuth requests."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Consult COB",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json, application/problem+json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "X-Application-Key",
+            "value": "{{client_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{api_base_url}}/cob/{{txid}}",
+          "host": [
+            "{{api_base_url}}"
+          ],
+          "path": [
+            "cob",
+            "{{txid}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
