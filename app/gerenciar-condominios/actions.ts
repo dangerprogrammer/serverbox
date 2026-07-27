@@ -10,6 +10,7 @@ import { getDataSource } from "@/lib/db/data-source";
 import { CondominiumClientAccessEntity } from "@/lib/db/entities/condominium-client-access.entity";
 import { CondominiumClientSessionEntity } from "@/lib/db/entities/condominium-client-session.entity";
 import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
+import type { CondominiumCourt } from "@/lib/db/entities/condominium-court.entity";
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
@@ -362,7 +363,7 @@ export async function deleteTubeBrandAction(
     courtName: string;
   }> = [];
   const condominiumsToUpdate = new Set<string>();
-  const courtsToUpdate: CondominiumCourtEntity[] = [];
+  const courtsToUpdate: CondominiumCourt[] = [];
 
   condominiums.forEach((condominium) => {
     const currentStock = getTubeStockEntries(condominium.tubeStockByBrand);
