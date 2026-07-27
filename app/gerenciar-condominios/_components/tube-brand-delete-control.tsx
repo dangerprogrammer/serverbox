@@ -44,6 +44,40 @@ export function TubeBrandDeleteControl({
   const courtSummary = courtCondominiums.length
     ? courtCondominiums.join(", ")
     : "nenhuma quadra";
+  const needsConfirmation = stockCondominiums.length > 0;
+
+  if (!needsConfirmation) {
+    return (
+      <form action={formAction} className="flex flex-col items-stretch gap-2">
+        <input type="hidden" name="tubeBrandId" value={tubeBrandId} />
+        <button
+          type="submit"
+          className="inline-flex size-8 items-center justify-center rounded-full text-rose-700 transition hover:bg-rose-50 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={`Excluir marca ${tubeBrandName}`}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="none"
+            className="h-5 w-5"
+          >
+            <path
+              d="M6 6L14 14M14 6L6 14"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+
+        {state.message ? (
+          <p className="max-w-44 text-xs leading-5 text-rose-700">
+            {state.message}
+          </p>
+        ) : null}
+      </form>
+    );
+  }
 
   return (
     <div className="flex flex-col items-stretch gap-2">
