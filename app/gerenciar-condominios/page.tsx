@@ -1,17 +1,17 @@
 import { CurrencyInput } from "@/app/_components/currency-input";
-import { FormSubmitButton } from "@/app/_components/form-submit-button";
-import { SessionTokenInput } from "@/app/_components/session-token-input";
 import {
   FloatingInput,
   FloatingTextarea,
 } from "@/app/_components/floating-field";
+import { FormSubmitButton } from "@/app/_components/form-submit-button";
+import { SessionTokenInput } from "@/app/_components/session-token-input";
 import { ClientAccessesPanel } from "@/app/gerenciar-condominios/_components/client-accesses-panel";
+import { CreateCondominiumForm } from "@/app/gerenciar-condominios/_components/create-condominium-form";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { TubeBrandDeleteControl } from "@/app/gerenciar-condominios/_components/tube-brand-delete-control";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
 import {
-  createCondominiumAction,
   createPlanAction,
   createTubeBrandAction,
   deleteCondominiumAction,
@@ -102,37 +102,7 @@ export default async function GerenciarCondominiosPage() {
             abaixo, no próprio card.
           </p>
 
-          <form action={createCondominiumAction} className="mt-6 space-y-4">
-            <SessionTokenInput />
-            <div className="grid gap-4 md:grid-cols-2">
-              <FloatingInput
-                label="Nome do condomínio"
-                name="name"
-                placeholder="Nome do condomínio"
-                className="bg-white"
-              />
-              <FloatingInput
-                label="Cidade"
-                name="city"
-                placeholder="Cidade"
-                className="bg-white"
-              />
-              <FloatingInput
-                label="UF"
-                name="state"
-                placeholder="UF"
-                maxLength={2}
-                className="bg-white uppercase"
-              />
-            </div>
-            <CondominiumCourtsFieldset tubeBrands={tubeBrands} />
-
-            <FormSubmitButton
-              idleLabel="Criar condomínio"
-              pendingLabel="Criando condomínio..."
-              className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-            />
-          </form>
+          <CreateCondominiumForm tubeBrands={tubeBrands} />
 
           <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
             <h3 className="text-lg font-semibold text-slate-900">

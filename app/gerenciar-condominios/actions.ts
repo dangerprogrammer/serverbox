@@ -338,7 +338,6 @@ export async function deleteTubeBrandAction(
   const dataSource = await getDataSource();
   const brandRepository = dataSource.getRepository(TubeBrandEntity);
   const condominiumRepository = dataSource.getRepository(CondominiumEntity);
-
   const brand = await brandRepository.findOneBy({ id: tubeBrandId });
 
   if (!brand) {
@@ -358,32 +357,86 @@ export async function deleteTubeBrandAction(
     },
   });
 
-  const usage = getTubeBrandUsageSummary(condominiums, tubeBrandId);
+  const blockedCourts: Array<{
+    condominiumName: string;
+    courtName: string;
+  }> = [];
+  const condominiumsToUpdate = new Set<string>();
+  const courtsToUpdate: CondominiumCourtEntity[] = [];
 
-  if (usage.courtCondominiums.length > 0) {
+  condominiums.forEach((condominium) => {
+    const currentStock = getTubeStockEntries(condominium.tubeStockByBrand);
+    const nextStock = currentStock.filter(
+      (entry) => entry.tubeBrandId !== tubeBrandId,
+    );
+
+    if (nextStock.length !== currentStock.length) {
+      condominium.tubeStockByBrand = nextStock;
+      condominiumsToUpdate.add(condominium.id);
+    }
+
+    condominium.courtDetails?.forEach((court) => {
+      const currentBrands =
+        court.tubeBrands && court.tubeBrands.length > 0
+          ? court.tubeBrands
+          : [court.tubeBrand];
+      const remainingBrands = currentBrands.filter(
+        (brandEntry) => brandEntry.id !== tubeBrandId,
+      );
+
+      if (remainingBrands.length === currentBrands.length) {
+        return;
+      }
+
+      if (court.tubeBrand.id === tubeBrandId && remainingBrands.length === 0) {
+        blockedCourts.push({
+          condominiumName: condominium.name,
+          courtName: court.name,
+        });
+        return;
+      }
+
+      if (court.tubeBrand.id === tubeBrandId) {
+        court.tubeBrand = remainingBrands[0];
+      }
+
+      court.tubeBrands = remainingBrands;
+      courtsToUpdate.push(court);
+      condominiumsToUpdate.add(condominium.id);
+    });
+  });
+
+  if (blockedCourts.length > 0) {
+    const blockedSummary = blockedCourts
+      .slice(0, 3)
+      .map(({ condominiumName, courtName }) => `${condominiumName} / ${courtName}`)
+      .join(", ");
+    const remainingBlocked = blockedCourts.length - 3;
+
     return {
       success: false,
-      message: `Esta marca ainda está vinculada às quadras dos condomínios: ${usage.courtCondominiums.join(
-        ", ",
-      )}. Remova-a das quadras antes de excluir.`,
+      message:
+        `Não foi possível excluir automaticamente porque estas quadras ficariam sem marca: ${blockedSummary}${remainingBlocked > 0 ? ` e mais ${remainingBlocked}` : ""}. ` +
+        "Adicione outra marca a essas quadras e tente novamente.",
     };
   }
 
-  const condominiumsToUpdate = condominiums.filter((condominium) =>
-    usage.stockCondominiums.includes(condominium.name),
-  );
+  await dataSource.transaction(async (manager) => {
+    if (condominiumsToUpdate.size > 0) {
+      const condominiumsToSave = condominiums.filter((condominium) =>
+        condominiumsToUpdate.has(condominium.id),
+      );
 
-  for (const condominium of condominiumsToUpdate) {
-    condominium.tubeStockByBrand = getTubeStockEntries(
-      condominium.tubeStockByBrand,
-    ).filter((entry) => entry.tubeBrandId !== tubeBrandId);
-  }
+      await manager.getRepository(CondominiumEntity).save(condominiumsToSave);
+    }
 
-  if (condominiumsToUpdate.length > 0) {
-    await condominiumRepository.save(condominiumsToUpdate);
-  }
+    if (courtsToUpdate.length > 0) {
+      await manager.getRepository(CondominiumCourtEntity).save(courtsToUpdate);
+    }
 
-  await brandRepository.delete({ id: tubeBrandId });
+    await manager.getRepository(TubeBrandEntity).delete({ id: tubeBrandId });
+  });
+
   revalidateManagementViews();
 
   return {

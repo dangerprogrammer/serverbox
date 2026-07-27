@@ -22,7 +22,7 @@ export function FormSubmitButton({
 
   return (
     <button type="submit" disabled={isDisabled} className={className}>
-      {pending ? pendingLabel : disabled ? disabledLabel ?? idleLabel : idleLabel}
+      {pending ? pendingLabel : idleLabel}
     </button>
   );
 }

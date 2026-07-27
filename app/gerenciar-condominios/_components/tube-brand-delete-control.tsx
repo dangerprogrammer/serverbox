@@ -38,7 +38,6 @@ export function TubeBrandDeleteControl({
     }
   }, [state.success]);
 
-  const hasCourtUsage = courtCondominiums.length > 0;
   const stockSummary = stockCondominiums.length
     ? stockCondominiums.join(", ")
     : "nenhum condomínio";
@@ -52,10 +51,22 @@ export function TubeBrandDeleteControl({
         <button
           type="button"
           onClick={() => setIsConfirming(true)}
-          className="rounded-full border border-rose-200 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50"
+          className="inline-flex size-8 items-center justify-center rounded-full text-rose-700 transition hover:bg-rose-50 hover:text-rose-800"
           aria-label={`Excluir marca ${tubeBrandName}`}
         >
-          x
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="none"
+            className="h-5 w-5"
+          >
+            <path
+              d="M6 6L14 14M14 6L6 14"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
       ) : (
         <div
@@ -78,10 +89,10 @@ export function TubeBrandDeleteControl({
                   Excluir {tubeBrandName}?
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Isso irá excluir a marca do estoque dos condomínios: {stockSummary}.
+                  Isso vai remover a marca do estoque dos condomínios e dos vínculos das quadras quando houver outra marca disponível.
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Quadras ainda vinculadas: {courtSummary}.
+                  Condomínios que usam esta marca no estoque: {stockSummary}.
                 </p>
               </div>
               <button
@@ -94,9 +105,9 @@ export function TubeBrandDeleteControl({
               </button>
             </div>
 
-            {hasCourtUsage ? (
+            {courtCondominiums.length > 0 ? (
               <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                Esta marca ainda está vinculada às quadras dos condomínios: {courtSummary}. Remova-a das quadras antes de continuar.
+                Esta marca ainda aparece nas quadras dos condomínios: {courtSummary}. A exclusão vai tentar limpar esses vínculos automaticamente; se alguma quadra ficar sem marca, a ação será bloqueada.
               </p>
             ) : null}
 
@@ -116,10 +127,8 @@ export function TubeBrandDeleteControl({
                 Cancelar
               </button>
               <FormSubmitButton
-                idleLabel="Continuar"
+                idleLabel="Excluir mesmo assim"
                 pendingLabel="Excluindo..."
-                disabled={hasCourtUsage}
-                disabledLabel="Remova das quadras primeiro"
                 className="inline-flex h-10 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
               />
             </form>

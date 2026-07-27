@@ -19,6 +19,7 @@ type CondominiumCourtsFieldsetProps = {
   initialCourts?: CourtValue[];
   initialStock?: { tubeBrandId: string; quantity: number }[];
   onDirtyChange?: (dirty: boolean) => void;
+  onReadyChange?: (ready: boolean) => void;
 };
 
 function createCourt(index: number, tubeBrandId: string): CourtValue {
@@ -60,6 +61,7 @@ export function CondominiumCourtsFieldset({
   initialCourts = [],
   initialStock = [],
   onDirtyChange,
+  onReadyChange,
 }: CondominiumCourtsFieldsetProps) {
   const defaultBrandId = tubeBrands[0]?.id ?? "";
   const initialValues = useMemo(
@@ -103,6 +105,17 @@ export function CondominiumCourtsFieldset({
     () => serializeStockState(tubeBrands, stockQuantities),
     [stockQuantities, tubeBrands],
   );
+  const isReady = useMemo(() => {
+    if (tubeBrands.length === 0 || courts.length === 0) {
+      return false;
+    }
+
+    return courts.some((court) =>
+      getCourtBrandIds(court).some(
+        (brandId) => (stockQuantities.get(brandId) ?? 0) > 0,
+      ),
+    );
+  }, [courts, stockQuantities, tubeBrands.length]);
 
   useEffect(() => {
     onDirtyChange?.(
@@ -116,6 +129,10 @@ export function CondominiumCourtsFieldset({
     initialStockState,
     onDirtyChange,
   ]);
+
+  useEffect(() => {
+    onReadyChange?.(isReady);
+  }, [isReady, onReadyChange]);
 
   function addCourt() {
     setCourts((currentCourts) => [

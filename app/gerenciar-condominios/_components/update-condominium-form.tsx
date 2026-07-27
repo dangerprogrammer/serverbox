@@ -101,8 +101,7 @@ export function UpdateCondominiumForm({
           idleLabel="Salvar condomínio"
           pendingLabel="Salvando condomínio..."
           disabled={!hasChanges}
-          disabledLabel="Sem alterações"
-          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:opacity-60"
         />
       </div>
     </form>
