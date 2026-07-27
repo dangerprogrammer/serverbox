@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type TubeBrandOption = {
   id: string;
@@ -18,6 +18,7 @@ type CondominiumCourtsFieldsetProps = {
   tubeBrands: TubeBrandOption[];
   initialCourts?: CourtValue[];
   initialStock?: { tubeBrandId: string; quantity: number }[];
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 function createCourt(index: number, tubeBrandId: string): CourtValue {
@@ -36,10 +37,29 @@ function getCourtBrandIds(court: CourtValue) {
   return court.tubeBrandId ? [court.tubeBrandId] : [];
 }
 
+function serializeCourtState(courts: CourtValue[]) {
+  return JSON.stringify(
+    courts.map((court) => ({
+      name: court.name.trim(),
+      tubeBrandIds: getCourtBrandIds(court),
+    })),
+  );
+}
+
+function serializeStockState(
+  tubeBrands: TubeBrandOption[],
+  stockQuantities: Map<string, number>,
+) {
+  return JSON.stringify(
+    tubeBrands.map((brand) => [brand.id, stockQuantities.get(brand.id) ?? 0]),
+  );
+}
+
 export function CondominiumCourtsFieldset({
   tubeBrands,
   initialCourts = [],
   initialStock = [],
+  onDirtyChange,
 }: CondominiumCourtsFieldsetProps) {
   const defaultBrandId = tubeBrands[0]?.id ?? "";
   const initialValues = useMemo(
@@ -70,6 +90,32 @@ export function CondominiumCourtsFieldset({
       ]),
     ),
   );
+  const initialCourtState = useMemo(
+    () => serializeCourtState(initialValues),
+    [initialValues],
+  );
+  const initialStockState = useMemo(
+    () => serializeStockState(tubeBrands, initialStockQuantities),
+    [initialStockQuantities, tubeBrands],
+  );
+  const currentCourtState = useMemo(() => serializeCourtState(courts), [courts]);
+  const currentStockState = useMemo(
+    () => serializeStockState(tubeBrands, stockQuantities),
+    [stockQuantities, tubeBrands],
+  );
+
+  useEffect(() => {
+    onDirtyChange?.(
+      currentCourtState !== initialCourtState ||
+        currentStockState !== initialStockState,
+    );
+  }, [
+    currentCourtState,
+    currentStockState,
+    initialCourtState,
+    initialStockState,
+    onDirtyChange,
+  ]);
 
   function addCourt() {
     setCourts((currentCourts) => [

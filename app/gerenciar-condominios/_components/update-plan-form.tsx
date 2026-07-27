@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CurrencyInput } from '@/app/_components/currency-input';
+import { FormSubmitButton } from '@/app/_components/form-submit-button';
 import { SessionTokenInput } from '@/app/_components/session-token-input';
 import { PlanTier } from '@/lib/domain/condominium-plan';
 import { updatePlanAction } from '@/app/gerenciar-condominios/actions';
@@ -102,13 +103,13 @@ export function UpdatePlanForm({
         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
       />
       <div className="flex flex-wrap gap-3">
-        <button
-          type="submit"
+        <FormSubmitButton
+          idleLabel="Salvar plano"
+          pendingLabel="Salvando plano..."
           disabled={!hasChanges}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Salvar plano
-        </button>
+          disabledLabel="Sem alterações"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+        />
       </div>
     </form>
   );

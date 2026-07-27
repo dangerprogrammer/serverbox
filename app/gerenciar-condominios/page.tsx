@@ -1,4 +1,5 @@
 import { CurrencyInput } from "@/app/_components/currency-input";
+import { FormSubmitButton } from "@/app/_components/form-submit-button";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
 import {
   FloatingInput,
@@ -88,12 +89,11 @@ export default async function GerenciarCondominiosPage() {
             </div>
             <CondominiumCourtsFieldset tubeBrands={tubeBrands} />
 
-            <button
-              type="submit"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500"
-            >
-              Criar condomínio
-            </button>
+            <FormSubmitButton
+              idleLabel="Criar condomínio"
+              pendingLabel="Criando condomínio..."
+              className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            />
           </form>
 
           <div className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
@@ -111,12 +111,11 @@ export default async function GerenciarCondominiosPage() {
                 placeholder="Ex.: Wilson"
                 className="bg-white sm:flex-1"
               />
-              <button
-                type="submit"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-              >
-                Cadastrar marca
-              </button>
+              <FormSubmitButton
+                idleLabel="Cadastrar marca"
+                pendingLabel="Cadastrando marca..."
+                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+              />
             </form>
             <div className="mt-4 flex flex-wrap gap-2">
               {tubeBrands.map((brand) => (
@@ -130,12 +129,11 @@ export default async function GerenciarCondominiosPage() {
                   <form action={deleteTubeBrandAction}>
                     <input type="hidden" name="tubeBrandId" value={brand.id} />
                     <SessionTokenInput />
-                    <button
-                      type="submit"
-                      className="rounded-full border border-rose-200 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50"
-                    >
-                      Excluir
-                    </button>
+                    <FormSubmitButton
+                      idleLabel="x"
+                      pendingLabel="..."
+                      className="rounded-full border border-rose-200 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
+                    />
                   </form>
                 </div>
               ))}
@@ -339,12 +337,11 @@ export default async function GerenciarCondominiosPage() {
                           required
                           className="bg-white"
                         />
-                        <button
-                          type="submit"
-                          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
-                        >
-                          Criar plano
-                        </button>
+                        <FormSubmitButton
+                          idleLabel="Criar plano"
+                          pendingLabel="Criando plano..."
+                          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+                        />
                       </form>
 
                       <div className="mt-4 space-y-4">
@@ -376,12 +373,11 @@ export default async function GerenciarCondominiosPage() {
                               <form action={deletePlanAction} className="mt-3">
                                 <input type="hidden" name="planId" value={plan.id} />
                                 <SessionTokenInput />
-                                <button
-                                  type="submit"
-                                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-                                >
-                                  Excluir plano
-                                </button>
+                                <FormSubmitButton
+                                  idleLabel="Excluir plano"
+                                  pendingLabel="Excluindo plano..."
+                                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
+                                />
                               </form>
                             </article>
                           ))
@@ -392,12 +388,11 @@ export default async function GerenciarCondominiosPage() {
                     <form action={deleteCondominiumAction} className="mt-4">
                       <input type="hidden" name="condominiumId" value={condominium.id} />
                       <SessionTokenInput />
-                      <button
-                        type="submit"
-                        className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-                      >
-                        Excluir condomínio
-                      </button>
+                      <FormSubmitButton
+                        idleLabel="Excluir condomínio"
+                        pendingLabel="Excluindo condomínio..."
+                        className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
+                      />
                     </form>
                   </div>
                 </details>

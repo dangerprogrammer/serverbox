@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { FloatingInput } from "@/app/_components/floating-field";
+import { FormSubmitButton } from "@/app/_components/form-submit-button";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { updateCondominiumAction } from "@/app/gerenciar-condominios/actions";
@@ -46,6 +47,11 @@ export function UpdateCondominiumForm({
   const [name, setName] = useState(initialName);
   const [city, setCity] = useState(initialCity);
   const [state, setState] = useState(initialState);
+  const [isCourtsDirty, setIsCourtsDirty] = useState(false);
+
+  const isOwnDirty =
+    name !== initialName || city !== initialCity || state !== initialState;
+  const hasChanges = isOwnDirty || isCourtsDirty;
 
   const handleSubmit = async (formData: FormData) => {
     await updateCondominiumAction(formData);
@@ -87,15 +93,17 @@ export function UpdateCondominiumForm({
         tubeBrands={tubeBrands}
         initialCourts={courtDetails}
         initialStock={tubeStockByBrand}
+        onDirtyChange={setIsCourtsDirty}
       />
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="submit"
-          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
-        >
-          Salvar condomínio
-        </button>
+        <FormSubmitButton
+          idleLabel="Salvar condomínio"
+          pendingLabel="Salvando condomínio..."
+          disabled={!hasChanges}
+          disabledLabel="Sem alterações"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+        />
       </div>
     </form>
   );

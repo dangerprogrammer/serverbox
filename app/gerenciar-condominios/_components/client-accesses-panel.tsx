@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { FloatingInput } from "@/app/_components/floating-field";
+import { FormSubmitButton } from "@/app/_components/form-submit-button";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
 import {
   createClientAccessAction,
@@ -82,12 +83,11 @@ export function ClientAccessesPanel({
             className="bg-white"
           />
         </div>
-        <button
-          type="submit"
-          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
-        >
-          Criar acesso
-        </button>
+        <FormSubmitButton
+          idleLabel="Criar acesso"
+          pendingLabel="Criando acesso..."
+          className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+        />
       </form>
 
       <div className="mt-4 space-y-3">
@@ -121,12 +121,11 @@ export function ClientAccessesPanel({
               <form action={deleteClientAccessAction}>
                 <input type="hidden" name="accessId" value={access.id} />
                 <SessionTokenInput />
-                <button
-                  type="submit"
-                  className="inline-flex h-10 w-full items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 sm:w-auto"
-                >
-                  Revogar acesso
-                </button>
+                <FormSubmitButton
+                  idleLabel="Revogar acesso"
+                  pendingLabel="Revogando..."
+                  className="inline-flex h-10 w-full items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400 sm:w-auto"
+                />
               </form>
             </article>
           ))
