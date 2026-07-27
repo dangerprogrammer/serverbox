@@ -7,6 +7,7 @@ import {
 } from "@/app/_components/floating-field";
 import { ClientAccessesPanel } from "@/app/gerenciar-condominios/_components/client-accesses-panel";
 import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
+import { TubeBrandDeleteControl } from "@/app/gerenciar-condominios/_components/tube-brand-delete-control";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";
 import {
@@ -15,7 +16,6 @@ import {
   createTubeBrandAction,
   deleteCondominiumAction,
   deletePlanAction,
-  deleteTubeBrandAction,
 } from "@/app/gerenciar-condominios/actions";
 import { getCondominiumManagementData } from "@/lib/data/admin-management";
 import { PlanTier } from "@/lib/domain/condominium-plan";
@@ -36,6 +36,44 @@ export const dynamic = "force-dynamic";
 
 export default async function GerenciarCondominiosPage() {
   const { condominiums, tubeBrands } = await getCondominiumManagementData();
+  const brandUsageById = new Map<
+    string,
+    { stockCondominiums: Set<string>; courtCondominiums: Set<string> }
+  >();
+
+  condominiums.forEach((condominium) => {
+    condominium.tubeStockByBrand.forEach((entry) => {
+      const usage =
+        brandUsageById.get(entry.tubeBrandId) ??
+        {
+          stockCondominiums: new Set<string>(),
+          courtCondominiums: new Set<string>(),
+        };
+
+      usage.stockCondominiums.add(condominium.name);
+      brandUsageById.set(entry.tubeBrandId, usage);
+    });
+
+    condominium.courtDetails.forEach((court) => {
+      const usageForCourt = [court.tubeBrandId, ...(court.tubeBrandIds ?? [])];
+
+      usageForCourt.forEach((brandId) => {
+        if (!brandId) {
+          return;
+        }
+
+        const usage =
+          brandUsageById.get(brandId) ??
+          {
+            stockCondominiums: new Set<string>(),
+            courtCondominiums: new Set<string>(),
+          };
+
+        usage.courtCondominiums.add(condominium.name);
+        brandUsageById.set(brandId, usage);
+      });
+    });
+  });
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
@@ -126,15 +164,16 @@ export default async function GerenciarCondominiosPage() {
                   <span className="text-xs font-semibold text-slate-700">
                     {brand.name}
                   </span>
-                  <form action={deleteTubeBrandAction}>
-                    <input type="hidden" name="tubeBrandId" value={brand.id} />
-                    <SessionTokenInput />
-                    <FormSubmitButton
-                      idleLabel="x"
-                      pendingLabel="..."
-                      className="rounded-full border border-rose-200 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
-                    />
-                  </form>
+                  <TubeBrandDeleteControl
+                    tubeBrandId={brand.id}
+                    tubeBrandName={brand.name}
+                    stockCondominiums={Array.from(
+                      brandUsageById.get(brand.id)?.stockCondominiums ?? [],
+                    )}
+                    courtCondominiums={Array.from(
+                      brandUsageById.get(brand.id)?.courtCondominiums ?? [],
+                    )}
+                  />
                 </div>
               ))}
             </div>

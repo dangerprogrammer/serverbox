@@ -15,6 +15,7 @@ import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.en
 import { PlanTier, type CondominiumPlan } from "@/lib/domain/condominium-plan";
 import {
   getActiveTubeStockEntries,
+  getTubeStockEntries,
   sumTubeStockEntries,
   type TubeStockEntry,
 } from "@/lib/domain/tube-stock";
@@ -270,13 +271,68 @@ export async function createTubeBrandAction(formData: FormData) {
   revalidateManagementViews();
 }
 
-export async function deleteTubeBrandAction(formData: FormData) {
+export type DeleteTubeBrandActionState = {
+  success: boolean;
+  message: string | null;
+};
+
+function getTubeBrandUsageSummary(
+  condominiums: Array<{
+    name: string;
+    tubeStockByBrand: Array<{ tubeBrandId?: string | null } | null> | null;
+    courtDetails?: Array<{
+      tubeBrand?: { id?: string | null } | null;
+      tubeBrands?: Array<{ id?: string | null } | null> | null;
+    }> | null;
+  }>,
+  tubeBrandId: string,
+) {
+  const stockCondominiums = new Set<string>();
+  const courtCondominiums = new Set<string>();
+
+  condominiums.forEach((condominium) => {
+    if (
+      Array.isArray(condominium.tubeStockByBrand) &&
+      condominium.tubeStockByBrand.some(
+        (entry) => entry?.tubeBrandId === tubeBrandId,
+      )
+    ) {
+      stockCondominiums.add(condominium.name);
+    }
+
+    if (
+      condominium.courtDetails?.some((court) => {
+        const courtBrands =
+          court.tubeBrands && court.tubeBrands.length > 0
+            ? court.tubeBrands
+            : [court.tubeBrand];
+
+        return courtBrands.some((brand) => brand?.id === tubeBrandId);
+      })
+    ) {
+      courtCondominiums.add(condominium.name);
+    }
+  });
+
+  return {
+    stockCondominiums: Array.from(stockCondominiums),
+    courtCondominiums: Array.from(courtCondominiums),
+  };
+}
+
+export async function deleteTubeBrandAction(
+  _previousState: DeleteTubeBrandActionState,
+  formData: FormData,
+): Promise<DeleteTubeBrandActionState> {
   await requireAuthenticatedAdminFromFormData(formData);
 
   const tubeBrandId = String(formData.get("tubeBrandId") ?? "").trim();
 
   if (!tubeBrandId) {
-    throw new Error("Marca de tubos invalida.");
+    return {
+      success: false,
+      message: "Marca de tubos invalida.",
+    };
   }
 
   const dataSource = await getDataSource();
@@ -286,11 +342,15 @@ export async function deleteTubeBrandAction(formData: FormData) {
   const brand = await brandRepository.findOneBy({ id: tubeBrandId });
 
   if (!brand) {
-    throw new Error("Marca de tubos nao encontrada.");
+    return {
+      success: false,
+      message: "Marca de tubos nao encontrada.",
+    };
   }
 
   const condominiums = await condominiumRepository.find({
     relations: {
+      primaryAdmin: true,
       courtDetails: {
         tubeBrand: true,
         tubeBrands: true,
@@ -298,29 +358,38 @@ export async function deleteTubeBrandAction(formData: FormData) {
     },
   });
 
-  const brandIsUsedInCourts = condominiums.some((condominium) =>
-    condominium.courtDetails?.some(
-      (court) =>
-        court.tubeBrand?.id === tubeBrandId ||
-        court.tubeBrands?.some((courtBrand) => courtBrand.id === tubeBrandId),
-    ),
+  const usage = getTubeBrandUsageSummary(condominiums, tubeBrandId);
+
+  if (usage.courtCondominiums.length > 0) {
+    return {
+      success: false,
+      message: `Esta marca ainda está vinculada às quadras dos condomínios: ${usage.courtCondominiums.join(
+        ", ",
+      )}. Remova-a das quadras antes de excluir.`,
+    };
+  }
+
+  const condominiumsToUpdate = condominiums.filter((condominium) =>
+    usage.stockCondominiums.includes(condominium.name),
   );
 
-  const brandIsUsedInStock = condominiums.some((condominium) =>
-    Array.isArray(condominium.tubeStockByBrand) &&
-    condominium.tubeStockByBrand.some(
-      (entry) => entry?.tubeBrandId === tubeBrandId,
-    ),
-  );
+  for (const condominium of condominiumsToUpdate) {
+    condominium.tubeStockByBrand = getTubeStockEntries(
+      condominium.tubeStockByBrand,
+    ).filter((entry) => entry.tubeBrandId !== tubeBrandId);
+  }
 
-  if (brandIsUsedInCourts || brandIsUsedInStock) {
-    throw new Error(
-      "Remova a marca das quadras e do estoque antes de excluir.",
-    );
+  if (condominiumsToUpdate.length > 0) {
+    await condominiumRepository.save(condominiumsToUpdate);
   }
 
   await brandRepository.delete({ id: tubeBrandId });
   revalidateManagementViews();
+
+  return {
+    success: true,
+    message: null,
+  };
 }
 
 export async function createCondominiumAction(formData: FormData) {
