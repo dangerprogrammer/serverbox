@@ -134,16 +134,18 @@ export default async function GerenciarCondominiosPage() {
                   <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">
                     {brand.name}
                   </span>
-                  <TubeBrandDeleteControl
-                    tubeBrandId={brand.id}
-                    tubeBrandName={brand.name}
-                    stockCondominiums={Array.from(
-                      brandUsageById.get(brand.id)?.stockCondominiums ?? [],
-                    )}
-                    courtCondominiums={Array.from(
-                      brandUsageById.get(brand.id)?.courtCondominiums ?? [],
-                    )}
-                  />
+                  {tubeBrands.length > 1 ? (
+                    <TubeBrandDeleteControl
+                      tubeBrandId={brand.id}
+                      tubeBrandName={brand.name}
+                      stockCondominiums={Array.from(
+                        brandUsageById.get(brand.id)?.stockCondominiums ?? [],
+                      )}
+                      courtCondominiums={Array.from(
+                        brandUsageById.get(brand.id)?.courtCondominiums ?? [],
+                      )}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
