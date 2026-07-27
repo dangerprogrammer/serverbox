@@ -28,6 +28,7 @@ export function TubeBrandDeleteControl({
   courtCondominiums,
 }: TubeBrandDeleteControlProps) {
   const [isConfirming, setIsConfirming] = useState(false);
+  const [hasSubmittedDelete, setHasSubmittedDelete] = useState(false);
   const [state, formAction] = useActionState(
     deleteTubeBrandAction,
     initialState,
@@ -36,6 +37,7 @@ export function TubeBrandDeleteControl({
   useEffect(() => {
     if (state.success) {
       setIsConfirming(false);
+      setHasSubmittedDelete(false);
     }
   }, [state.success]);
 
@@ -52,7 +54,7 @@ export function TubeBrandDeleteControl({
       ? "Isso vai remover a marca do estoque dos condomínios e dos vínculos das quadras quando houver outra marca disponível."
       : stockCondominiums.length > 0
         ? "Isso vai remover a marca do estoque dos condomínios quando houver outra marca disponível."
-        : "Isso vai remover a marca dos vínculos das quadras quando houver outra marca disponível.";
+        : "Essa marca só permanece vinculada às quadras dos condomínios.";
 
   if (canDeleteDirectly) {
     return (
@@ -93,7 +95,10 @@ export function TubeBrandDeleteControl({
       {!isConfirming ? (
         <button
           type="button"
-          onClick={() => setIsConfirming(true)}
+          onClick={() => {
+            setHasSubmittedDelete(false);
+            setIsConfirming(true);
+          }}
           className="inline-flex size-8 items-center justify-center rounded-full text-rose-700 transition hover:bg-rose-50 hover:text-rose-800"
           aria-label={`Excluir marca ${tubeBrandName}`}
         >
@@ -114,7 +119,10 @@ export function TubeBrandDeleteControl({
       ) : (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
-          onClick={() => setIsConfirming(false)}
+          onClick={() => {
+            setHasSubmittedDelete(false);
+            setIsConfirming(false);
+          }}
         >
           <div
             role="dialog"
@@ -146,7 +154,10 @@ export function TubeBrandDeleteControl({
               </div>
               <button
                 type="button"
-                onClick={() => setIsConfirming(false)}
+                onClick={() => {
+                  setHasSubmittedDelete(false);
+                  setIsConfirming(false);
+                }}
                 className="inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-500 transition hover:border-slate-900 hover:text-slate-900"
                 aria-label="Fechar confirmação"
               >
@@ -160,13 +171,17 @@ export function TubeBrandDeleteControl({
               </p>
             ) : null}
 
-            {state.message ? (
+            {hasSubmittedDelete && state.message ? (
               <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">
                 {state.message}
               </p>
             ) : null}
 
-            <form action={formAction} className="mt-5 flex flex-wrap gap-2">
+            <form
+              action={formAction}
+              className="mt-5 flex flex-wrap gap-2"
+              onSubmit={() => setHasSubmittedDelete(true)}
+            >
               <SessionTokenInput />
               <input type="hidden" name="tubeBrandId" value={tubeBrandId} />
               <button
