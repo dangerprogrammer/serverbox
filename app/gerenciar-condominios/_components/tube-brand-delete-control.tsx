@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 
+import { SessionTokenInput } from "@/app/_components/session-token-input";
 import { FormSubmitButton } from "@/app/_components/form-submit-button";
 import {
   deleteTubeBrandAction,
@@ -49,6 +50,7 @@ export function TubeBrandDeleteControl({
   if (!needsConfirmation) {
     return (
       <form action={formAction} className="flex flex-col items-stretch gap-2">
+        <SessionTokenInput />
         <input type="hidden" name="tubeBrandId" value={tubeBrandId} />
         <button
           type="submit"
@@ -152,6 +154,7 @@ export function TubeBrandDeleteControl({
             ) : null}
 
             <form action={formAction} className="mt-5 flex flex-wrap gap-2">
+              <SessionTokenInput />
               <input type="hidden" name="tubeBrandId" value={tubeBrandId} />
               <button
                 type="button"
