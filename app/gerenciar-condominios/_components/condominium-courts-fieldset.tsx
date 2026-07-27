@@ -276,7 +276,7 @@ export function CondominiumCourtsFieldset({
                     <span className="text-sm font-medium text-slate-700">
                       Marcas e estoque
                     </span>
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-x-3 gap-y-2">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-x-3 gap-y-2">
                       {tubeBrands.map((brand) => {
                         const isSelected = getCourtBrandIds(court).includes(brand.id);
                         const quantity = stockQuantities.get(brand.id) ?? 0;
