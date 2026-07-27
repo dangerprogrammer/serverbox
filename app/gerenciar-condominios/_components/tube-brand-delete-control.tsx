@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { FormSubmitButton } from "@/app/_components/form-submit-button";
 import {
@@ -32,6 +32,12 @@ export function TubeBrandDeleteControl({
     initialState,
   );
 
+  useEffect(() => {
+    if (state.success) {
+      setIsConfirming(false);
+    }
+  }, [state.success]);
+
   const hasCourtUsage = courtCondominiums.length > 0;
   const stockSummary = stockCondominiums.length
     ? stockCondominiums.join(", ")
@@ -52,43 +58,72 @@ export function TubeBrandDeleteControl({
           x
         </button>
       ) : (
-        <div className="min-w-72 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-left shadow-sm">
-          <p className="text-sm font-semibold text-rose-900">
-            Confirmar exclusão de {tubeBrandName}?
-          </p>
-          <p className="mt-2 text-sm leading-6 text-rose-800">
-            Isso irá remover a marca do estoque dos condomínios: {stockSummary}.
-          </p>
-          <p className="mt-2 text-sm leading-6 text-rose-800">
-            Quadras ainda vinculadas: {courtSummary}.
-          </p>
-          {hasCourtUsage ? (
-            <p className="mt-2 text-sm font-medium text-rose-900">
-              Remova essa marca das quadras antes de continuar.
-            </p>
-          ) : null}
-          {state.message ? (
-            <p className="mt-2 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm text-rose-700">
-              {state.message}
-            </p>
-          ) : null}
-          <form action={formAction} className="mt-3 flex flex-wrap gap-2">
-            <input type="hidden" name="tubeBrandId" value={tubeBrandId} />
-            <button
-              type="button"
-              onClick={() => setIsConfirming(false)}
-              className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-            >
-              Cancelar
-            </button>
-            <FormSubmitButton
-              idleLabel="Continuar"
-              pendingLabel="Excluindo..."
-              disabled={hasCourtUsage}
-              disabledLabel="Remova das quadras primeiro"
-              className="inline-flex h-9 items-center justify-center rounded-full border border-rose-200 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
-            />
-          </form>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+          onClick={() => setIsConfirming(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`delete-brand-title-${tubeBrandId}`}
+            className="w-full max-w-lg rounded-[1.5rem] border border-rose-200 bg-white p-5 text-left shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p
+                  id={`delete-brand-title-${tubeBrandId}`}
+                  className="text-lg font-semibold text-slate-900"
+                >
+                  Excluir {tubeBrandName}?
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Isso irá excluir a marca do estoque dos condomínios: {stockSummary}.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Quadras ainda vinculadas: {courtSummary}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsConfirming(false)}
+                className="inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-500 transition hover:border-slate-900 hover:text-slate-900"
+                aria-label="Fechar confirmação"
+              >
+                ×
+              </button>
+            </div>
+
+            {hasCourtUsage ? (
+              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                Esta marca ainda está vinculada às quadras dos condomínios: {courtSummary}. Remova-a das quadras antes de continuar.
+              </p>
+            ) : null}
+
+            {state.message ? (
+              <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">
+                {state.message}
+              </p>
+            ) : null}
+
+            <form action={formAction} className="mt-5 flex flex-wrap gap-2">
+              <input type="hidden" name="tubeBrandId" value={tubeBrandId} />
+              <button
+                type="button"
+                onClick={() => setIsConfirming(false)}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+              >
+                Cancelar
+              </button>
+              <FormSubmitButton
+                idleLabel="Continuar"
+                pendingLabel="Excluindo..."
+                disabled={hasCourtUsage}
+                disabledLabel="Remova das quadras primeiro"
+                className="inline-flex h-10 items-center justify-center rounded-full border border-rose-200 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-rose-50 disabled:text-rose-400"
+              />
+            </form>
+          </div>
         </div>
       )}
     </div>
