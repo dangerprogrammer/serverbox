@@ -129,9 +129,9 @@ export default async function GerenciarCondominiosPage() {
               {tubeBrands.map((brand) => (
                 <div
                   key={brand.id}
-                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 py-1"
+                  className="flex min-w-[11rem] flex-1 basis-[11rem] items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-1.5"
                 >
-                  <span className="text-xs font-semibold text-slate-700">
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">
                     {brand.name}
                   </span>
                   <TubeBrandDeleteControl
