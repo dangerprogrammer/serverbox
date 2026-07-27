@@ -45,9 +45,10 @@ export function TubeBrandDeleteControl({
   const courtSummary = courtCondominiums.length
     ? courtCondominiums.join(", ")
     : "nenhuma quadra";
-  const needsConfirmation = stockCondominiums.length > 0;
+  const canDeleteDirectly =
+    stockCondominiums.length === 0 && courtCondominiums.length === 0;
 
-  if (!needsConfirmation) {
+  if (canDeleteDirectly) {
     return (
       <form action={formAction} className="flex flex-col items-stretch gap-2">
         <SessionTokenInput />
