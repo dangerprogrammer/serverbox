@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { isInfinitePayPixCopyPasteCode } from "@/lib/payments/infinitepay";
+
 type PaymentStatus = "pending" | "paid" | "failed" | "expired" | "refunded";
 
 type PaymentDetails = {
@@ -41,13 +43,21 @@ export function PaymentStatusPanel({
   const [payment, setPayment] = useState(initialPayment);
   const [copied, setCopied] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
-  const checkoutUrl =
-    payment.provider === "infinitepay"
-      ? payment.providerReceiptUrl ?? payment.pixCopyPasteCode
-      : null;
-  const paymentCodeValue = checkoutUrl ?? payment.pixCopyPasteCode;
-  const paymentCodeLabel = checkoutUrl ? "Link de checkout" : "Código cópia e cola";
-  const copyButtonLabel = checkoutUrl ? "Copiar link" : "Copiar código";
+  const checkoutUrl = payment.provider === "infinitepay" ? payment.providerReceiptUrl : null;
+  const hasPixCopyPasteCode = isInfinitePayPixCopyPasteCode(payment.pixCopyPasteCode);
+  const paymentCodeValue = hasPixCopyPasteCode
+    ? payment.pixCopyPasteCode
+    : checkoutUrl ?? payment.pixCopyPasteCode;
+  const paymentCodeLabel = hasPixCopyPasteCode
+    ? "Código PIX"
+    : checkoutUrl
+      ? "Link de checkout"
+      : "Código cópia e cola";
+  const copyButtonLabel = hasPixCopyPasteCode
+    ? "Copiar código PIX"
+    : checkoutUrl
+      ? "Copiar link"
+      : "Copiar código";
   const canSimulatePayment =
     payment.provider === "abacatepay" && Boolean(payment.providerDevMode);
 
@@ -158,7 +168,7 @@ export function PaymentStatusPanel({
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
             {payment.status === "pending"
-              ? checkoutUrl
+              ? checkoutUrl && !hasPixCopyPasteCode
                 ? "Abra o checkout da InfinitePay. O saldo só deve ser liberado depois que o gateway confirmar o pagamento."
                 : "O saldo só deve ser liberado depois que o gateway confirmar o pagamento deste PIX."
               : "A cobrança já recebeu um retorno definitivo do pagamento."}

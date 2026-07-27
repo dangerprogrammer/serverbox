@@ -115,6 +115,84 @@ function buildCheckoutUrl(
   return null;
 }
 
+function normalizePixCopyPasteCode(value: string) {
+  return value.replace(/\s+/g, "").trim();
+}
+
+function looksLikePixCopyPasteCode(value: string) {
+  const normalized = normalizePixCopyPasteCode(value);
+
+  return (
+    normalized.startsWith("000201") &&
+    normalized.includes("BR.GOV.BCB.PIX") &&
+    /6304[0-9A-F]{4}$/i.test(normalized)
+  );
+}
+
+export function isInfinitePayPixCopyPasteCode(value: string | null | undefined) {
+  return typeof value === "string" && looksLikePixCopyPasteCode(value);
+}
+
+function extractPixCopyPasteCode(text: string) {
+  const normalizedText = text.replace(/\\u0026/g, "&");
+  const jsonKeyPatterns = [
+    /"(?:pixCopyPasteCode|pix_copy_paste_code|brCode|br_code|copyPaste|copypaste|payload)"\s*:\s*"([^"]+)"/gi,
+    /'(?:pixCopyPasteCode|pix_copy_paste_code|brCode|br_code|copyPaste|copypaste|payload)'\s*:\s*'([^']+)'/gi,
+  ];
+
+  for (const pattern of jsonKeyPatterns) {
+    let match: RegExpExecArray | null;
+
+    while ((match = pattern.exec(normalizedText))) {
+      const candidate = match[1];
+
+      if (looksLikePixCopyPasteCode(candidate)) {
+        return normalizePixCopyPasteCode(candidate);
+      }
+    }
+  }
+
+  const genericPatterns = [
+    /(000201[0-9A-Za-z.\/*:+\-]{80,}6304[0-9A-F]{4})/gi,
+    /(000201[0-9A-Za-z.\/*:+\-\s]{80,}6304[0-9A-F]{4})/gi,
+  ];
+
+  for (const pattern of genericPatterns) {
+    let match: RegExpExecArray | null;
+
+    while ((match = pattern.exec(normalizedText))) {
+      const candidate = match[1];
+
+      if (looksLikePixCopyPasteCode(candidate)) {
+        return normalizePixCopyPasteCode(candidate);
+      }
+    }
+  }
+
+  return null;
+}
+
+async function tryExtractPixCopyPasteCode(checkoutUrl: string) {
+  try {
+    const response = await fetch(checkoutUrl, {
+      method: "GET",
+      headers: {
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const text = await response.text();
+    return extractPixCopyPasteCode(text);
+  } catch {
+    return null;
+  }
+}
+
 function buildCheckoutDescription(
   reference: string,
   metadata: CreatePixChargeInput["metadata"],
@@ -265,10 +343,15 @@ export async function createInfinitePayCheckoutCharge({
 
   const response = await createCheckoutLink(body);
   const checkoutUrl = buildCheckoutUrl(response, handle);
+  const checkoutPixCopyPasteCode = checkoutUrl
+    ? await tryExtractPixCopyPasteCode(checkoutUrl)
+    : null;
 
   if (!checkoutUrl) {
     throw new Error("InfinitePay nao retornou uma URL de checkout.");
   }
+
+  const pixCopyPasteCode = checkoutPixCopyPasteCode ?? checkoutUrl;
 
   return {
     provider: INFINITEPAY_PROVIDER,
@@ -287,7 +370,7 @@ export async function createInfinitePayCheckoutCharge({
         ? response.slug
         : null,
     pixQrCode: null,
-    pixCopyPasteCode: checkoutUrl,
+    pixCopyPasteCode,
     pixExpiresAt: null,
   } satisfies PaymentChargeSnapshot;
 }
