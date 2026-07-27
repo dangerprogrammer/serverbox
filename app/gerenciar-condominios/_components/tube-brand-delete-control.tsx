@@ -47,6 +47,12 @@ export function TubeBrandDeleteControl({
     : "nenhuma quadra";
   const canDeleteDirectly =
     stockCondominiums.length === 0 && courtCondominiums.length === 0;
+  const usageIntro =
+    stockCondominiums.length > 0 && courtCondominiums.length > 0
+      ? "Isso vai remover a marca do estoque dos condomínios e dos vínculos das quadras quando houver outra marca disponível."
+      : stockCondominiums.length > 0
+        ? "Isso vai remover a marca do estoque dos condomínios quando houver outra marca disponível."
+        : "Isso vai remover a marca dos vínculos das quadras quando houver outra marca disponível.";
 
   if (canDeleteDirectly) {
     return (
@@ -126,11 +132,17 @@ export function TubeBrandDeleteControl({
                   Excluir {tubeBrandName}?
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Isso vai remover a marca do estoque dos condomínios e dos vínculos das quadras quando houver outra marca disponível.
+                  {usageIntro}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Condomínios que usam esta marca no estoque: {stockSummary}.
-                </p>
+                {stockCondominiums.length > 0 ? (
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Condomínios que usam esta marca no estoque: {stockSummary}.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Esta marca não aparece no estoque de nenhum condomínio.
+                  </p>
+                )}
               </div>
               <button
                 type="button"
