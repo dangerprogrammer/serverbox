@@ -30,7 +30,7 @@ if exist "%SUPABASE_CLI%" (
 )
 
 echo Limpando banco de producao...
-"%SUPABASE_CMD%" db query "TRUNCATE TABLE administrators, admin_sessions, condominiums, condominium_payments, ball_inventory_movements RESTART IDENTITY CASCADE;" --db-url "%PROD_DB_URL%"
+call "%SUPABASE_CMD%" db query "TRUNCATE TABLE administrators, admin_sessions, condominiums, condominium_payments, ball_inventory_movements RESTART IDENTITY CASCADE;" --db-url "%PROD_DB_URL%"
 
 if errorlevel 1 (
   echo Falha ao limpar o banco de producao.
@@ -52,7 +52,7 @@ if exist "%RESEED_SCRIPT%" (
   echo Executando reseed para recriar admin (CONFIRM_RESEED=true)...
   set "CONFIRM_RESEED=true"
   set "DATABASE_URL=%PROD_DB_URL%"
-  "%NODE_CMD%" "%RESEED_SCRIPT%"
+  call "%NODE_CMD%" "%RESEED_SCRIPT%"
   if errorlevel 1 (
     echo Reseed falhou.
     pause

@@ -26,7 +26,7 @@ const administratorSeed = {
 const DEV_SEED_REFERENCE_PREFIX = "dev-seed-";
 const DEV_SEED_REASON_PREFIX = "DEV_SEED:";
 
-const tubeBrandSeeds = ["Wilson", "Tecnifibre"];
+const tubeBrandSeeds = ["Babolat", "Wilson"];
 
 const developmentCondominiumSeeds = [
   {

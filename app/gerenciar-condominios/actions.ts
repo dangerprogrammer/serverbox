@@ -270,6 +270,59 @@ export async function createTubeBrandAction(formData: FormData) {
   revalidateManagementViews();
 }
 
+export async function deleteTubeBrandAction(formData: FormData) {
+  await requireAuthenticatedAdminFromFormData(formData);
+
+  const tubeBrandId = String(formData.get("tubeBrandId") ?? "").trim();
+
+  if (!tubeBrandId) {
+    throw new Error("Marca de tubos invalida.");
+  }
+
+  const dataSource = await getDataSource();
+  const brandRepository = dataSource.getRepository(TubeBrandEntity);
+  const condominiumRepository = dataSource.getRepository(CondominiumEntity);
+
+  const brand = await brandRepository.findOneBy({ id: tubeBrandId });
+
+  if (!brand) {
+    throw new Error("Marca de tubos nao encontrada.");
+  }
+
+  const condominiums = await condominiumRepository.find({
+    relations: {
+      courtDetails: {
+        tubeBrand: true,
+        tubeBrands: true,
+      },
+    },
+  });
+
+  const brandIsUsedInCourts = condominiums.some((condominium) =>
+    condominium.courtDetails?.some(
+      (court) =>
+        court.tubeBrand?.id === tubeBrandId ||
+        court.tubeBrands?.some((courtBrand) => courtBrand.id === tubeBrandId),
+    ),
+  );
+
+  const brandIsUsedInStock = condominiums.some((condominium) =>
+    Array.isArray(condominium.tubeStockByBrand) &&
+    condominium.tubeStockByBrand.some(
+      (entry) => entry?.tubeBrandId === tubeBrandId,
+    ),
+  );
+
+  if (brandIsUsedInCourts || brandIsUsedInStock) {
+    throw new Error(
+      "Remova a marca das quadras e do estoque antes de excluir.",
+    );
+  }
+
+  await brandRepository.delete({ id: tubeBrandId });
+  revalidateManagementViews();
+}
+
 export async function createCondominiumAction(formData: FormData) {
   const administrator = await requireAuthenticatedAdminFromFormData(formData);
 

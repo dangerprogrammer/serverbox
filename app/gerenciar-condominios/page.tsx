@@ -14,6 +14,7 @@ import {
   createTubeBrandAction,
   deleteCondominiumAction,
   deletePlanAction,
+  deleteTubeBrandAction,
 } from "@/app/gerenciar-condominios/actions";
 import { getCondominiumManagementData } from "@/lib/data/admin-management";
 import { PlanTier } from "@/lib/domain/condominium-plan";
@@ -119,12 +120,24 @@ export default async function GerenciarCondominiosPage() {
             </form>
             <div className="mt-4 flex flex-wrap gap-2">
               {tubeBrands.map((brand) => (
-                <span
+                <div
                   key={brand.id}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 py-1"
                 >
-                  {brand.name}
-                </span>
+                  <span className="text-xs font-semibold text-slate-700">
+                    {brand.name}
+                  </span>
+                  <form action={deleteTubeBrandAction}>
+                    <input type="hidden" name="tubeBrandId" value={brand.id} />
+                    <SessionTokenInput />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-rose-200 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50"
+                    >
+                      Excluir
+                    </button>
+                  </form>
+                </div>
               ))}
             </div>
           </div>
