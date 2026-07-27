@@ -276,7 +276,7 @@ export function CondominiumCourtsFieldset({
                     <span className="text-sm font-medium text-slate-700">
                       Marcas e estoque
                     </span>
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-x-3 gap-y-2">
+                    <div className="flex flex-wrap gap-3">
                       {tubeBrands.map((brand) => {
                         const isSelected = getCourtBrandIds(court).includes(brand.id);
                         const quantity = stockQuantities.get(brand.id) ?? 0;
@@ -284,9 +284,9 @@ export function CondominiumCourtsFieldset({
                         return (
                           <div
                             key={brand.id}
-                            className={`transition ${isSelected ? "opacity-100" : "opacity-55"}`}
+                            className={`min-w-[13rem] flex-1 basis-[13rem] transition ${isSelected ? "opacity-100" : "opacity-55"}`}
                           >
-                            <label className="group inline-flex min-h-8 min-w-0 cursor-pointer items-center gap-2">
+                            <label className="group flex min-h-8 min-w-0 cursor-pointer items-start gap-2">
                               <input
                                 type="checkbox"
                                 name={`tubeBrandIds:${court.id}`}
@@ -305,7 +305,7 @@ export function CondominiumCourtsFieldset({
                               >
                                 ✓
                               </span>
-                              <span className="truncate text-sm font-semibold text-slate-900">
+                              <span className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-900">
                                 {brand.name}
                               </span>
                             </label>
