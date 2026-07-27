@@ -42,8 +42,8 @@ export function normalizePaymentProviderName(
 export function getActivePaymentProviderName(): PaymentProviderName {
   const provider = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
 
-  if (!provider) {
-    return "infinitepay";
+  if (!provider || provider === "infinitepay") {
+    return "santander";
   }
 
   const normalizedProvider = normalizePaymentProviderName(provider);
