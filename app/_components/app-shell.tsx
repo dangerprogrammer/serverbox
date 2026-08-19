@@ -21,7 +21,7 @@ type AppShellProps = {
 
 const hiddenSidebarPaths = ["/login", "/cliente/login"];
 
-const publicPaths = ["/", "/login", "/sobre-nos"];
+const publicPaths = ["/", "/login", "/sobre-nos", "/sugestoes"];
 
 type SessionState = "checking" | "authenticated" | "public";
 

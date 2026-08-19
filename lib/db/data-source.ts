@@ -14,6 +14,7 @@ import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.enti
 import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
 import { CondominiumPaymentEntity } from "@/lib/db/entities/condominium-payment.entity";
 import { AdminSessionEntity } from "@/lib/db/entities/admin-session.entity";
+import { SuggestionEntity } from "@/lib/db/entities/suggestion.entity";
 import { TubeBrandEntity } from "@/lib/db/entities/tube-brand.entity";
 import { seedDatabase } from "@/lib/db/seed";
 import { getTubeStockEntries } from "@/lib/domain/tube-stock";
@@ -28,7 +29,7 @@ declare global {
     | undefined;
 }
 
-const DATA_SOURCE_SCHEMA_VERSION = "2026-06-18-standalone-purchases";
+const DATA_SOURCE_SCHEMA_VERSION = "2026-08-19-suggestions";
 
 const entities = [
   AdministratorEntity,
@@ -40,6 +41,7 @@ const entities = [
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
   AdminSessionEntity,
+  SuggestionEntity,
 ];
 
 type OrmConfig = {
@@ -354,6 +356,16 @@ async function ensurePostgresRuntimeSchema(dataSource: DataSource) {
   await dataSource.query(`
     CREATE INDEX IF NOT EXISTS "IDX_condominium_court_tube_brands_tube_brand"
       ON condominium_court_tube_brands ("tubeBrandId")
+  `);
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS suggestions (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "residentName" character varying(120) NOT NULL,
+      "condominiumName" character varying(160) NOT NULL,
+      message text NOT NULL,
+      "createdAt" timestamp without time zone NOT NULL DEFAULT now(),
+      "updatedAt" timestamp without time zone NOT NULL DEFAULT now()
+    )
   `);
   await dataSource.query(`
     INSERT INTO condominium_court_tube_brands ("courtId", "tubeBrandId")

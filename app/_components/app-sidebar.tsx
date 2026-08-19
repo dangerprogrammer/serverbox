@@ -10,6 +10,7 @@ import { ThemeSwitcher } from "@/app/_components/theme-switcher";
 const navigationItems = [
   { href: "/dashboard", label: "Visão geral", icon: DashboardIcon },
   { href: "/sobre-nos", label: "Sobre nós", icon: InfoIcon },
+  { href: "/sugestoes", label: "Sugestões", icon: FeedbackIcon },
 ];
 
 function DashboardIcon({ className }: { className?: string }) {
@@ -59,6 +60,24 @@ function InfoIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
     >
       <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-10.5v5m0-9v.01" />
+    </svg>
+  );
+}
+
+function FeedbackIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 17H9l-4.5 3.5V7A1.5 1.5 0 0 1 5 5.5Z" />
+      <path d="M8.5 10h7m-7 3h4.5" />
     </svg>
   );
 }

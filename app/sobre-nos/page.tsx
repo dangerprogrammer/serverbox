@@ -92,6 +92,12 @@ export default async function SobreNosPage() {
               >
                 {administrator ? "Abrir dashboard" : "Entrar como admin"}
               </Link>
+              <Link
+                href="/sugestoes"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
+              >
+                Enviar sugestão
+              </Link>
               {administrator ? (
                 <Link
                   href="/gerenciar-condominios"

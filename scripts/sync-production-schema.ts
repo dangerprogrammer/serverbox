@@ -14,6 +14,7 @@ import { CondominiumClientSessionEntity } from "../lib/db/entities/condominium-c
 import { CondominiumCourtEntity } from "../lib/db/entities/condominium-court.entity";
 import { CondominiumPaymentEntity } from "../lib/db/entities/condominium-payment.entity";
 import { CondominiumEntity } from "../lib/db/entities/condominium.entity";
+import { SuggestionEntity } from "../lib/db/entities/suggestion.entity";
 import { TubeBrandEntity } from "../lib/db/entities/tube-brand.entity";
 
 const entities = [
@@ -26,6 +27,7 @@ const entities = [
   CondominiumPaymentEntity,
   BallInventoryMovementEntity,
   AdminSessionEntity,
+  SuggestionEntity,
 ];
 const DEFAULT_ADMIN_NAME = "Operacao ServerBox";
 const DEFAULT_ADMIN_EMAIL = "admin@serverbox.local";
