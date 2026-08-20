@@ -29,8 +29,8 @@ const entities = [
   AdminSessionEntity,
   SuggestionEntity,
 ];
-const DEFAULT_ADMIN_NAME = "Operacao ServerBox";
-const DEFAULT_ADMIN_EMAIL = "admin@serverbox.local";
+const DEFAULT_ADMIN_NAME = "Operacao ServeBox";
+const DEFAULT_ADMIN_EMAIL = "admin@servebox.local";
 const DEFAULT_TUBE_BRANDS = ["Wilson", "Tecnifibre"];
 const KEY_LENGTH = 64;
 

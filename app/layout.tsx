@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ServerBox | Tubos de tênis para condomínios",
+  title: "ServeBox | Tubos de tênis para condomínios",
   description:
     "Gestão de planos de tubos de tênis para condomínios com Next.js e TypeORM.",
 };
@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 const themeScript = `
 (() => {
   try {
-    const key = "serverbox-theme";
+    const key = "servebox-theme";
     const stored = window.localStorage.getItem(key);
     const mode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";

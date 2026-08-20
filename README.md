@@ -1,4 +1,4 @@
-﻿## ServerBox
+## ServeBox
 
 Base inicial em Next.js 16 para vender tubos de tenis para condominios.
 O projeto usa TypeORM no servidor com banco SQLite local para desenvolvimento.
@@ -26,7 +26,7 @@ npm run dev
 
 3. Abra `http://localhost:3000`.
 
-Na primeira execucao, o banco e criado automaticamente em `data/serverbox.sqlite` e recebe seed com:
+Na primeira execucao, o banco e criado automaticamente em `data/servebox.sqlite` e recebe seed com:
 
 - 1 administrador inicial
 
@@ -91,7 +91,7 @@ Exemplo de criacao de condominio:
 ```bash
 curl -X POST http://localhost:3000/api/condominios \
   -H "Content-Type: application/json" \
-  -d "{\"name\":\"Condominio Parque Central\",\"city\":\"Sao Paulo\",\"state\":\"SP\",\"courts\":2,\"activeResidents\":180,\"adminEmail\":\"admin@serverbox.local\"}"
+  -d "{\"name\":\"Condominio Parque Central\",\"city\":\"Sao Paulo\",\"state\":\"SP\",\"courts\":2,\"activeResidents\":180,\"adminEmail\":\"admin@servebox.local\"}"
 ```
 
 Exemplo de criacao de plano dentro de um condominio:
@@ -143,7 +143,7 @@ na URL do webhook e exige o mesmo valor para aceitar a notificacao.
 
 No Portal do Desenvolvedor Santander:
 
-1. Crie uma aplicacao para o ServerBox.
+1. Crie uma aplicacao para o ServeBox.
 2. Habilite a API `Pix - QRCode Generation`.
 3. Cadastre a chave Pix recebedora.
 4. Configure o certificado A1 em PEM para mTLS.

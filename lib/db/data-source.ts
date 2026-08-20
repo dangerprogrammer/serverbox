@@ -21,7 +21,7 @@ import { getTubeStockEntries } from "@/lib/domain/tube-stock";
 import { DataSource, type DataSourceOptions } from "typeorm";
 
 declare global {
-  var __serverboxDataSourceCache:
+  var __serveboxDataSourceCache:
     | {
         version: string;
         promise: Promise<DataSource>;

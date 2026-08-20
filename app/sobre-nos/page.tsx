@@ -44,10 +44,12 @@ export default async function SobreNosPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
-      <section className="rounded-[1.5rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8 lg:px-12 lg:py-12">
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8 lg:px-12 lg:py-12">
+        <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-indigo-100/70 blur-3xl" />
         <div className="grid gap-10 lg:grid-cols-[1.35fr_0.95fr]">
-          <div className="space-y-8">
-            <div className="inline-flex rounded-full border border-border bg-surface-strong px-4 py-2 text-sm font-medium text-slate-700">
+          <div className="relative space-y-8">
+            <div className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
               Sobre nós
             </div>
             <div className="max-w-3xl space-y-5">
@@ -62,19 +64,19 @@ export default async function SobreNosPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[1.25rem] border border-border bg-white p-5">
+              <div className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-5 backdrop-blur">
                 <p className="text-sm text-slate-500">Condomínios ativos</p>
                 <p className="mt-2 text-3xl font-semibold text-slate-900">
                   {dashboard.summary.activeCondominiums}
                 </p>
               </div>
-              <div className="rounded-[1.25rem] border border-border bg-white p-5">
+              <div className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-5 backdrop-blur">
                 <p className="text-sm text-slate-500">Planos cadastrados</p>
                 <p className="mt-2 text-3xl font-semibold text-slate-900">
                   {dashboard.summary.totalPlans}
                 </p>
               </div>
-              <div className="rounded-[1.25rem] border border-border bg-white p-5">
+              <div className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-5 backdrop-blur">
                 <p className="text-sm text-slate-500">Saldo total</p>
                 <p className="mt-2 text-3xl font-semibold text-slate-900">
                   {dashboard.summary.availableBalls}
@@ -109,7 +111,7 @@ export default async function SobreNosPage() {
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border border-border bg-surface-strong p-6">
+          <div className="relative rounded-[1.5rem] border border-border bg-surface-strong p-6">
             <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
               Operação
             </p>
@@ -122,7 +124,7 @@ export default async function SobreNosPage() {
                 dashboard.condominiums.map((condominium) => (
                   <article
                     key={condominium.id}
-                    className="rounded-[1.25rem] border border-border bg-white p-4"
+                    className="rounded-[1.25rem] border border-border bg-white p-4 transition hover:border-blue-200 hover:shadow-sm"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -180,7 +182,7 @@ export default async function SobreNosPage() {
           {dashboard.plans.map((plan) => (
             <article
               key={plan.id}
-              className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm"
+              className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
@@ -211,4 +213,3 @@ export default async function SobreNosPage() {
     </main>
   );
 }
-

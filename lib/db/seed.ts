@@ -19,8 +19,8 @@ import type { TubeStockEntry } from "@/lib/domain/tube-stock";
 import { Like, type DataSource } from "typeorm";
 
 const administratorSeed = {
-  name: "Operação ServerBox",
-  email: "admin@serverbox.local",
+  name: "Operação ServeBox",
+  email: "admin@servebox.local",
 };
 
 const DEV_SEED_REFERENCE_PREFIX = "dev-seed-";

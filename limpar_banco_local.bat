@@ -2,7 +2,7 @@
 setlocal enableextensions
 cd /d "%~dp0"
 
-set "DB_PATH=%~dp0data\serverbox.sqlite"
+set "DB_PATH=%~dp0data\servebox.sqlite"
 
 if exist ".env.local" (
 	for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b /c:"DB_FILENAME=" ".env.local"`) do (

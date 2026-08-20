@@ -38,7 +38,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `SESSION_SECRET` is required for login/session flows.
 - `ABACATEPAY_API_KEY` is required to create PIX charges; missing key causes payment creation to fail.
 - SQLite is used locally by default; DB file path can be configured with `DB_FILENAME`.
-- On Vercel runtime, DB storage path handling differs (`/tmp/serverbox`), so avoid assumptions tied to local paths.
+- On Vercel runtime, DB storage path handling differs (`/tmp/servebox`), so avoid assumptions tied to local paths.
 - Database bootstrap and legacy schema compatibility logic exist in `lib/db/data-source.ts`; preserve this behavior when refactoring startup.
 
 ## References

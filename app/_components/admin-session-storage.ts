@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 
 import { ADMIN_SESSION_STORAGE_KEY } from "@/lib/auth/session-constants";
 
-const SESSION_CHANGE_EVENT = "serverbox-admin-session-change";
+const SESSION_CHANGE_EVENT = "servebox-admin-session-change";
 
 function emitSessionChange() {
   window.dispatchEvent(new Event(SESSION_CHANGE_EVENT));

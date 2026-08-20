@@ -6,8 +6,8 @@ const { randomBytes, randomUUID, scryptSync } = require('node:crypto');
 async function main() {
   const confirm = process.env.CONFIRM_RESEED === 'true';
   const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
-  const adminEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@serverbox.local';
-  const adminName = process.env.ADMIN_DEFAULT_NAME || 'Operação ServerBox';
+  const adminEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@servebox.local';
+  const adminName = process.env.ADMIN_DEFAULT_NAME || 'Operação ServeBox';
   const adminPassword = (process.env.ADMIN_DEFAULT_PASSWORD || 'admin123456').trim();
 
   if (!confirm) {

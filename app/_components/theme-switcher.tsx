@@ -10,8 +10,8 @@ type ThemeSwitcherProps = {
   className?: string;
 };
 
-const THEME_STORAGE_KEY = "serverbox-theme";
-const THEME_CHANGE_EVENT = "serverbox-theme-change";
+const THEME_STORAGE_KEY = "servebox-theme";
+const THEME_CHANGE_EVENT = "servebox-theme-change";
 
 function getSystemTheme() {
   if (typeof window === "undefined") {
