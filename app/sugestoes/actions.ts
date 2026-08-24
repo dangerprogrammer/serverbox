@@ -7,7 +7,7 @@ import { SuggestionEntity } from "@/lib/db/entities/suggestion.entity";
 
 const RESIDENT_NAME_MAX_LENGTH = 120;
 const CONDOMINIUM_NAME_MAX_LENGTH = 160;
-const SUGGESTION_MAX_LENGTH = 1500;
+const SUGGESTION_MAX_LENGTH = 200;
 
 type SuggestionFieldErrors = {
   residentName?: string;

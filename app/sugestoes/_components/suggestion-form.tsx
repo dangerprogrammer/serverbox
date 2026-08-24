@@ -89,7 +89,7 @@ export function SuggestionForm() {
           label="Sugestão"
           name="message"
           placeholder="Escreva sua sugestão"
-          maxLength={1500}
+          maxLength={200}
           required
           aria-invalid={Boolean(state.fieldErrors.message) || undefined}
           aria-describedby={
