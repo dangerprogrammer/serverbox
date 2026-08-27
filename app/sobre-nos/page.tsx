@@ -1,213 +1,151 @@
-﻿import Link from "next/link";
-import { connection } from "next/server";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-import { getDashboardData } from "@/lib/data/dashboard";
-
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-
-export const dynamic = "force-dynamic";
-
-const fallbackDashboard = {
-  summary: {
-    activeCondominiums: 0,
-    totalPlans: 0,
-    availableBalls: 0,
-  },
-  condominiums: [] as Awaited<ReturnType<typeof getDashboardData>>["condominiums"],
-  plans: [] as Awaited<ReturnType<typeof getDashboardData>>["plans"],
+export const metadata: Metadata = {
+  title: "Sobre nós | ServeBox",
+  description:
+    "Conheça a ServeBox, uma operação de reposição e venda de tubos de tênis para condomínios.",
 };
 
-async function getPublicPageData() {
-  try {
-    const dashboard = await getDashboardData();
+const principles = [
+  {
+    title: "Reposição sem ruído",
+    text: "A rotina do condomínio já tem muitas frentes acontecendo ao mesmo tempo. A ServeBox entra para cuidar dos tubos de tênis com clareza, previsibilidade e menos trabalho manual para quem administra.",
+  },
+  {
+    title: "Planos com contexto",
+    text: "Cada condomínio tem seu próprio ritmo de uso das quadras. Por isso, os planos são pensados a partir da realidade de cada operação, em vez de seguir uma tabela genérica que ignora consumo, frequência e preferência dos moradores.",
+  },
+  {
+    title: "Pagamento acompanhado",
+    text: "A cobrança fica integrada ao fluxo de compra e o saldo só muda quando o pagamento é confirmado. Assim, a gestão comercial conversa com o estoque sem depender de conferências paralelas.",
+  },
+];
 
-    return {
-      administrator: null,
-      dashboard,
-    };
-  } catch (error) {
-    console.error("Falha ao carregar dados públicos da página Sobre nós.", error);
+const workflow = [
+  "Entendemos como o condomínio usa as quadras e quais marcas fazem sentido para aquele público.",
+  "Organizamos planos e compras avulsas de uma forma simples para o administrador manter a oferta atualizada.",
+  "Acompanhamos cobranças, confirmações e reposições para que a experiência nas quadras continue fluida.",
+];
 
-    return {
-      administrator: null,
-      dashboard: fallbackDashboard,
-    };
-  }
-}
-
-export default async function SobreNosPage() {
-  await connection();
-  const { administrator, dashboard } = await getPublicPageData();
-
+export default function SobreNosPage() {
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-10 lg:px-12">
-      <section className="relative overflow-hidden rounded-[1.75rem] border border-border bg-surface px-4 py-6 shadow-sm sm:px-8 lg:px-12 lg:py-12">
-        <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-indigo-100/70 blur-3xl" />
-        <div className="grid gap-10 lg:grid-cols-[1.35fr_0.95fr]">
-          <div className="relative space-y-8">
-            <div className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
-              Sobre nós
-            </div>
-            <div className="max-w-3xl space-y-5">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Venda recorrente de tubos de tênis para condomínios.
-              </h1>
-              <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                Uma base administrativa simples para organizar condomínios,
-                planos próprios por cliente e planos mensais/anuais sem planilhas ou
-                controles paralelos.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-5 backdrop-blur">
-                <p className="text-sm text-slate-500">Condomínios ativos</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">
-                  {dashboard.summary.activeCondominiums}
-                </p>
-              </div>
-              <div className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-5 backdrop-blur">
-                <p className="text-sm text-slate-500">Planos cadastrados</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">
-                  {dashboard.summary.totalPlans}
-                </p>
-              </div>
-              <div className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-5 backdrop-blur">
-                <p className="text-sm text-slate-500">Saldo total</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">
-                  {dashboard.summary.availableBalls}
-                </p>
-                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-                  tubos disponíveis
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4 pt-2 sm:flex-row">
-              <Link
-                href={administrator ? "/dashboard" : "/login"}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 sm:w-auto"
-              >
-                {administrator ? "Abrir dashboard" : "Entrar como admin"}
-              </Link>
-              <Link
-                href="/sugestoes"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
-              >
-                Enviar sugestão
-              </Link>
-              {administrator ? (
-                <Link
-                  href="/gerenciar-condominios"
-                  className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
-                >
-                  Gerenciar condomínios
-                </Link>
-              ) : null}
-            </div>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-12 px-4 py-8 sm:px-10 lg:px-12 lg:py-12">
+      <section className="grid gap-10 py-4 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
+        <div className="flex flex-col justify-center">
+          <div className="inline-flex w-max rounded-full border border-border bg-surface-strong px-4 py-2 text-sm font-medium text-slate-700">
+            Sobre nós
           </div>
 
-          <div className="relative rounded-[1.5rem] border border-border bg-surface-strong p-6">
-            <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
-              Operação
+          <div className="mt-8 max-w-3xl space-y-6">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              Tubos de tênis sempre à mão, sem transformar a gestão em planilha.
+            </h1>
+            <p className="text-base leading-8 text-slate-600 sm:text-lg">
+              A ServeBox nasceu para aproximar a compra de tubos da rotina real
+              dos condomínios. Em vez de tratar a operação como um painel cheio
+              de números, cuidamos do que importa no dia a dia: disponibilidade,
+              reposição, cobrança clara e uma experiência mais tranquila para
+              administradores e moradores.
             </p>
-            <div className="mt-6 space-y-4">
-              {dashboard.condominiums.length === 0 ? (
-                <div className="rounded-[1.25rem] border border-border bg-white p-4 text-sm text-slate-600">
-                  Nenhum condomínio cadastrado ainda.
-                </div>
-              ) : (
-                dashboard.condominiums.map((condominium) => (
-                  <article
-                    key={condominium.id}
-                    className="rounded-[1.25rem] border border-border bg-white p-4 transition hover:border-blue-200 hover:shadow-sm"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h2 className="text-lg font-medium text-slate-900">
-                          {condominium.name}
-                        </h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {condominium.city}, {condominium.state} -{" "}
-                          {condominium.courts} quadras
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
-                        {condominium.availablePlanCount} planos
-                      </span>
-                    </div>
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-end sm:justify-between">
-                      <span>
-                        {condominium.availableBalls} tubos -{" "}
-                        {condominium.paidPayments} pagamentos pagos
-                      </span>
-                      <strong className="text-base text-slate-900">
-                        {condominium.administratorName}
-                      </strong>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
+            <p className="text-base leading-8 text-slate-600 sm:text-lg">
+              Nosso trabalho combina serviço, organização e tecnologia. A parte
+              técnica fica nos bastidores; para o condomínio, a sensação deve ser
+              de simplicidade: saber o que está disponível, escolher o melhor
+              plano e seguir com as quadras prontas para uso.
+            </p>
           </div>
+
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <Link
+              href="/login"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold !text-white transition hover:bg-blue-500 sm:w-auto"
+            >
+              Entrar como admin
+            </Link>
+            <Link
+              href="/sugestoes"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
+            >
+              Enviar sugestão
+            </Link>
+          </div>
+        </div>
+
+        <aside className="self-start border-l-4 border-accent bg-surface p-6 sm:p-8">
+          <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
+            O que nos move
+          </p>
+          <div className="mt-6 space-y-5 text-base leading-8 text-slate-700">
+            <p>
+              Um bom serviço para quadras não aparece apenas na hora da venda.
+              Ele aparece quando o morador encontra tubos disponíveis, quando o
+              administrador entende o que foi comprado e quando a reposição deixa
+              de depender de mensagens soltas.
+            </p>
+            <p>
+              Por isso, pensamos a ServeBox como uma operação próxima: prática o
+              bastante para caber na rotina do condomínio e cuidadosa o bastante
+              para não deixar o esporte virar mais uma pendência administrativa.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <section className="grid gap-8 border-t border-border pt-10 lg:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
+            Como trabalhamos
+          </p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
+            Uma operação pensada para a rotina de quem cuida das quadras.
+          </h2>
+          <div className="mt-6 space-y-4 text-base leading-8 text-slate-700">
+            {workflow.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-200 border-y border-border">
+          {principles.map((principle) => (
+            <article key={principle.title} className="py-6 first:pt-0 last:pb-0">
+              <div className="grid gap-3 md:grid-cols-[0.45fr_1fr]">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {principle.title}
+                </h3>
+                <p className="text-sm leading-7 text-slate-600">
+                  {principle.text}
+                </p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
-        <div className="rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-7">
+      <section className="border-t border-border py-10">
+        <div className="max-w-4xl">
           <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
-            Estrutura
+            Próximo passo
           </p>
           <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
-            Cada condomínio concentra seus próprios planos.
+            Queremos que a compra de tubos pareça parte natural da vida do
+            condomínio.
           </h2>
-          <div className="mt-6 space-y-4 text-base leading-8 text-slate-700">
-            <p>
-              O modelo atual remove a ideia de catálogo global. Cada plano
-              pertence a um condomínio específico e acompanha a realidade da
-              operação daquele cliente.
-            </p>
-            <p>
-              O pagamento gera um checkout e o saldo de tubos só muda
-              depois da confirmação real do gateway.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {dashboard.plans.map((plan) => (
-            <article
-              key={plan.id}
-              className="rounded-[1.5rem] border border-border bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
+          <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
+            A página de sugestões existe para manter essa construção aberta. Se
+            algo pode ficar mais claro, mais simples ou mais útil para o seu
+            condomínio, a equipe pode avaliar e transformar essa percepção em
+            melhoria do serviço.
+          </p>
+          <div className="mt-7">
+            <Link
+              href="/sugestoes"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 sm:w-auto"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
-                  {plan.tierLabel}
-                </span>
-                <span className="text-sm text-slate-500">{plan.condominiumName}</span>
-              </div>
-              <h3 className="mt-5 text-2xl font-semibold text-slate-900">
-                {plan.name}
-              </h3>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
-                {plan.description}
-              </p>
-              <p className="mt-6 text-3xl font-semibold tracking-tight text-slate-900">
-                {currencyFormatter.format(plan.monthlyPriceInCents / 100)}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">por mês</p>
-              <dl className="mt-6 space-y-3 text-sm text-slate-700">
-                <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-                  <dt>Tubos inclusas</dt>
-                  <dd className="font-semibold">{plan.monthlyBallAllowance}/mês</dd>
-                </div>
-              </dl>
-            </article>
-          ))}
+              Compartilhar uma sugestão
+            </Link>
+          </div>
         </div>
       </section>
     </main>
