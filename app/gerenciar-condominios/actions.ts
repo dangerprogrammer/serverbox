@@ -277,50 +277,6 @@ export type DeleteTubeBrandActionState = {
   message: string | null;
 };
 
-function getTubeBrandUsageSummary(
-  condominiums: Array<{
-    name: string;
-    tubeStockByBrand: Array<{ tubeBrandId?: string | null } | null> | null;
-    courtDetails?: Array<{
-      tubeBrand?: { id?: string | null } | null;
-      tubeBrands?: Array<{ id?: string | null } | null> | null;
-    }> | null;
-  }>,
-  tubeBrandId: string,
-) {
-  const stockCondominiums = new Set<string>();
-  const courtCondominiums = new Set<string>();
-
-  condominiums.forEach((condominium) => {
-    if (
-      Array.isArray(condominium.tubeStockByBrand) &&
-      condominium.tubeStockByBrand.some(
-        (entry) => entry?.tubeBrandId === tubeBrandId,
-      )
-    ) {
-      stockCondominiums.add(condominium.name);
-    }
-
-    if (
-      condominium.courtDetails?.some((court) => {
-        const courtBrands =
-          court.tubeBrands && court.tubeBrands.length > 0
-            ? court.tubeBrands
-            : [court.tubeBrand];
-
-        return courtBrands.some((brand) => brand?.id === tubeBrandId);
-      })
-    ) {
-      courtCondominiums.add(condominium.name);
-    }
-  });
-
-  return {
-    stockCondominiums: Array.from(stockCondominiums),
-    courtCondominiums: Array.from(courtCondominiums),
-  };
-}
-
 export async function deleteTubeBrandAction(
   _previousState: DeleteTubeBrandActionState,
   formData: FormData,

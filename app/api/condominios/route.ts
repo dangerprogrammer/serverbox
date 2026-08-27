@@ -5,7 +5,10 @@ import {
   CondominiumEntity,
   type Condominium,
 } from "@/lib/db/entities/condominium.entity";
-import { CondominiumCourtEntity } from "@/lib/db/entities/condominium-court.entity";
+import {
+  CondominiumCourtEntity,
+  type CondominiumCourt,
+} from "@/lib/db/entities/condominium-court.entity";
 import { TubeBrandEntity, type TubeBrand } from "@/lib/db/entities/tube-brand.entity";
 import {
   getActiveTubeStockEntries,
@@ -66,7 +69,9 @@ export async function GET(request: Request) {
       },
     }),
   ]);
-  const brandById = new Map(brands.map((brand) => [brand.id, brand]));
+  const brandById = new Map<string, TubeBrand>(
+    brands.map((brand: TubeBrand) => [brand.id, brand]),
+  );
 
   return Response.json(
     condominiums.map((condominium: Condominium) => {
@@ -192,7 +197,9 @@ export async function POST(request: Request) {
         : 1;
 
   const brands = await brandRepository.find({ order: { name: "ASC" } });
-  const brandById = new Map(brands.map((brand) => [brand.id, brand]));
+  const brandById = new Map<string, TubeBrand>(
+    brands.map((brand: TubeBrand) => [brand.id, brand]),
+  );
   const defaultBrand = brands[0];
   const tubeStockByBrand = getTubeStockEntries(
     payload.tubeStockByBrand?.map((entry) => ({
@@ -316,7 +323,7 @@ export async function POST(request: Request) {
           tubeBrandName: tubeBrand?.name ?? "Marca removida",
         };
       }),
-      courtDetails: savedCourts.map((court) => {
+      courtDetails: savedCourts.map((court: CondominiumCourt) => {
         const tubeBrands =
           court.tubeBrands && court.tubeBrands.length > 0
             ? court.tubeBrands
@@ -329,7 +336,7 @@ export async function POST(request: Request) {
             id: court.tubeBrand.id,
             name: court.tubeBrand.name,
           },
-          tubeBrands: tubeBrands.map((brand) => ({
+          tubeBrands: tubeBrands.map((brand: TubeBrand) => ({
             id: brand.id,
             name: brand.name,
           })),

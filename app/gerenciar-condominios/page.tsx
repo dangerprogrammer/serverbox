@@ -7,7 +7,6 @@ import { FormSubmitButton } from "@/app/_components/form-submit-button";
 import { SessionTokenInput } from "@/app/_components/session-token-input";
 import { ClientAccessesPanel } from "@/app/gerenciar-condominios/_components/client-accesses-panel";
 import { CreateCondominiumForm } from "@/app/gerenciar-condominios/_components/create-condominium-form";
-import { CondominiumCourtsFieldset } from "@/app/gerenciar-condominios/_components/condominium-courts-fieldset";
 import { TubeBrandDeleteControl } from "@/app/gerenciar-condominios/_components/tube-brand-delete-control";
 import { UpdateCondominiumForm } from "@/app/gerenciar-condominios/_components/update-condominium-form";
 import { UpdatePlanForm } from "@/app/gerenciar-condominios/_components/update-plan-form";

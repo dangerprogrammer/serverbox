@@ -21,7 +21,7 @@ import { getTubeStockEntries } from "@/lib/domain/tube-stock";
 import { DataSource, type DataSourceOptions } from "typeorm";
 
 declare global {
-  var __serveboxDataSourceCache:
+  var __serverboxDataSourceCache:
     | {
         version: string;
         promise: Promise<DataSource>;
@@ -472,7 +472,7 @@ async function createDataSource() {
   return initialize();
 }
 
-export async function getDataSource() {
+export async function getDataSource(): Promise<DataSource> {
   const cached = globalThis.__serverboxDataSourceCache;
 
   if (!cached || cached.version !== DATA_SOURCE_SCHEMA_VERSION) {

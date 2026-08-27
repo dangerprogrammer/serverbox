@@ -19,10 +19,15 @@ export function FormSubmitButton({
 }: FormSubmitButtonProps) {
   const { pending } = useFormStatus();
   const isDisabled = pending || disabled;
+  const label = pending
+    ? pendingLabel
+    : disabled && disabledLabel
+      ? disabledLabel
+      : idleLabel;
 
   return (
     <button type="submit" disabled={isDisabled} className={className}>
-      {pending ? pendingLabel : idleLabel}
+      {label}
     </button>
   );
 }

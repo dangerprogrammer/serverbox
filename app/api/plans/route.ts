@@ -2,8 +2,14 @@ import crypto from "node:crypto";
 
 import { getAuthenticatedAdminFromToken, getSessionTokenFromRequest } from "@/lib/auth/session";
 import { getDataSource } from "@/lib/db/data-source";
-import { CondominiumEntity } from "@/lib/db/entities/condominium.entity";
-import { PlanTier } from "@/lib/domain/condominium-plan";
+import {
+  CondominiumEntity,
+  type Condominium,
+} from "@/lib/db/entities/condominium.entity";
+import {
+  PlanTier,
+  type CondominiumPlan,
+} from "@/lib/domain/condominium-plan";
 
 type CreatePlanPayload = {
   condominiumId?: string;
@@ -14,6 +20,26 @@ type CreatePlanPayload = {
   monthlyPriceInCents?: number;
   overagePriceInCents?: number;
   tier?: string;
+};
+
+type PlanListItem = {
+  id: string;
+  condominiumId: string;
+  condominiumName: string;
+  slug: string;
+  name: string;
+  tier: PlanTier;
+  description: string;
+  monthlyBallAllowance: number;
+  monthlyPriceInCents: number;
+  overagePriceInCents: number;
+  createdBy:
+    | {
+        id: string;
+        name: string;
+        email: string;
+      }
+    | null;
 };
 
 function normalizeSlug(value: string) {
@@ -47,8 +73,8 @@ export async function GET(request: Request) {
 
   return Response.json(
     condominiums
-      .flatMap((condominium) =>
-        condominium.plans.map((plan) => ({
+      .flatMap((condominium: Condominium) =>
+        condominium.plans.map((plan: CondominiumPlan) => ({
           id: plan.id,
           condominiumId: condominium.id,
           condominiumName: condominium.name,
@@ -68,7 +94,10 @@ export async function GET(request: Request) {
             : null,
         })),
       )
-      .sort((left, right) => left.monthlyPriceInCents - right.monthlyPriceInCents),
+      .sort(
+        (left: PlanListItem, right: PlanListItem) =>
+          left.monthlyPriceInCents - right.monthlyPriceInCents,
+      ),
   );
 }
 
@@ -101,7 +130,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "Condomínio não encontrado." }, { status: 404 });
   }
 
-  const existingPlan = condominium.plans.find((plan) => plan.slug === slug);
+  const existingPlan = condominium.plans.find(
+    (plan: CondominiumPlan) => plan.slug === slug,
+  );
 
   if (existingPlan) {
     return Response.json(

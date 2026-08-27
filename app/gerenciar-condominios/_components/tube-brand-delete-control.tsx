@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 
 import { SessionTokenInput } from "@/app/_components/session-token-input";
 import { FormSubmitButton } from "@/app/_components/form-submit-button";
@@ -34,12 +34,9 @@ export function TubeBrandDeleteControl({
     initialState,
   );
 
-  useEffect(() => {
-    if (state.success) {
-      setIsConfirming(false);
-      setHasSubmittedDelete(false);
-    }
-  }, [state.success]);
+  if (state.success) {
+    return null;
+  }
 
   const stockSummary = stockCondominiums.length
     ? stockCondominiums.join(", ")
